@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPTU DMS VISION — Master Fleet & Driver Intelligence Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0B0F19',
+                            card: 'rgba(15, 23, 42, 0.75)',
+                            accent: '#3B82F6',
+                            emerald: '#10B981',
+                            amber: '#F59E0B',
+                            rose: '#EF4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0B0F19;
+            color: #F8FAFC;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-panel-glow-red {
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);
+        }
+        .gauge-needle {
+            transition: transform 0.05s ease-out;
+            transform-origin: 100px 100px;
+        }
+        @keyframes pulse-red-border {
+            0%, 100% { box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.8), 0 0 30px rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: inset 0 0 5px rgba(239, 68, 68, 0.2), 0 0 5px rgba(239, 68, 68, 0.1); }
+        }
+        .critical-alarm-active {
+            animation: pulse-red-border 0.6s infinite ease-in-out;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-100 bg-[#0B0F19] antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i data-lucide="shield-alert" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
+                    FPTU DMS VISION
+                </h1>
+                <p class="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Connected Car & Fleet Intelligence Platform
+                </p>
+            </div>
+        </div>
+
+        <!-- 3 View Selector Tabs -->
+        <div class="flex items-center bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 space-x-1">
+            <button id="tab-driver" onclick="switchView('driver')" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 bg-blue-600 text-white shadow-md shadow-blue-600/30">
+                <i data-lucide="gauge" class="w-4 h-4"></i> Driver HUD (2s Glance)
+            </button>
+            <button id="tab-fleet" onclick="switchView('fleet')" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+                <i data-lucide="map" class="w-4 h-4"></i> Fleet Manager View
+            </button>
+            <button id="tab-business" onclick="switchView('business')" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i> Insurance & GenAI Report
+            </button>
+        </div>
+
+        <!-- Trip & Connection Status -->
+        <div class="flex items-center space-x-3">
+            <select id="trip-selector" onchange="changeTrip(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                <option value="T01-Sample">Trip: T01-Sample (BTC Practice)</option>
+                <option value="T01d">Trip: T01d (Redacted Trip 1)</option>
+                <option value="T02d">Trip: T02d (Redacted Trip 2)</option>
+            </select>
+            <div id="conn-badge" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> 20 FPS WS Live
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main id="app-container" class="flex-1 px-6 py-4 max-w-[1920px] mx-auto w-full">
+
+        <!-- VIEW 1: DRIVER HUD VIEW (NHTSA 2s-glance Ergonomics) -->
+        <section id="view-driver" class="grid grid-cols-12 gap-6">
+            <!-- Left Panel: SVG Risk Gauge & Status Pill -->
+            <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+                <!-- SVG Risk Gauge Card -->
+                <div id="hud-card" class="glass-panel rounded-2xl p-6 flex flex-col items-center justify-between text-center relative overflow-hidden transition-all duration-300">
+                    <div class="flex items-center justify-between w-full mb-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="activity" class="w-4 h-4 text-blue-400"></i> Real-time Risk Score R(t)
+                        </span>
+                        <span id="state-pill" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                            ALERT
+                        </span>
+                    </div>
+
+                    <!-- SVG Circular Gauge -->
+                    <div class="relative w-64 h-64 flex items-center justify-center my-2">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <!-- Background Track -->
+                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent" />
+                            <!-- Colored Risk Arc -->
+                            <circle id="gauge-arc" cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" stroke-dasharray="263.89" stroke-dashoffset="250" stroke-linecap="round" class="text-emerald-500 transition-all duration-75" fill="transparent" />
+                        </svg>
+                        <div class="absolute flex flex-col items-center justify-center">
+                            <span id="risk-num" class="text-6xl font-extrabold tracking-tight text-emerald-400 font-mono">5.0</span>
+                            <span class="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1">NHTSA Risk Level</span>
+                        </div>
+                    </div>
+
+                    <!-- ADAS Banner -->
+                    <div id="adas-banner" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-left mt-2">
+                        <div class="flex items-center space-x-3">
+                            <div id="adas-icon-box" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 id="adas-title" class="text-sm font-bold text-slate-200">Cabin Normal</h4>
+                                <p id="adas-desc" class="text-xs text-slate-400">TTC & Driver State within safe margins.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telemetry Cards Row -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between">
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Ego Speed</span>
+                        <div class="flex items-baseline space-x-1 my-2">
+                            <span id="val-speed" class="text-4xl font-extrabold text-white font-mono">60.0</span>
+                            <span class="text-xs text-slate-400 font-semibold">km/h</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div id="bar-speed" class="bg-blue-500 h-full w-[45%] transition-all duration-75"></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between">
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Time-to-Collision</span>
+                        <div class="flex items-baseline space-x-1 my-2">
+                            <span id="val-ttc" class="text-4xl font-extrabold text-emerald-400 font-mono">∞</span>
+                            <span class="text-xs text-slate-400 font-semibold">sec</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div id="bar-ttc" class="bg-emerald-500 h-full w-[100%] transition-all duration-75"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Dual Camera Feeds (Front Road + Driver Cabin) -->
+            <div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                    <!-- Road Camera Feed (KITTI) -->
+                    <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between relative group overflow-hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <i data-lucide="video" class="w-4 h-4 text-blue-400"></i> Front Road Stereo Camera
+                            </span>
+                            <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                20 FPS LIVE
+                            </span>
+                        </div>
+                        <div class="relative w-full aspect-video bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                            <img id="img-road" src="/kitti/image_2/000000.jpg" onerror="this.src='https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80'" alt="Front Road Cam" class="w-full h-full object-cover" />
+                            <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono">
+                                Road Detection: <span id="road-det-class" class="text-emerald-400 font-bold">Clear Lane</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Driver Cabin Camera Feed -->
+                    <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between relative group overflow-hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <i data-lucide="user-check" class="w-4 h-4 text-emerald-400"></i> Driver Cabin Infrared Camera
+                            </span>
+                            <span id="badge-cabin-state" class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                ALERTNESS 95%
+                            </span>
+                        </div>
+                        <div class="relative w-full aspect-video bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                            <img id="img-driver" src="/driver/frame_000000.jpg" onerror="this.src='https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=800&q=80'" alt="Driver Cabin Cam" class="w-full h-full object-cover" />
+                            <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono flex items-center gap-2">
+                                Cabin Status: <span id="driver-state-tag" class="text-emerald-400 font-bold uppercase">ALERT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: FLEET MANAGER VIEW (Leaflet Map & Event Timeline) -->
+        <section id="view-fleet" class="hidden grid grid-cols-12 gap-6">
+            <!-- Left Panel: Interactive Leaflet Map -->
+            <div class="col-span-12 lg:col-span-8 glass-panel rounded-2xl p-4 flex flex-col gap-3 min-h-[500px]">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="navigation" class="w-4 h-4 text-blue-400"></i> GPS Trajectory Live Vehicle Tracking
+                    </h3>
+                    <span class="text-xs text-slate-400 font-mono" id="gps-coords">Lat: 10.762622, Lon: 106.660172</span>
+                </div>
+                <div id="map" class="w-full flex-1 rounded-xl border border-slate-800 overflow-hidden min-h-[420px]"></div>
+            </div>
+
+            <!-- Right Panel: Risk Event Timeline & Driver Ranking Leaderboard -->
+            <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+                <!-- Driver Safety Ranking Card -->
+                <div class="glass-panel rounded-2xl p-5 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i> Driver Safety Ranking</span>
+                        <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded font-semibold">Active Fleet (12 Drivers)</span>
+                    </h3>
+                    <div class="space-y-2.5 overflow-y-auto max-h-[220px] pr-1">
+                        <!-- Top 1 Driver -->
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 hover:border-emerald-500/60 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/40">#1</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-100 flex items-center gap-1.5">Tài xế C <span class="text-[10px] text-slate-400">(VH-02)</span></div>
+                                    <div class="text-[10px] text-slate-400">TTC TB: 3.8s • 0 Vi ngủ</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-emerald-400">96/100</span>
+                                <div class="text-[9px] text-emerald-500 font-medium">Safe</div>
+                            </div>
+                        </div>
+                        <!-- Top 2 Driver -->
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 font-bold text-xs flex items-center justify-center border border-blue-500/40">#2</span>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-100 flex items-center gap-1.5">Tài xế B <span class="text-[10px] text-slate-400">(VH-01)</span></div>
+                                    <div class="text-[10px] text-slate-400">TTC TB: 2.9s • 1 Mất tập trung</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-blue-400">88/100</span>
+                                <div class="text-[9px] text-blue-400 font-medium">Moderate</div>
+                            </div>
+                        </div>
+                        <!-- High Risk Driver -->
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/40 hover:border-rose-500/70 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 font-bold text-xs flex items-center justify-center border border-rose-500/40">#12</span>
+                                <div>
+                                    <div class="text-xs font-bold text-rose-200 flex items-center gap-1.5">Tài xế A <span class="text-[10px] text-rose-400 font-bold">(VH-04)</span></div>
+                                    <div class="text-[10px] text-rose-300">TTC: 1.2s • 2 Vi ngủ</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-rose-400">42/100</span>
+                                <div class="text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded font-bold uppercase animate-pulse">Critical</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 flex flex-col flex-1">
+                    <h3 class="text-sm font-bold text-slate-200 mb-4 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> Violation Event Timeline</span>
+                        <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono" id="event-count">0 Events</span>
+                    </h3>
+                    <div id="event-timeline" class="flex-1 space-y-3 overflow-y-auto max-h-[220px] pr-1">
+                        <div class="text-center py-8 text-xs text-slate-500">No critical events detected yet in trip.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: BUSINESS & INSURANCE REPORT VIEW -->
+        <section id="view-business" class="hidden grid grid-cols-12 gap-6">
+            <!-- Left Column: Donut Chart & SHAP Factors -->
+            <div class="col-span-12 lg:col-span-7 flex flex-col gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Donut Chart Card -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col items-center justify-between">
+                        <h3 class="text-sm font-bold text-slate-200 w-full text-left mb-2 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i> Driver State % Distribution
+                        </h3>
+                        <div class="w-48 h-48 relative">
+                            <canvas id="donutChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- SHAP Factors Card -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col justify-between">
+                        <h3 class="text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i> Risk Contribution Matrix
+                        </h3>
+                        <div class="space-y-3 my-auto">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400">Time-to-Collision (FCW)</span>
+                                    <span class="text-blue-400">45%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-blue-500 h-full w-[45%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400">Drowsiness & Microsleep</span>
+                                    <span class="text-amber-400">35%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-amber-500 h-full w-[35%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400">Kinematics (Brake/Corner)</span>
+                                    <span class="text-emerald-400">20%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full w-[20%]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: AI AGENT CHATBOT BOX -->
+            <div class="col-span-12 lg:col-span-5 glass-panel rounded-2xl p-5 flex flex-col h-[480px]">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 rounded-lg bg-blue-600/20 text-blue-400">
+                            <i data-lucide="bot" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-200">GenAI Coaching Agent</h3>
+                            <p class="text-[10px] text-slate-400">LLM Fleet Safety Advisor</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono border border-emerald-500/20">
+                        ONLINE
+                    </span>
+                </div>
+
+                <!-- Chat Messages Area -->
+                <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 pr-2 text-xs">
+                    <div class="flex gap-2 text-slate-300 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                        <i data-lucide="bot" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold text-blue-400 block mb-1">Safety Advisor Agent:</span>
+                            Xin chào Quản lý đoàn xe! Tôi đã phân tích chuyến đi <b>T01-Sample</b>. Tài xế lái xe rất an toàn (Điểm an toàn: 92.5/100). Bạn có cần tôi xuất câu khuyến nghị huấn luyện tài xế không?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Form -->
+                <form id="chat-form" onsubmit="sendChatMessage(event)" class="mt-3 flex gap-2">
+                    <input id="chat-input" type="text" placeholder="Hỏi AI Coaching về chuyến đi này..." class="flex-1 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500" />
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-600/30">
+                        <i data-lucide="send" class="w-4 h-4"></i> Gửi
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- BOTTOM REPLAY PLAYER CONTROLS BAR (20 FPS Engine Controls) -->
+    <footer class="sticky bottom-0 z-50 glass-panel border-t border-slate-800/80 px-6 py-3 flex items-center justify-between">
+        <!-- Play / Pause & Controls -->
+        <div class="flex items-center space-x-3">
+            <button id="btn-play" onclick="togglePlay()" class="h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition shadow-lg shadow-blue-600/30">
+                <i id="icon-play" data-lucide="play" class="w-5 h-5 fill-current"></i>
+            </button>
+            <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 text-xs space-x-1">
+                <button onclick="setSpeed(1.0)" id="speed-1" class="px-2.5 py-1 rounded-lg font-mono font-bold bg-blue-600 text-white">1x</button>
+                <button onclick="setSpeed(2.0)" id="speed-2" class="px-2.5 py-1 rounded-lg font-mono font-bold text-slate-400 hover:text-white">2x</button>
+                <button onclick="setSpeed(4.0)" id="speed-4" class="px-2.5 py-1 rounded-lg font-mono font-bold text-slate-400 hover:text-white">4x</button>
+            </div>
+        </div>
+
+        <!-- Frame Seek Slider & Time Counter -->
+        <div class="flex-1 max-w-3xl mx-8 flex items-center space-x-4">
+            <span id="time-current" class="text-xs font-mono font-bold text-blue-400 w-14">00:00.00</span>
+            <input id="seek-slider" type="range" min="0" max="599" value="0" oninput="onSeek(this.value)" class="flex-1 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+            <span id="time-total" class="text-xs font-mono font-semibold text-slate-400 w-14">00:30.00</span>
+        </div>
+
+        <!-- FPS & Frame Counter Badge -->
+        <div class="flex items-center space-x-3 text-xs font-mono text-slate-400">
+            <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                Frame: <strong id="lbl-frame-idx" class="text-slate-200">0</strong> / <span id="lbl-max-idx">599</span>
+            </span>
+            <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-emerald-400 font-bold">
+                20 FPS (50ms)
+            </span>
+        </div>
+    </footer>
+
+    <!-- SCRIPT ENGINE (WebSocket Connection + Leaflet + Charts) -->
+    <script>
+        // State variables
+        let isPlaying = true;
+        let speedMultiplier = 1.0;
+        let currentFrameIdx = 0;
+        let maxFrames = 600;
+        let framesData = [];
+        let map, carMarker, polyline;
+        let donutChart;
+        let timerInterval = null;
+        let ws = null;
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Audio Alert Synthesizer
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playWarningBeep() {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz beep
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {}
+        }
+
+        // Initialize App on DOM Load
+        window.addEventListener('DOMContentLoaded', async () => {
+            initMap();
+            initCharts();
+            await loadDataset("T01-Sample");
+            startReplayTimer();
+        });
+
+        // Initialize Leaflet Map
+        function initMap() {
+            map = L.map('map').setView([10.762622, 106.660172], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            const carIcon = L.divIcon({
+                className: 'custom-car-icon',
+                html: `<div style="background: #3B82F6; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px #3B82F6;"></div>`,
+                iconSize: [16, 16]
+            });
+            carMarker = L.marker([10.762622, 106.660172], { icon: carIcon }).addTo(map);
+            polyline = L.polyline([], { color: '#3B82F6', weight: 4, opacity: 0.8 }).addTo(map);
+        }
+
+        // Initialize Donut Chart
+        function initCharts() {
+            const ctx = document.getElementById('donutChart').getContext('2d');
+            donutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Alert', 'Drowsy', 'Yawning', 'Microsleep'],
+                    datasets: [{
+                        data: [85, 10, 3, 2],
+                        backgroundColor: ['#10B981', '#F59E0B', '#3B82F6', '#EF4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94A3B8', font: { family: 'Outfit', size: 11 } } }
+                    },
+                    cutout: '75%'
+                }
+            });
+        }
+
+        // Load Dataset via Fetch
+        async function loadDataset(tripId) {
+            try {
+                const res = await fetch(`http://localhost:8000/static/T01-Sample.json`);
+                if (res.ok) {
+                    const json = await res.json();
+                    framesData = json.frames || json.data || [];
+                    maxFrames = framesData.length;
+                    document.getElementById('seek-slider').max = maxFrames - 1;
+                    document.getElementById('lbl-max-idx').innerText = maxFrames - 1;
+
+                    // Plot GPS polyline
+                    const latlngs = framesData.map(f => [
+                        f.telemetry?.latitude || 10.762622,
+                        f.telemetry?.longitude || 106.660172
+                    ]);
+                    polyline.setLatLngs(latlngs);
+                    if (latlngs.length > 0) map.fitBounds(polyline.getBounds());
+                }
+            } catch (err) {
+                console.log("Using built-in fallback frame generator");
+                generateFallbackFrames();
+            }
+        }
+
+        function generateFallbackFrames() {
+            framesData = [];
+            for (let i = 0; i < 600; i++) {
+                const ts = i * 0.05;
+                const state = i > 400 && i < 450 ? 'microsleep' : (i > 200 && i < 260 ? 'drowsy' : 'alert');
+                framesData.push({
+                    frame_id: i,
+                    timestamp: ts,
+                    telemetry: {
+                        speed_kmh: 60.0 + Math.sin(i / 20) * 5,
+                        longitudinal_accel: i === 420 ? -3.8 : -0.2,
+                        latitude: 10.762622 + i * 0.00005,
+                        longitude: 106.660172 + i * 0.00005
+                    },
+                    ai_vision: {
+                        predicted_ttc: i === 420 ? 1.2 : 'inf',
+                        predicted_driver_state: state
+                    },
+                    images: {
+                        road_cam_url: `/static/kitti/image_2/${String(i).padStart(6, '0')}.png`,
+                        driver_cam_url: `/static/driver/frame_${String(i).padStart(6, '0')}.jpg`
+                    }
+                });
+            }
+        }
+
+        // Replay Loop Timer (50ms @ 20 FPS)
+        function startReplayTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (isPlaying && framesData.length > 0) {
+                    renderFrame(currentFrameIdx);
+                    currentFrameIdx = (currentFrameIdx + 1) % maxFrames;
+                }
+            }, 50 / speedMultiplier);
+        }
+
+        // Render Frame Data to UI
+        function renderFrame(idx) {
+            const frame = framesData[idx];
+            if (!frame) return;
+
+            document.getElementById('seek-slider').value = idx;
+            document.getElementById('lbl-frame-idx').innerText = idx;
+
+            const ts = frame.timestamp || idx * 0.05;
+            const mins = Math.floor(ts / 60);
+            const secs = (ts % 60).toFixed(2);
+            document.getElementById('time-current').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(5, '0')}`;
+
+            // Telemetry & AI Vision
+            const speed = frame.telemetry?.speed_kmh || 60.0;
+            const ttc = frame.ai_vision?.predicted_ttc || 'inf';
+            const state = (frame.ai_vision?.predicted_driver_state || 'alert').toLowerCase();
+
+            document.getElementById('val-speed').innerText = speed.toFixed(1);
+            document.getElementById('val-ttc').innerText = ttc === 'inf' ? '∞' : parseFloat(ttc).toFixed(1);
+
+            // Risk Scoring Calculation
+            let riskScore = 5.0;
+            if (state === 'microsleep') riskScore = 95.0;
+            else if (state === 'drowsy') riskScore = 65.0;
+            else if (ttc !== 'inf' && parseFloat(ttc) <= 1.5) riskScore = 90.0;
+
+            const riskNumEl = document.getElementById('risk-num');
+            riskNumEl.innerText = riskScore.toFixed(1);
+
+            // Gauge Arc Updates
+            const gaugeArc = document.getElementById('gauge-arc');
+            const dashOffset = 263.89 * (1 - riskScore / 100);
+            gaugeArc.style.strokeDashoffset = dashOffset;
+
+            // State Pill & Colors
+            const statePill = document.getElementById('state-pill');
+            const adasBanner = document.getElementById('adas-banner');
+            const adasTitle = document.getElementById('adas-title');
+            const adasDesc = document.getElementById('adas-desc');
+            const hudCard = document.getElementById('hud-card');
+
+            if (riskScore >= 75) {
+                statePill.className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase tracking-wider animate-bounce";
+                statePill.innerText = "CRITICAL RISK";
+                gaugeArc.setAttribute('class', 'text-rose-500 transition-all duration-75');
+                riskNumEl.className = "text-6xl font-extrabold tracking-tight text-rose-400 font-mono";
+                adasTitle.innerText = "CRITICAL ADAS WARNING!";
+                adasDesc.innerText = state === 'microsleep' ? 'MICROSLEEP DETECTED IN CABIN!' : 'FCW COLLISION IMMINENT!';
+                hudCard.classList.add('critical-alarm-active');
+                playWarningBeep();
+            } else if (riskScore >= 40) {
+                statePill.className = "px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider";
+                statePill.innerText = "WARNING";
+                gaugeArc.setAttribute('class', 'text-amber-500 transition-all duration-75');
+                riskNumEl.className = "text-6xl font-extrabold tracking-tight text-amber-400 font-mono";
+                adasTitle.innerText = "Driver Fatigue Warning";
+                adasDesc.innerText = "Driver showing signs of drowsiness.";
+                hudCard.classList.remove('critical-alarm-active');
+            } else {
+                statePill.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider";
+                statePill.innerText = "ALERT";
+                gaugeArc.setAttribute('class', 'text-emerald-500 transition-all duration-75');
+                riskNumEl.className = "text-6xl font-extrabold tracking-tight text-emerald-400 font-mono";
+                adasTitle.innerText = "Cabin Normal";
+                adasDesc.innerText = "TTC & Driver State within safe margins.";
+                hudCard.classList.remove('critical-alarm-active');
+            }
+
+            // Image Feeds Matching (Real dataset images from /kitti and /driver)
+            const roadImg = document.getElementById('img-road');
+            const driverImg = document.getElementById('img-driver');
+
+            const padded = String(idx).padStart(6, '0');
+            roadImg.src = `/kitti/image_2/${padded}.jpg`;
+            driverImg.src = `/driver/frame_${padded}.jpg`;
+
+            // Leaflet Marker Position
+            if (frame.telemetry?.latitude && frame.telemetry?.longitude) {
+                carMarker.setLatLng([frame.telemetry.latitude, frame.telemetry.longitude]);
+                document.getElementById('gps-coords').innerText = `Lat: ${frame.telemetry.latitude.toFixed(6)}, Lon: ${frame.telemetry.longitude.toFixed(6)}`;
+            }
+        }
+
+        // Player Controls Functions
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('icon-play').setAttribute('data-lucide', isPlaying ? 'pause' : 'play');
+            lucide.createIcons();
+        }
+
+        function setSpeed(spd) {
+            speedMultiplier = spd;
+            ['speed-1', 'speed-2', 'speed-4'].forEach(id => {
+                document.getElementById(id).className = "px-2.5 py-1 rounded-lg font-mono font-bold text-slate-400 hover:text-white";
+            });
+            document.getElementById(`speed-${spd}`).className = "px-2.5 py-1 rounded-lg font-mono font-bold bg-blue-600 text-white";
+            startReplayTimer();
+        }
+
+        function onSeek(val) {
+            currentFrameIdx = parseInt(val);
+            renderFrame(currentFrameIdx);
+        }
+
+        // View Switching Tabs
+        function switchView(viewName) {
+            ['driver', 'fleet', 'business'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+                document.getElementById(`tab-${v}`).className = "px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800";
+            });
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.getElementById(`tab-${viewName}`).className = "px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 bg-blue-600 text-white shadow-md shadow-blue-600/30";
+            
+            if (viewName === 'fleet') {
+                setTimeout(() => map.invalidateSize(), 200);
+            }
+        }
+
+        // GenAI Chatbot Submission
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML += `
+                <div class="flex gap-2 text-slate-200 bg-blue-950/40 p-3 rounded-xl border border-blue-800/40 justify-end">
+                    <div class="text-right font-medium">${msg}</div>
+                </div>
+            `;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Call Backend API or streaming response
+            try {
+                const res = await fetch('http://localhost:8000/api/coaching/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trip_id: 'T01-Sample', safe_score: 92.5, user_query: msg })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    chatBox.innerHTML += `
+                        <div class="flex gap-2 text-slate-300 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                            <i data-lucide="bot" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <span class="font-bold text-blue-400 block mb-1">Safety Advisor Agent:</span>
+                                ${data.coaching_advice || data.message}
+                            </div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    return;
+                }
+            } catch(e) {}
+
+            // Fallback GenAI Response
+            setTimeout(() => {
+                chatBox.innerHTML += `
+                    <div class="flex gap-2 text-slate-300 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                        <i data-lucide="bot" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold text-blue-400 block mb-1">Safety Advisor Agent:</span>
+                            Dựa trên phân tích 600 frames của chuyến đi T01-Sample, tài xế giữ khoảng cách an toàn tốt. Khuyến nghị duy trì quãng nghỉ sau mỗi 2 giờ lái xe liên tục.
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 600);
+        }
+    </script>
+</body>
+</html>

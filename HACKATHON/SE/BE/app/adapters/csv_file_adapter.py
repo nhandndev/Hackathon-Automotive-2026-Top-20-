@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 from app.domain.interfaces.base_data_adapter import BaseDataAdapter
 from app.core.config import settings
 from app.core.logger import logger
+from app.core.errors import DatasetUnavailableError, TripNotFoundError
 
 class CSVFileAdapter(BaseDataAdapter):
     """
@@ -25,6 +26,9 @@ class CSVFileAdapter(BaseDataAdapter):
         3. {data_dir}/submissions/{trip_id}.csv
         4. {data_dir}/T01-Sample.json (Default dataset fallback)
         """
+        if not os.path.isdir(self.data_dir):
+            raise DatasetUnavailableError({"dataset_dir": str(self.data_dir)})
+
         csv_path = os.path.join(self.data_dir, f"{trip_id}.csv")
         json_path = os.path.join(self.data_dir, f"{trip_id}.json")
         sub_csv_path = os.path.join(self.data_dir, "submissions", f"{trip_id}.csv")
@@ -48,10 +52,8 @@ class CSVFileAdapter(BaseDataAdapter):
             logger.info(f"Loading REAL fallback dataset from: {fallback_json}")
             return self._parse_json_file(fallback_json)
 
-        # If no file found, raise explicit FileNotFound exception
-        err_msg = f"No real CSV or JSON file found for trip '{trip_id}' in directory '{self.data_dir}'"
-        logger.error(err_msg)
-        raise FileNotFoundError(err_msg)
+        logger.warning("Trip not found trip_id=%s data_dir=%s", trip_id, self.data_dir)
+        raise TripNotFoundError(trip_id)
 
     def _parse_csv_file(self, csv_path: str) -> List[Dict[str, Any]]:
         """Parses real CSV files with telemetry and AI vision predictions."""

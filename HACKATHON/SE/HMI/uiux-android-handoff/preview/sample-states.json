@@ -1,0 +1,50 @@
+{
+  "safe": {
+    "aiStatus": "ONLINE",
+    "severity": "SAFE",
+    "driverState": "alert",
+    "recommendedAction": "NONE",
+    "speedKmh": 60,
+    "speedLimitKmh": 80,
+    "riskScore": 5,
+    "alertnessScore": 0.95,
+    "minTtcSec": 10,
+    "criticalAlert": false,
+    "alertReasonCode": "NONE",
+    "dataAgeMs": 30,
+    "voiceEnabled": true,
+    "ecuState": "STANDBY"
+  },
+  "warning": {
+    "aiStatus": "DEGRADED",
+    "severity": "WARNING",
+    "driverState": "distracted",
+    "recommendedAction": "FOCUS_FORWARD",
+    "speedKmh": 75,
+    "speedLimitKmh": 80,
+    "riskScore": 55,
+    "alertnessScore": 0.45,
+    "minTtcSec": 3,
+    "criticalAlert": false,
+    "alertReasonCode": "DRIVER_DISTRACTED",
+    "dataAgeMs": 40,
+    "voiceEnabled": true,
+    "ecuState": "WARNING_BUZZER_ON"
+  },
+  "critical": {
+    "aiStatus": "ONLINE",
+    "severity": "CRITICAL",
+    "driverState": "microsleep",
+    "recommendedAction": "BRAKE_SAFE",
+    "speedKmh": 80,
+    "speedLimitKmh": 80,
+    "riskScore": 88,
+    "alertnessScore": 0.15,
+    "minTtcSec": 1.2,
+    "criticalAlert": true,
+    "alertReasonCode": "TTC_CRITICAL",
+    "dataAgeMs": 40,
+    "voiceEnabled": true,
+    "ecuState": "BRAKE_ASSIST_REQUESTED"
+  }
+}

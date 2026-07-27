@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DMS HMI Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050816;
+      color: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 36rem),
+        radial-gradient(circle at bottom right, rgba(248, 113, 113, 0.14), transparent 32rem),
+        #050816;
+    }
+
+    .wrap {
+      width: min(96vw, 1280px);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 18px;
+      color: #cbd5e1;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(15, 23, 42, 0.88);
+      color: #f8fafc;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+
+    button:hover {
+      border-color: rgba(56, 189, 248, 0.72);
+    }
+
+    .screen {
+      aspect-ratio: 16 / 9;
+      border-radius: 30px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+      background: #0b1c2d;
+      position: relative;
+    }
+
+    .screen.safe {
+      background:
+        linear-gradient(135deg, rgba(14, 165, 233, 0.16), transparent 40%),
+        #081827;
+    }
+
+    .screen.warning {
+      background:
+        linear-gradient(135deg, rgba(251, 191, 36, 0.26), transparent 44%),
+        #7c5209;
+    }
+
+    .screen.critical {
+      background:
+        linear-gradient(135deg, rgba(248, 113, 113, 0.28), transparent 40%),
+        #641523;
+    }
+
+    .topbar {
+      height: 88px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 44px;
+      background: rgba(2, 6, 23, 0.36);
+      backdrop-filter: blur(8px);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.58);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 24px #22c55e;
+    }
+
+    .warning .dot {
+      background: #facc15;
+      box-shadow: 0 0 24px #facc15;
+    }
+
+    .critical .dot {
+      background: #fb7185;
+      box-shadow: 0 0 24px #fb7185;
+    }
+
+    .main {
+      height: calc(100% - 178px);
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      gap: 24px;
+      padding: 36px 44px;
+      align-items: center;
+    }
+
+    .card {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.36);
+      min-height: 210px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 36px 20px;
+    }
+
+    .eyebrow {
+      font-size: 20px;
+      letter-spacing: 0.12em;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.78);
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 14px 0 10px;
+      font-size: clamp(48px, 6vw, 86px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .action {
+      font-size: clamp(26px, 3vw, 44px);
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .reason {
+      margin-top: 20px;
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .metric-label {
+      color: rgba(255, 255, 255, 0.58);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin: 4px 0 18px;
+      font-size: 36px;
+      font-weight: 900;
+    }
+
+    .risk {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 12px solid rgba(255, 255, 255, 0.12);
+      font-size: 46px;
+      font-weight: 950;
+      background: rgba(2, 6, 23, 0.28);
+    }
+
+    .footer {
+      height: 90px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: rgba(0, 0, 0, 0.56);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer > div {
+      display: grid;
+      place-items: center;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .small {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.68);
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .main {
+        grid-template-columns: 1fr;
+        overflow: auto;
+      }
+
+      .screen {
+        aspect-ratio: auto;
+        min-height: 900px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <h1>DMS Android HMI Preview</h1>
+      <div class="buttons">
+        <button onclick="render('safe')">SAFE</button>
+        <button onclick="render('warning')">WARNING</button>
+        <button onclick="render('critical')">CRITICAL</button>
+      </div>
+    </div>
+
+    <main id="screen" class="screen safe">
+      <section class="topbar">
+        <div class="pill"><span class="dot"></span><span id="ai">AI ONLINE</span></div>
+        <div class="pill" id="voice">VOICE ON</div>
+      </section>
+
+      <section class="main">
+        <aside class="card">
+          <div class="metric-label">Driver</div>
+          <div class="metric-value" id="driver">Tỉnh táo</div>
+          <div class="metric-label">Alertness</div>
+          <div class="metric-value" id="alertness">95%</div>
+          <div class="metric-label">TTC</div>
+          <div class="metric-value" id="ttc">10.0s</div>
+        </aside>
+
+        <section class="hero">
+          <div class="eyebrow" id="severity">SAFE</div>
+          <div class="title" id="title">LÁI XE AN TOÀN</div>
+          <div class="action" id="action">TIẾP TỤC QUAN SÁT</div>
+          <div class="reason" id="reason">Không phát hiện rủi ro nghiêm trọng.</div>
+        </section>
+
+        <aside class="card">
+          <div class="metric-label">Risk Score</div>
+          <div class="risk" id="risk">5</div>
+          <div class="metric-label">ECU Reaction</div>
+          <div class="metric-value small" id="ecu">STANDBY</div>
+        </aside>
+      </section>
+
+      <section class="footer">
+        <div><span id="speed">60 km/h</span></div>
+        <div><span id="limit">Limit 80</span></div>
+        <div><span id="reasonCode">NONE</span></div>
+        <div><span id="age">30 ms</span></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const states = {
+      safe: {
+        aiStatus: "ONLINE",
+        severity: "SAFE",
+        driverState: "alert",
+        recommendedAction: "NONE",
+        speedKmh: 60,
+        speedLimitKmh: 80,
+        riskScore: 5,
+        alertnessScore: 0.95,
+        minTtcSec: 10,
+        alertReasonCode: "NONE",
+        dataAgeMs: 30,
+        voiceEnabled: true,
+        ecuState: "STANDBY"
+      },
+      warning: {
+        aiStatus: "DEGRADED",
+        severity: "WARNING",
+        driverState: "distracted",
+        recommendedAction: "FOCUS_FORWARD",
+        speedKmh: 75,
+        speedLimitKmh: 80,
+        riskScore: 55,
+        alertnessScore: 0.45,
+        minTtcSec: 3,
+        alertReasonCode: "DRIVER_DISTRACTED",
+        dataAgeMs: 40,
+        voiceEnabled: true,
+        ecuState: "WARNING_BUZZER_ON"
+      },
+      critical: {
+        aiStatus: "ONLINE",
+        severity: "CRITICAL",
+        driverState: "microsleep",
+        recommendedAction: "BRAKE_SAFE",
+        speedKmh: 80,
+        speedLimitKmh: 80,
+        riskScore: 88,
+        alertnessScore: 0.15,
+        minTtcSec: 1.2,
+        alertReasonCode: "TTC_CRITICAL",
+        dataAgeMs: 40,
+        voiceEnabled: true,
+        ecuState: "BRAKE_ASSIST_REQUESTED"
+      }
+    };
+
+    function driverText(v) {
+      return {
+        alert: "Tỉnh táo",
+        drowsy: "Buồn ngủ",
+        yawning: "Ngáp",
+        distracted: "Mất tập trung",
+        microsleep: "Vi ngủ"
+      }[v] || v;
+    }
+
+    function actionText(v) {
+      return {
+        NONE: "TIẾP TỤC QUAN SÁT",
+        FOCUS_FORWARD: "TẬP TRUNG PHÍA TRƯỚC",
+        TAKE_BREAK: "HÃY NGHỈ NGƠI",
+        BRAKE_SAFE: "PHANH AN TOÀN",
+        REDUCE_SPEED: "GIẢM TỐC ĐỘ"
+      }[v] || v;
+    }
+
+    function titleText(v) {
+      return {
+        SAFE: "LÁI XE AN TOÀN",
+        WARNING: "CẢNH BÁO",
+        CRITICAL: "NGUY HIỂM"
+      }[v] || v;
+    }
+
+    function reasonText(s) {
+      if (s.severity === "CRITICAL") return "Rủi ro cao. HMI yêu cầu tài xế phản ứng ngay.";
+      if (s.severity === "WARNING") return "AI phát hiện dấu hiệu cần nhắc tài xế.";
+      return "Không phát hiện rủi ro nghiêm trọng.";
+    }
+
+    function render(name) {
+      const s = states[name];
+      const screen = document.getElementById("screen");
+      screen.className = "screen " + name;
+      document.getElementById("ai").textContent = "AI " + s.aiStatus;
+      document.getElementById("voice").textContent = s.voiceEnabled ? "VOICE ON" : "VOICE MUTED";
+      document.getElementById("severity").textContent = s.severity;
+      document.getElementById("title").textContent = titleText(s.severity);
+      document.getElementById("action").textContent = actionText(s.recommendedAction);
+      document.getElementById("reason").textContent = reasonText(s);
+      document.getElementById("driver").textContent = driverText(s.driverState);
+      document.getElementById("alertness").textContent = Math.round(s.alertnessScore * 100) + "%";
+      document.getElementById("ttc").textContent = Number(s.minTtcSec).toFixed(1) + "s";
+      document.getElementById("risk").textContent = s.riskScore;
+      document.getElementById("ecu").textContent = s.ecuState.replaceAll("_", " ");
+      document.getElementById("speed").textContent = s.speedKmh + " km/h";
+      document.getElementById("limit").textContent = "Limit " + s.speedLimitKmh;
+      document.getElementById("reasonCode").textContent = s.alertReasonCode;
+      document.getElementById("age").textContent = s.dataAgeMs + " ms";
+    }
+
+    render("safe");
+  </script>
+</body>
+</html>

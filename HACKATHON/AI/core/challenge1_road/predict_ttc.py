@@ -35,6 +35,17 @@ def format_ttc(ttc: float) -> str:
     return f"{max(0.0, ttc):.3f}"
 
 
+def _resolve_tracker(name: str) -> str:
+    """Accept either a bare ultralytics tracker name or one of our own
+    configs/*.yaml, resolved relative to the AI root so the caller's CWD
+    doesn't matter."""
+    if name.endswith(".yaml"):
+        local = Path(__file__).resolve().parents[2] / "configs" / Path(name).name
+        if local.is_file():
+            return str(local)
+    return name
+
+
 class RoadTTCPredictor:
     """Full stereo-vision TTC pipeline with temporal tracking state."""
 
@@ -58,6 +69,7 @@ class RoadTTCPredictor:
             iou=det_cfg.get("iou", 0.5),
             device=det_cfg.get("device"),
             imgsz=det_cfg.get("imgsz", 640),
+            tracker=str(_resolve_tracker(det_cfg.get("tracker", "bytetrack.yaml"))),
         )
         self.depth = StereoDepth(self.fx, self.baseline, cfg.get("sgbm"))
         self.engine = TTCEngine(self.fx, self.image_width)

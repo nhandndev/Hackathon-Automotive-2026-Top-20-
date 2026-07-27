@@ -11,6 +11,13 @@ detector:
   # breaks the pretrained scale prior.)
   weights: yolov8s.pt      # COCO-pretrained; auto-downloaded by ultralytics on first run
   conf: 0.15               # lowered: the CARLA-rendered VRUs score ~0.17-0.26
+  # MUST accompany the low `conf`: ByteTrack's own new_track_thresh would
+  # otherwise drop these faint detections before they ever become tracks.
+  # "simple" = our centroid tracker over raw predict() output. ByteTrack (any
+  # threshold config) needs two consecutive matched frames to emit a track,
+  # and these VRU detections are intermittent, so it dropped the T02 rider
+  # entirely -- including a 0.50-confidence box. See _CentroidTracker.
+  tracker: simple
   iou: 0.5                 # NMS IoU
   imgsz: 640
   device: null             # null = auto (cuda if available else cpu)

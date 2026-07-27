@@ -1,0 +1,17 @@
+# Datasets (provided by organizer — never commit, huge + redacted rules)
+Dataset/
+dataset (1)/
+data/
+
+# Generated outputs
+predictions/
+artifacts/
+
+# Model weights (auto-downloaded / trained)
+*.pt
+*.onnx
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo

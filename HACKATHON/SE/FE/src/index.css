@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* 
+  Gentle Light Mode Overrides (Warm Monochrome / Minimalist UI)
+  These overrides automatically apply when the device is in Light Mode,
+  providing a soft, eye-soothing experience at night or in bright rooms.
+*/
+@media (prefers-color-scheme: light) {
+  /* Backgrounds */
+  .bg-\[\#070A12\] { background-color: #F8F7F3 !important; }
+  .bg-\[\#0B0F19\] { background-color: #F1EFE9 !important; }
+  .bg-\[\#111827\] { background-color: #EAE8E0 !important; }
+  .bg-\[\#1E293B\] { background-color: #DFDCD1 !important; }
+  .bg-slate-900, .bg-slate-900\/80, .bg-slate-900\/40 { background-color: #E2DFD5 !important; }
+  .bg-slate-800 { background-color: #D5D1C6 !important; }
+  
+  /* Borders */
+  .border-\[\#1E293B\], .border-\[\#1F2937\], .border-slate-700 { border-color: #D1CEC3 !important; }
+  .border-slate-700\/50 { border-color: rgba(209, 206, 195, 0.5) !important; }
+
+  /* Typography */
+  .text-white { color: #2C2B29 !important; }
+  .text-slate-200 { color: #43413E !important; }
+  .text-slate-300 { color: #5A5853 !important; }
+  .text-slate-400 { color: #73716A !important; }
+  .text-slate-500 { color: #8C8A81 !important; }
+  
+  /* Accents */
+  .text-sky-400 { color: #0EA5E9 !important; }
+  .bg-sky-600 { background-color: #0284C7 !important; }
+  .border-sky-400 { border-color: #38BDF8 !important; }
+
+  /* Modal / Overlays */
+  .bg-black\/50, .bg-black\/80 { background-color: rgba(248, 247, 243, 0.85) !important; }
+}

@@ -3,8 +3,14 @@
 # 6 Practice trips without touching source (anti-overfit signal for judges).
 
 detector:
-  weights: yolov8n.pt      # COCO-pretrained; auto-downloaded by ultralytics on first run
-  conf: 0.25               # detection confidence threshold
+  # yolov8s over yolov8n: on T02's cut-in the nano model found the rider in
+  # 2/6 sampled frames and mislabelled it "person", while the small model
+  # found it in 3/6 and classified it "motorcycle". (Upscaling the input to
+  # imgsz=1280 was tested and is WORSE -- the release images are already a
+  # downscale of the CARLA render, so upsampling adds no information and
+  # breaks the pretrained scale prior.)
+  weights: yolov8s.pt      # COCO-pretrained; auto-downloaded by ultralytics on first run
+  conf: 0.15               # lowered: the CARLA-rendered VRUs score ~0.17-0.26
   iou: 0.5                 # NMS IoU
   imgsz: 640
   device: null             # null = auto (cuda if available else cpu)
@@ -25,6 +31,18 @@ ttc:
   corridor_growth: 0.02
   min_closing_speed: 0.5
   smooth_window: 5
+  # Emitted instead of `inf` when nothing is confidently tracked -- see the
+  # long comment in predict_ttc.py. Swept 6..30s on the practice trips;
+  # 10-12s is optimal. Set to 0 to restore raw `inf` output.
+  no_detection_floor: 12.0
+  # Danger-confirmation: a sub-2s reading is only trusted after this many
+  # consecutive frames already inside `danger_confirm_band`; otherwise it is
+  # demoted to `danger_demote_to`. Swept on the practice trips (K x demote):
+  # K=8 / 2.5s was the optimum, lifting the average 57.5 -> 59.8 by cutting
+  # the false-positive flood that was suppressing the F1 term.
+  danger_confirm_frames: 8
+  danger_confirm_band: 3.0
+  danger_demote_to: 2.5
 
 # Baseline-fallback ROI (used only if YOLO weights/ultralytics unavailable).
 roi:

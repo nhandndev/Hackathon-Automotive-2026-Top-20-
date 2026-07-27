@@ -35,6 +35,7 @@ from core.challenge1_road.ttc_engine import FEATURE_KEYS       # noqa: E402
 def extract_trip(trip_dir: Path, cfg: dict) -> pd.DataFrame:
     ds = TripDataset(trip_dir)
     p = RoadTTCPredictor(ds.load_calibration(), cfg)
+    p.set_trip_dir(trip_dir)
     p.reset()
     rows = []
     for fr in ds.iter_frames():

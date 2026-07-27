@@ -197,7 +197,7 @@ source .venv/bin/activate
 pytest -q
 ```
 
-Hiện Phase 01 đã verified với 19 test trên Python 3.11. `/ready` được phép trả 503 trước khi Phase 02 nạp đủ dataset/cache.
+Hiện Backend có 23 test PASS trên Python 3.11. `/ready` được phép trả 503 trước khi Phase 02 nạp đủ dataset/cache.
 
 ### Frontend
 
@@ -216,16 +216,18 @@ Hiện Phase 01 đã verified với 19 test trên Python 3.11. `/ready` được
 - Critical alert gửi theo episode transition, không gửi lặp 20 lần/giây.
 - TTS lỗi không được làm hỏng visual critical alert, REST hoặc WebSocket.
 - Runbook: [`PHASE_05_1`](SE/BE/docs/phases/PHASE_05_1_CARSKY_HMI_RUNBOOK.md) và [`PHASE_05_2`](SE/BE/docs/phases/PHASE_05_2_CARSKY_HMI_ACTION_CHECKLIST.md).
+- Contract/change memory bắt buộc đọc trước khi sửa AI payload hoặc CarSky mapping:
+  [`AI_CONTRACT_AND_CHANGELOG`](SE/BE/docs/AI_CONTRACT_AND_CHANGELOG.md).
 
 ## 8. Trạng thái hiện tại
 
 | Khu vực | Trạng thái quan sát được |
 |---|---|
-| Backend Phase 01 | Verified: app chạy, canonical schema/config/error/health/readiness; 19 test pass |
+| Backend Phase 01 | Verified: app chạy, canonical schema/config/error/health/readiness; bộ Backend hiện có 23 test PASS |
 | Backend Phase 02–06 | Có spec chi tiết; code legacy tồn tại một phần, chưa được coi là hoàn thành |
 | AI | Đang được thành viên chỉnh sửa; không giả định skeleton/file cũ vẫn là implementation hiện hành |
 | Frontend | Có dashboard prototype một file HTML; integration contract còn cần đồng bộ |
-| CarSky | Có tài liệu/runbook; integration thật cần credential, Blueprint, VSS, Room/node và HMI app |
+| CarSky | Có credential local, VSS/bridge/APK và Blueprint valid; deployment runtime còn chờ xử lý visibility của VSS artifact |
 | Submission | Có script khởi đầu; phải validate lại bằng evaluator/file BTC chính thức |
 
 ## 9. Quy trình Vibe Coding bắt buộc

@@ -11,19 +11,21 @@ Tài liệu này là điểm bắt đầu cho phần Backend của dự án **AI
 
 | Hạng mục | Hiện trạng | Ưu tiên |
 |---|---|---|
-| FastAPI bootstrap | Phase 01 đã implement; chạy Python 3.11, 19 automated tests pass | Hoàn thành |
+| FastAPI bootstrap | Phase 01 đã implement; chạy Python 3.11, automated tests pass | Hoàn thành |
 | Dataset adapter | Đã có, còn hard-code path và fallback sai trip | P0 |
 | AI output/risk | Canonical Pydantic contract đã có; Phase 02 còn phải chuyển adapter/pipeline legacy sang contract mới | P0 |
 | External AI API | Chưa có AI Gateway/client, authentication, timeout hoặc fallback mode | P0 |
 | Fleet REST API | Có summary/trajectory, chưa đúng contract SRS | P0 |
 | WebSocket replay | Có loop 20 FPS, cần sửa seek/timing/error handling | P0 |
 | Copilot | Hiện luôn dùng fallback, chưa xử lý câu hỏi fleet | P1 |
-| CarSky | Tài liệu nói đã xong nhưng code chưa tồn tại | P1 |
+| CarSky | Mapper/client/queue, VSS, bridge và Android APK đã có; Blueprint valid, deployment còn vướng visibility của VSS artifact | P0 |
 | Submission | Có exporter/validator, cần tăng validation | P0 |
-| Automated tests | Có 19 test cho Phase 01; các phase sau chưa đủ test | P0 |
+| Automated tests | 23 Backend tests pass; runtime CarSky/Android chưa nghiệm thu | P0 |
 
 ## Tài liệu
 
+- [AI contract, compatibility và change memory](AI_CONTRACT_AND_CHANGELOG.md)
+- [CarSky deployment self-check — kiểm tra không sửa tài nguyên](CARSKY_DEPLOYMENT_SELF_CHECK.md)
 - [Phase 01 — Bootstrap và contract](phases/PHASE_01_BOOTSTRAP_AND_CONTRACT.md)
 - [Phase 02 — AI output ingestion và aggregation](phases/PHASE_02_DATA_AND_RISK_ENGINE.md)
 - [Phase 03 — REST API và fleet](phases/PHASE_03_REST_API_AND_FLEET.md)

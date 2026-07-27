@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 {
   "Vehicle": {
     "type": "branch",
@@ -38,10 +39,27 @@
             "max": 1,
             "description": "Driver alertness score in the range 0..1."
           }
+=======
+[
+{
+  "Vehicle": {
+    "type": "branch",
+    "description": "Vehicle root",
+    "children": {
+      "Speed": {"type": "sensor", "datatype": "float", "unit": "km/h", "description": "Vehicle speed"},
+      "SpeedLimit": {"type": "attribute", "datatype": "float", "unit": "km/h", "description": "Current speed limit"},
+      "Driver": {
+        "type": "branch",
+        "description": "Driver monitoring",
+        "children": {
+          "State": {"type": "sensor", "datatype": "string", "description": "alert, drowsy, yawning, distracted or microsleep"},
+          "AlertnessScore": {"type": "sensor", "datatype": "float", "min": 0, "max": 1, "description": "Driver alertness score"}
+>>>>>>> Stashed changes
         }
       },
       "ADAS": {
         "type": "branch",
+<<<<<<< Updated upstream
         "description": "Driver safety and ADAS risk signals for HMI display.",
         "children": {
           "MinTTC": {
@@ -136,8 +154,26 @@
             "unit": "ms",
             "description": "Age of the latest AI frame in milliseconds."
           }
+=======
+        "description": "DMS safety HMI signals",
+        "children": {
+          "MinTTC": {"type": "sensor", "datatype": "float", "unit": "s", "min": 0, "description": "Minimum finite time to collision"},
+          "Headway": {"type": "sensor", "datatype": "float", "unit": "s", "min": 0, "description": "Finite headway"},
+          "FinalRiskScore": {"type": "sensor", "datatype": "float", "min": 0, "max": 100, "description": "AI final risk score, never recomputed by Backend"},
+          "CriticalAlert": {"type": "actuator", "datatype": "boolean", "description": "Critical episode active"},
+          "DisplaySeverity": {"type": "actuator", "datatype": "string", "description": "SAFE, WARNING, CRITICAL or RECOVERY"},
+          "AlertReasonCode": {"type": "actuator", "datatype": "string", "description": "Deterministic alert reason"},
+          "RecommendedActionCode": {"type": "actuator", "datatype": "string", "description": "Deterministic driver action"},
+          "EventTransition": {"type": "actuator", "datatype": "string", "description": "NONE, START, UPDATE or END"},
+          "AIStatus": {"type": "actuator", "datatype": "string", "description": "ONLINE, DEGRADED or OFFLINE"},
+          "DataAgeMs": {"type": "actuator", "datatype": "uint32", "unit": "ms", "description": "Age of most recent AI frame"}
+>>>>>>> Stashed changes
         }
       }
     }
   }
 }
+<<<<<<< Updated upstream
+=======
+]
+>>>>>>> Stashed changes

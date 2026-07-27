@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+<<<<<<< Updated upstream
 """Small CarSky helper for Phase 05 manual validation.
 
 Commands:
@@ -9,11 +10,18 @@ Commands:
   send-safe
   send-warning
   send-critical
+=======
+"""Operate the dedicated Phase 05.2 CarSky room after it is RUNNING.
+
+Secrets and room/node identifiers are read from SE/BE/.env through Settings.
+This tool never creates, publishes, or deletes CarSky workspace resources.
+>>>>>>> Stashed changes
 """
 
 from __future__ import annotations
 
 import argparse
+<<<<<<< Updated upstream
 import json
 import os
 import sys
@@ -241,6 +249,185 @@ def main() -> None:
         actuate(WARNING)
     elif args.command == "send-critical":
         actuate(CRITICAL)
+=======
+import base64
+import json
+from pathlib import Path
+import sys
+from typing import Any
+
+import httpx
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+from app.core.config import settings
+
+
+SCENARIOS: dict[str, dict[str, list[dict[str, Any]]]] = {
+    "normal": {
+        "signals": [
+            {"path": "Vehicle.Driver.State", "value": "alert"},
+            {"path": "Vehicle.Driver.AlertnessScore", "value": 0.95},
+            {"path": "Vehicle.ADAS.MinTTC", "value": 10.0},
+            {"path": "Vehicle.ADAS.FinalRiskScore", "value": 5.0},
+            {"path": "Vehicle.ADAS.CriticalAlert", "value": False},
+            {"path": "Vehicle.Speed", "value": 60.0},
+            {"path": "Vehicle.SpeedLimit", "value": 80.0},
+            {"path": "Vehicle.ADAS.Headway", "value": 3.0},
+            {"path": "Vehicle.ADAS.DisplaySeverity", "value": "SAFE"},
+            {"path": "Vehicle.ADAS.AlertReasonCode", "value": "NONE"},
+            {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "NONE"},
+            {"path": "Vehicle.ADAS.EventTransition", "value": "END"},
+            {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+            {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+        ]
+    },
+    "warning": {
+        "signals": [
+            {"path": "Vehicle.Driver.State", "value": "distracted"},
+            {"path": "Vehicle.Driver.AlertnessScore", "value": 0.45},
+            {"path": "Vehicle.ADAS.MinTTC", "value": 3.0},
+            {"path": "Vehicle.ADAS.FinalRiskScore", "value": 55.0},
+            {"path": "Vehicle.ADAS.CriticalAlert", "value": False},
+            {"path": "Vehicle.Speed", "value": 75.0},
+            {"path": "Vehicle.SpeedLimit", "value": 80.0},
+            {"path": "Vehicle.ADAS.Headway", "value": 2.2},
+            {"path": "Vehicle.ADAS.DisplaySeverity", "value": "WARNING"},
+            {"path": "Vehicle.ADAS.AlertReasonCode", "value": "DISTRACTED"},
+            {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "FOCUS_FORWARD"},
+            {"path": "Vehicle.ADAS.EventTransition", "value": "START"},
+            {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+            {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+        ]
+    },
+    "critical": {
+        "signals": [
+            {"path": "Vehicle.Driver.State", "value": "microsleep"},
+            {"path": "Vehicle.Driver.AlertnessScore", "value": 0.15},
+            {"path": "Vehicle.ADAS.MinTTC", "value": 1.2},
+            {"path": "Vehicle.ADAS.FinalRiskScore", "value": 88.0},
+            {"path": "Vehicle.ADAS.CriticalAlert", "value": True},
+            {"path": "Vehicle.Speed", "value": 80.0},
+            {"path": "Vehicle.SpeedLimit", "value": 80.0},
+            {"path": "Vehicle.ADAS.Headway", "value": 0.9},
+            {"path": "Vehicle.ADAS.DisplaySeverity", "value": "CRITICAL"},
+            {"path": "Vehicle.ADAS.AlertReasonCode", "value": "TTC_CRITICAL"},
+            {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "BRAKE_SAFE"},
+            {"path": "Vehicle.ADAS.EventTransition", "value": "START"},
+            {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+            {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+        ]
+    },
+}
+
+
+class Phase05Operator:
+    def __init__(self) -> None:
+        required = {
+            "CARSKY_BASE_URL": settings.CARSKY_BASE_URL,
+            "CARSKY_API_KEY": settings.CARSKY_API_KEY,
+            "CARSKY_ROOM_ID": settings.CARSKY_ROOM_ID,
+            "CARSKY_NODE_KEY": settings.CARSKY_NODE_KEY,
+            "CARSKY_ANDROID_NODE_KEY": settings.CARSKY_ANDROID_NODE_KEY,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise SystemExit(f"Missing required .env values: {', '.join(missing)}")
+        self.base_url = str(settings.CARSKY_BASE_URL).rstrip("/")
+        self.room_id = settings.CARSKY_ROOM_ID
+        self.signal_node = settings.CARSKY_NODE_KEY
+        self.android_node = settings.CARSKY_ANDROID_NODE_KEY
+        self.client = httpx.Client(
+            timeout=30,
+            headers={"Authorization": f"Bearer {settings.CARSKY_API_KEY}"},
+        )
+
+    def close(self) -> None:
+        self.client.close()
+
+    def request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
+        response = self.client.request(method, f"{self.base_url}{path}", **kwargs)
+        response.raise_for_status()
+        return response
+
+    def status(self) -> Any:
+        return self.request("GET", f"/api/v1/deployments/{self.room_id}/status").json()
+
+    def nodes(self) -> Any:
+        return self.request("GET", f"/api/v1/deployments/{self.room_id}/nodes").json()
+
+    def adb(self, command: str, *, binary: bool = False) -> httpx.Response:
+        return self.request(
+            "POST",
+            f"/api/v1/deployments/{self.room_id}/adb-exec/{self.android_node}",
+            json={"command": command, "binary": binary},
+        )
+
+    def install_apk(self, apk: Path) -> list[Any]:
+        encoded = base64.b64encode(apk.read_bytes()).decode("ascii")
+        responses: list[Any] = []
+        responses.append(self.adb("rm -f /data/local/tmp/dms-hmi.b64 /data/local/tmp/dms-hmi.apk").json())
+        for offset in range(0, len(encoded), 1800):
+            chunk = encoded[offset : offset + 1800]
+            responses.append(
+                self.adb(f"printf '%s' '{chunk}' >> /data/local/tmp/dms-hmi.b64").json()
+            )
+        responses.append(
+            self.adb("base64 -d /data/local/tmp/dms-hmi.b64 > /data/local/tmp/dms-hmi.apk").json()
+        )
+        install = self.adb("pm install -r /data/local/tmp/dms-hmi.apk").json()
+        responses.append(install)
+        if install.get("exitCode") not in (0, None) or "Success" not in install.get("stdout", ""):
+            raise RuntimeError(f"APK install failed: {install}")
+        responses.append(
+            self.adb("am start -n vn.fpt.dms.hmi/.MainActivity").json()
+        )
+        return responses
+
+    def scenario(self, name: str) -> Any:
+        return self.request(
+            "POST",
+            f"/api/v1/signals/{self.room_id}/{self.signal_node}/actuate",
+            json=SCENARIOS[name],
+        ).json()
+
+    def screenshot(self, output: Path) -> Path:
+        response = self.adb("screencap -p", binary=True)
+        output.write_bytes(response.content)
+        return output
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("status")
+    subparsers.add_parser("nodes")
+    install = subparsers.add_parser("install-apk")
+    install.add_argument("apk", type=Path)
+    scenario = subparsers.add_parser("scenario")
+    scenario.add_argument("name", choices=sorted(SCENARIOS))
+    screenshot = subparsers.add_parser("screenshot")
+    screenshot.add_argument("output", type=Path)
+    args = parser.parse_args()
+
+    operator = Phase05Operator()
+    try:
+        if args.command == "status":
+            result: Any = operator.status()
+        elif args.command == "nodes":
+            result = operator.nodes()
+        elif args.command == "install-apk":
+            result = operator.install_apk(args.apk.resolve())
+        elif args.command == "scenario":
+            result = operator.scenario(args.name)
+        else:
+            result = str(operator.screenshot(args.output.resolve()))
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    finally:
+        operator.close()
+>>>>>>> Stashed changes
 
 
 if __name__ == "__main__":

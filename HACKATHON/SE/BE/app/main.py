@@ -22,6 +22,8 @@ from app.modules.fleet.router import router as fleet_router
 from app.modules.insurance.router import router as insurance_router
 from app.modules.risk_fusion.router import router as risk_router
 from app.modules.streaming.router import router as streaming_router
+from app.integrations.carsky.client import CarSkyClient
+from app.integrations.carsky.service import CarSkyPublisher
 
 
 EXPECTED_TRIP_IDS = frozenset(f"T{index:02d}d" for index in range(1, 11))
@@ -73,6 +75,31 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
         application.state.trip_cache = getattr(application.state, "trip_cache", {})
         application.state.settings = configured_settings
         application.state.started_at = time.time()
+        application.state.carsky_publisher = None
+
+        if (
+            configured_settings.CARSKY_ENABLED
+            and configured_settings.CARSKY_MODE == "external"
+            and configured_settings.CARSKY_BASE_URL
+            and configured_settings.CARSKY_API_KEY
+            and configured_settings.CARSKY_ROOM_ID
+            and configured_settings.CARSKY_NODE_KEY
+        ):
+            cars_client = CarSkyClient(
+                base_url=configured_settings.CARSKY_BASE_URL,
+                api_key=configured_settings.CARSKY_API_KEY,
+                room_id=configured_settings.CARSKY_ROOM_ID,
+                node_key=configured_settings.CARSKY_NODE_KEY,
+                auth_mode=configured_settings.CARSKY_AUTH_MODE,
+                timeout_sec=configured_settings.CARSKY_TIMEOUT_SEC,
+                max_retries=configured_settings.CARSKY_MAX_RETRIES,
+            )
+            cars_publisher = CarSkyPublisher(
+                cars_client,
+                queue_size=configured_settings.CARSKY_QUEUE_SIZE,
+            )
+            await cars_publisher.start()
+            application.state.carsky_publisher = cars_publisher
 
         dataset_dir = configured_settings.DATASET_DIR
         if dataset_is_readable(dataset_dir) and not getattr(
@@ -94,6 +121,9 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
             (time.perf_counter() - started_at) * 1000,
         )
         yield
+        cars_publisher = getattr(application.state, "carsky_publisher", None)
+        if cars_publisher is not None:
+            await cars_publisher.stop()
         logger.info("Backend shutdown complete")
 
     application = FastAPI(

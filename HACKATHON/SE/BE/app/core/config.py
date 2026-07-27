@@ -51,9 +51,14 @@ class Settings(BaseSettings):
     CARSKY_MODE: Literal["external", "offline"] = "offline"
     CARSKY_BASE_URL: str = ""
     CARSKY_API_KEY: str = ""
+    CARSKY_AUTH_MODE: Literal["x-api-key", "bearer"] = "bearer"
     CARSKY_ROOM_ID: str = ""
     CARSKY_NODE_KEY: str = ""
+    CARSKY_ANDROID_NODE_KEY: str = ""
     CARSKY_TIMEOUT_SEC: float = Field(default=1.5, gt=0)
+    CARSKY_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
+    CARSKY_QUEUE_SIZE: int = Field(default=100, ge=1)
+    CARSKY_TELEMETRY_INTERVAL_SEC: float = Field(default=1.0, gt=0)
 
     @field_validator("API_V1_PREFIX", "LEGACY_API_PREFIX", "AI_API_PATH")
     @classmethod

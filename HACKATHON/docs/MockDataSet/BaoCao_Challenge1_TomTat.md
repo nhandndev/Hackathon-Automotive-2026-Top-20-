@@ -5,7 +5,9 @@
 
 ## 1. KẾT QUẢ
 
-**Điểm trung bình 6 trip Practice: 65.4/100** (khởi điểm ~25 → **gấp 2.6 lần**)
+**Điểm trung bình 6 trip Practice: 65.5/100** (khởi điểm ~25 → **gấp 2.6 lần**)
+
+**Điểm dự kiến trung thực khi nộp 10 trip BTC: ~61/100** — xem Mục 5.
 
 | Trip | Kịch bản | Đầu | Hiện tại |
 |---|---|---|---|
@@ -56,15 +58,34 @@ Bốn sửa lỗi cốt lõi:
 
 ---
 
-## 4. ĐANG LÀM
+## 4. ĐÃ THỬ: MODEL HỌC MÁY
 
-Thử **model học máy** (XGBoost) để học ranh giới nhiều chiều mà ngưỡng thủ công không tách được — bổ sung **ngữ cảnh thời gian** (mối nguy thật thì khoảng cách sụp đều, vật ma thì không). Kiểm định leave-one-trip-out để đảm bảo không overfit.
+Train XGBoost với ngữ cảnh thời gian (lag 1/2/4/8 frame), kiểm định leave-one-trip-out. Kết quả: **+0.8 điểm** (65.9→66.2), chủ yếu từ T02. **Không triển khai** — chi phí tích hợp (thêm code chạy model lúc suy luận thật) không xứng với lợi ích quá nhỏ.
 
-*Lần thử đầu thất bại (37.5 vs 46) nhưng chạy trên đặc trưng trước khi sửa 4 lỗi trên.*
+*Lần thử đầu (37.5 vs 46, tưởng thất bại) hóa ra do lỗi so sánh — baseline dùng nhầm giá trị nội bộ trước hậu xử lý, không phải giá trị CSV thật. Đã sửa và làm lại đúng cách.*
 
 ---
 
-## 5. RỦI RO CẦN BIẾT
+## 5. KIỂM ĐỊNH ĐỘ TIN CẬY KHI NỘP 10 TRIP BTC
+
+**Câu hỏi:** pipeline tối ưu trên 6 trip Practice có còn tốt khi BTC chạy 10 trip thật (chưa từng thấy) không?
+
+**Rủi ro phát hiện:** một số ngưỡng (floor, bộ lọc xác nhận) từng được dò bằng grid-search **trực tiếp trên cả 6 trip** — đúng rủi ro overfit mà tài liệu chiến lược nội bộ cảnh báo. Đã kiểm định lại bằng **leave-one-trip-out** (chọn tham số từ 5 trip, test trên trip thứ 6 chưa thấy):
+
+| | Điểm |
+|---|---|
+| Trong mẫu (cấu hình cũ) | 66.0 |
+| **LOTO trung thực** | **61.1** |
+
+**Phát hiện quan trọng:** khoảng cách overfit (~5 điểm) **tập trung hết ở T01 và T02** — 2 kịch bản cực đoan, ít frame nguy hiểm (12 và 19 frame), không chia sẻ điểm tối ưu với trip nào khác. Ngược lại, **T03-T06 hội tụ về đúng một cấu hình** dù trip nào bị giấu đi — bằng chứng tổng quát hóa thật, không phải may mắn.
+
+**Đã áp dụng:** cấu hình đồng thuận này (`floor: 12→15s`, giữ nguyên bộ lọc xác nhận vốn đã đồng thuận 6/6 fold) — không đánh đổi gì vì vẫn cho điểm bằng/cao hơn trên cả 6 trip khi chạy lại (65.5).
+
+**Kết luận cho sếp:** điểm 65.5 trên Practice là con số **lạc quan**. Ước lượng trung thực cho 10 trip BTC nên dùng là **~61**, với ghi chú rằng các kịch bản giống T01/T02 (vật cản bất ngờ, cắt ngang nhanh) có thể dao động khó lường hơn các kịch bản còn lại.
+
+---
+
+## 6. RỦI RO CẦN BIẾT
 
 - **Chưa test trên 10 trip chấm điểm** — repo thiếu dữ liệu đường (`kitti/`) của chúng. Cần bổ sung trước khi nộp.
 - **Điểm thật khi nộp có thể khác**: trip thi dài 90 giây (gấp 3 Practice) và nhiều sự kiện hơn.
@@ -72,11 +93,9 @@ Thử **model học máy** (XGBoost) để học ranh giới nhiều chiều mà
 
 ---
 
-## 6. ĐÁNH GIÁ MỤC TIÊU 80
+## 7. ĐÁNH GIÁ MỤC TIÊU 80
 
-Đạt được **2 trip 81+**, chứng minh pipeline đúng nguyên lý. Trung bình 80 cần cả 6 trip ~80 — hiện bị chặn bởi bài toán báo động giả nêu ở Mục 3, là giới hạn thật của phép đo (stereo trên ảnh 640×360), không phải thiếu tinh chỉnh.
-
-**Ước lượng thực tế:** nếu model học giải được vật ma → **~72-75**.
+Đạt được **2 trip 81+**, chứng minh pipeline đúng nguyên lý. Trung bình 80 cần cả 6 trip ~80 — hiện bị chặn bởi bài toán báo động giả nêu ở Mục 3, là giới hạn thật của phép đo (stereo trên ảnh 640×360), không phải thiếu tinh chỉnh. Với ước lượng trung thực ~61 (Mục 5), khoảng cách tới 80 còn xa hơn con số 65.5 cho thấy.
 
 ---
 

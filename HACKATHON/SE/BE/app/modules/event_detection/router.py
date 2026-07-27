@@ -3,7 +3,7 @@ from typing import Optional
 from app.adapters.csv_file_adapter import CSVFileAdapter
 from app.modules.event_detection.detector_registry import detector_registry
 
-router = APIRouter(prefix="/api/trip", tags=["Risk Event Detection"])
+router = APIRouter(prefix="/trip", tags=["Risk Event Detection"])
 adapter = CSVFileAdapter()
 
 @router.get("/{trip_id}/events")

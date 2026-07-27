@@ -1,13 +1,14 @@
-from fastapi import APIRouter, BaseModel
+from fastapi import APIRouter
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from app.modules.coaching.llm_service import llm_coaching_service
 
-router = APIRouter(prefix="/api/coaching", tags=["GenAI Coaching Agent"])
+router = APIRouter(prefix="/coaching", tags=["GenAI Coaching Agent"])
 
 class CoachingRequest(BaseModel):
     trip_id: str
     safe_score: Optional[float] = 85.0
-    top_violations: Optional[List[str]] = []
+    top_violations: Optional[List[str]] = Field(default_factory=list)
 
 @router.post("/generate")
 async def generate_coaching_advice(req: CoachingRequest):

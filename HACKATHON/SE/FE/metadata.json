@@ -1,0 +1,6 @@
+{
+  "name": "Fleet Command - AI Driver Safety & Vision Monitoring",
+  "description": "Real-time AI fleet safety system with driver drowsiness monitoring, dual-cam telemetry sync, and Fleet AI Copilot.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

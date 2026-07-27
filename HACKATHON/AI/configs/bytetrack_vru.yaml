@@ -1,0 +1,20 @@
+# ByteTrack tuned for this dataset's weak VRU detections.
+#
+# Why this file exists: the stock bytetrack.yaml uses new_track_thresh 0.25,
+# but the CARLA-rendered riders/pedestrians here only score 0.12-0.42 with
+# COCO-pretrained YOLO. On T02's cut-in the detector DOES find the rider from
+# frame 311, yet the pipeline saw nothing at all (n_obs=1, n_in_cone=0 for the
+# entire event) because no track was ever created for it -- so lowering the
+# YOLO `conf` alone had no effect, the tracker was silently discarding them.
+#
+# Thresholds are lowered to admit those weak-but-real detections. The cost is
+# more spurious tracks, which is contained downstream by the collision-cone
+# filter and the danger-confirmation window.
+
+tracker_type: bytetrack
+track_high_thresh: 0.15 # first-stage match (was 0.25)
+track_low_thresh: 0.05 # second-stage, recovers weak VRU boxes (was 0.1)
+new_track_thresh: 0.12 # start a track for a faint rider (was 0.25) -- the fix
+track_buffer: 40 # hold through brief occlusion during a cut-in (was 30)
+match_thresh: 0.8
+fuse_score: True

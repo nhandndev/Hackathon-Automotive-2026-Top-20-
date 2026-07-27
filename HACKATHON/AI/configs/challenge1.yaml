@@ -3,8 +3,21 @@
 # 6 Practice trips without touching source (anti-overfit signal for judges).
 
 detector:
-  weights: yolov8n.pt      # COCO-pretrained; auto-downloaded by ultralytics on first run
-  conf: 0.25               # detection confidence threshold
+  # yolov8s over yolov8n: on T02's cut-in the nano model found the rider in
+  # 2/6 sampled frames and mislabelled it "person", while the small model
+  # found it in 3/6 and classified it "motorcycle". (Upscaling the input to
+  # imgsz=1280 was tested and is WORSE -- the release images are already a
+  # downscale of the CARLA render, so upsampling adds no information and
+  # breaks the pretrained scale prior.)
+  weights: yolov8s.pt      # COCO-pretrained; auto-downloaded by ultralytics on first run
+  conf: 0.15               # lowered: the CARLA-rendered VRUs score ~0.17-0.26
+  # MUST accompany the low `conf`: ByteTrack's own new_track_thresh would
+  # otherwise drop these faint detections before they ever become tracks.
+  # "simple" = our centroid tracker over raw predict() output. ByteTrack (any
+  # threshold config) needs two consecutive matched frames to emit a track,
+  # and these VRU detections are intermittent, so it dropped the T02 rider
+  # entirely -- including a 0.50-confidence box. See _CentroidTracker.
+  tracker: simple
   iou: 0.5                 # NMS IoU
   imgsz: 640
   device: null             # null = auto (cuda if available else cpu)
@@ -25,6 +38,22 @@ ttc:
   corridor_growth: 0.02
   min_closing_speed: 0.5
   smooth_window: 5
+  # Emitted instead of `inf` when nothing is confidently tracked -- see the
+  # long comment in predict_ttc.py. Set to 0 to restore raw `inf` output.
+  # Value chosen via leave-one-trip-out validation (scripts/loto_postprocess.py),
+  # not a raw grid search on all 6 trips: 15.0 is what 4 of 6 LOTO folds
+  # independently converge on (a plain 6-trip grid search had picked 12.0,
+  # an overfitting risk flagged in file 04). 15.0 also scores marginally
+  # higher in-sample (66.1 vs 66.0), so this is not a trade-off.
+  no_detection_floor: 15.0
+  # Danger-confirmation: a sub-2s reading is only trusted after this many
+  # consecutive frames already inside `danger_confirm_band`; otherwise it is
+  # demoted to `danger_demote_to`. K=8/band=3.0/demote=2.5 is the same value
+  # the LOTO sweep (scripts/loto_postprocess.py) selected for 6 of 6
+  # held-out folds -- the single most stable knob in the pipeline.
+  danger_confirm_frames: 8
+  danger_confirm_band: 3.0
+  danger_demote_to: 2.5
 
 # Baseline-fallback ROI (used only if YOLO weights/ultralytics unavailable).
 roi:

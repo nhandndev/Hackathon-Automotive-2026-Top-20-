@@ -59,6 +59,7 @@ def run_trip(trip_dir: Path, out_dir: Path, config: Dict[str, Any]) -> Path:
         raise RuntimeError(f"No calibration_info.txt in {trip_dir}/kitti/")
 
     predictor = RoadTTCPredictor(calib, config)
+    predictor.set_trip_dir(trip_dir)
     if not predictor.use_detector:
         logger.warning(
             "YOLO detector unavailable (%s) — falling back to stereo-ROI baseline.",

@@ -80,6 +80,39 @@ Vehicle.ADAS.AIStatus                        string
 Vehicle.ADAS.DataAgeMs                       integer
 ```
 
+File upload lên CarSky phải là JSON object/map, không phải JSON array.
+
+Đúng:
+
+```json
+{
+  "Vehicle": {
+    "type": "branch",
+    "children": {}
+  }
+}
+```
+
+Sai:
+
+```json
+[
+  {"path": "Vehicle.Driver.State", "datatype": "string"}
+]
+```
+
+Nếu upload dạng mảng `[...]`, KUKSA Broker sẽ crash với lỗi:
+
+```text
+ParseError("invalid type: sequence, expected a map at line 1 column 1")
+```
+
+File chuẩn hiện tại của dự án nằm tại:
+
+```text
+SE/BE/carsky/dms-vss-signals.json
+```
+
 - [ ] Chọn **Artifacts → New/Manage Artifact**.
 - [ ] Upload artifact.
 - [ ] Đặt tên `fleet-driver-safety-vss-v1`.

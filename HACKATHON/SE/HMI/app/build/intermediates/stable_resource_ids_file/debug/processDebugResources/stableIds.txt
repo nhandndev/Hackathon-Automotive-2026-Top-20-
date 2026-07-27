@@ -1,0 +1,1 @@
+vn.fpt.dms.hmi:style/AppTheme = 0x7f010000

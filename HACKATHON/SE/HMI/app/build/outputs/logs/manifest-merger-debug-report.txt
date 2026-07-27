@@ -1,0 +1,65 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:1:1-13:12
+INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:1:1-13:12
+INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:1:1-13:12
+INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:1:1-13:12
+	package
+		INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml
+	android:versionCode
+		INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:1:11-69
+uses-feature#android.hardware.type.automotive
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:2:5-94
+	android:required
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:2:67-91
+	android:name
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:2:19-66
+uses-permission#android.car.permission.CAR_SPEED
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:3:5-72
+	android:name
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:3:22-69
+uses-permission#android.car.permission.CAR_INFO
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:4:5-71
+	android:name
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:4:22-68
+application
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:5-12:19
+INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:5-12:19
+	android:extractNativeLibs
+		INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml
+	android:label
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:50-80
+	android:allowBackup
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:81-108
+	android:theme
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:18-49
+activity#vn.fpt.dms.hmi.MainActivity
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:9-11:20
+	android:screenOrientation
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:48-85
+	android:exported
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:86-109
+	android:name
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:19-47
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:7:13-10:29
+action#android.intent.action.MAIN
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:8:17-69
+	android:name
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:8:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:9:17-77
+	android:name
+		ADDED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:9:27-74
+uses-sdk
+INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml
+INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml

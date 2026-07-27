@@ -1,0 +1,7 @@
+vn.fpt.dms.hmi.app-pngs-0 /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/build/generated/res/pngs/debug
+vn.fpt.dms.hmi.app-resValues-1 /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/build/generated/res/resValues/debug
+vn.fpt.dms.hmi.app-packageDebugResources-2 /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+vn.fpt.dms.hmi.app-packageDebugResources-3 /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+vn.fpt.dms.hmi.app-debug-4 /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/build/intermediates/merged_res/debug/mergeDebugResources
+vn.fpt.dms.hmi.app-debug-5 /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/debug/res
+vn.fpt.dms.hmi.app-main-6 /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/res

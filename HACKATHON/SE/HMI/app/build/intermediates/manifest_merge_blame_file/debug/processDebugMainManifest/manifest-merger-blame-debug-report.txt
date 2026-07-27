@@ -1,0 +1,56 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="vn.fpt.dms.hmi"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="29"
+9        android:targetSdkVersion="35" />
+10
+11    <uses-feature
+11-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:2:5-94
+12        android:name="android.hardware.type.automotive"
+12-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:2:19-66
+13        android:required="false" />
+13-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:2:67-91
+14
+15    <uses-permission android:name="android.car.permission.CAR_SPEED" />
+15-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:3:5-72
+15-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:3:22-69
+16    <uses-permission android:name="android.car.permission.CAR_INFO" />
+16-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:4:5-71
+16-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:4:22-68
+17
+18    <application
+18-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:5-12:19
+19        android:allowBackup="false"
+19-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:81-108
+20        android:debuggable="true"
+21        android:extractNativeLibs="false"
+22        android:label="DMS Safety HMI"
+22-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:50-80
+23        android:theme="@style/AppTheme" >
+23-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:5:18-49
+24        <activity
+24-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:9-11:20
+25            android:name="vn.fpt.dms.hmi.MainActivity"
+25-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:19-47
+26            android:exported="true"
+26-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:86-109
+27            android:screenOrientation="landscape" >
+27-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:6:48-85
+28            <intent-filter>
+28-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:7:13-10:29
+29                <action android:name="android.intent.action.MAIN" />
+29-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:8:17-69
+29-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:8:25-66
+30
+31                <category android:name="android.intent.category.LAUNCHER" />
+31-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:9:17-77
+31-->/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/HMI/app/src/main/AndroidManifest.xml:9:27-74
+32            </intent-filter>
+33        </activity>
+34    </application>
+35
+36</manifest>

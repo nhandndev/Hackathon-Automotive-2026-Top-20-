@@ -1,0 +1,143 @@
+{
+  "Vehicle": {
+    "type": "branch",
+    "description": "Root vehicle branch for the DMS Driver Safety HMI demo.",
+    "children": {
+      "Speed": {
+        "type": "sensor",
+        "datatype": "float",
+        "unit": "km/h",
+        "description": "Current ego vehicle speed."
+      },
+      "SpeedLimit": {
+        "type": "sensor",
+        "datatype": "float",
+        "unit": "km/h",
+        "description": "Current road speed limit."
+      },
+      "Driver": {
+        "type": "branch",
+        "description": "Driver monitoring signals inferred from the AI pipeline.",
+        "children": {
+          "State": {
+            "type": "sensor",
+            "datatype": "string",
+            "allowed": [
+              "alert",
+              "drowsy",
+              "yawning",
+              "distracted",
+              "microsleep"
+            ],
+            "description": "Driver state from the AI contract."
+          },
+          "AlertnessScore": {
+            "type": "sensor",
+            "datatype": "float",
+            "min": 0,
+            "max": 1,
+            "description": "Driver alertness score in the range 0..1."
+          }
+        }
+      },
+      "ADAS": {
+        "type": "branch",
+        "description": "Driver safety and ADAS risk signals for HMI display.",
+        "children": {
+          "MinTTC": {
+            "type": "sensor",
+            "datatype": "float",
+            "unit": "s",
+            "description": "Minimum time-to-collision in seconds. Do not send Infinity to CarSky."
+          },
+          "Headway": {
+            "type": "sensor",
+            "datatype": "float",
+            "unit": "s",
+            "description": "Following headway in seconds."
+          },
+          "FinalRiskScore": {
+            "type": "sensor",
+            "datatype": "float",
+            "min": 0,
+            "max": 100,
+            "description": "Final risk score from AI/backend enrichment."
+          },
+          "CriticalAlert": {
+            "type": "sensor",
+            "datatype": "boolean",
+            "description": "Whether the HMI should enter critical alert mode."
+          },
+          "DisplaySeverity": {
+            "type": "sensor",
+            "datatype": "string",
+            "allowed": [
+              "SAFE",
+              "WARNING",
+              "CRITICAL",
+              "RECOVERY"
+            ],
+            "description": "Display severity for the HMI."
+          },
+          "AlertReasonCode": {
+            "type": "sensor",
+            "datatype": "string",
+            "allowed": [
+              "NONE",
+              "DISTRACTED",
+              "DROWSY",
+              "YAWNING",
+              "MICROSLEEP",
+              "TTC_CRITICAL",
+              "TAILGATING",
+              "SPEEDING",
+              "HARSH_BRAKE",
+              "HARSH_ACCEL",
+              "HARSH_CORNER"
+            ],
+            "description": "Reason code for the active alert."
+          },
+          "RecommendedActionCode": {
+            "type": "sensor",
+            "datatype": "string",
+            "allowed": [
+              "NONE",
+              "FOCUS_FORWARD",
+              "TAKE_BREAK",
+              "BRAKE_SAFE",
+              "REDUCE_SPEED"
+            ],
+            "description": "Recommended driver action for the HMI."
+          },
+          "EventTransition": {
+            "type": "sensor",
+            "datatype": "string",
+            "allowed": [
+              "NONE",
+              "START",
+              "UPDATE",
+              "END"
+            ],
+            "description": "Alert lifecycle transition."
+          },
+          "AIStatus": {
+            "type": "sensor",
+            "datatype": "string",
+            "allowed": [
+              "ONLINE",
+              "DEGRADED",
+              "OFFLINE"
+            ],
+            "description": "AI data freshness status for the HMI."
+          },
+          "DataAgeMs": {
+            "type": "sensor",
+            "datatype": "uint32",
+            "unit": "ms",
+            "description": "Age of the latest AI frame in milliseconds."
+          }
+        }
+      }
+    }
+  }
+}

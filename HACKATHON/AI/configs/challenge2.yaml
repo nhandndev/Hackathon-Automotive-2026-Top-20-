@@ -1,0 +1,41 @@
+camera:
+  index: 0
+  width: 1280
+  height: 720
+  expected_fps: 20
+  processing_mirror: false
+face:
+  min_detection_confidence: 0.50
+  min_tracking_confidence: 0.50
+eye:
+  calibration_seconds: 5
+  closure_threshold_ratio: 0.72
+  closure_ratio_enter: 0.80
+  closure_ratio_exit: 0.55
+  microsleep_min_ms: 1000
+  microsleep_max_ms: 3000
+  sleep_min_ms: 3000
+mouth:
+  yawn_min_ms: 1500
+  yawn_strong_ms: 2000
+attention:
+  long_glance_ms: 3000
+  vats_window_ms: 30000
+  vats_trigger_ms: 10000
+  candidate_yaw_deg: 20
+  candidate_pitch_deg: 15
+quality:
+  unknown_after_ms: 500
+smoothing:
+  primitive_median_window_frames: 3
+batch:
+  # Starter Kit labels describe a sustained clip state rather than only the
+  # exact frames where an eye/mouth event peaks.
+  segment_seconds: 15
+  microsleep_median_ear_max: 0.10
+  microsleep_closed_fraction_min: 0.45
+  yawn_median_mar_min: 0.30
+  yawn_upper_quartile_mar_min: 0.34
+  drowsy_closed_fraction_min: 0.10
+  drowsy_ear_q10_max: 0.14
+  distracted_median_mar_min: 0.205

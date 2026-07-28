@@ -1,143 +1,194 @@
-"""
-Challenge 1 — run TTC inference on one or more trips and write submission CSVs.
-
-Usage:
-    # single trip
-    python scripts/run_inference.py --trip-dir "<path>/T01-Sample" \
-        --out predictions/FPTU_DMS_Vision
-
-    # batch (all T*/ trips under a data root)
-    python scripts/run_inference.py --data-dir "<path>/Practice_Dataset 2" \
-        --out predictions/FPTU_DMS_Vision
-
-Output: <out>/<trip_id>.csv with columns frame_id,timestamp,predicted_ttc
-(the minimal Challenge-1 submission format).
-"""
-
+"""Unified Challenge 1+2+3 inference with the official BTC CSV contract."""
 from __future__ import annotations
 
 import argparse
 import csv
 import logging
+import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-# --- make the AI package importable regardless of CWD ---
+import yaml
+
 AI_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(AI_ROOT))
 
-from core.challenge1_road.predict_ttc import RoadTTCPredictor, format_ttc  # noqa: E402
+from core.challenge1_road.predict_ttc import (  # noqa: E402
+    RoadTTCPredictor,
+    format_ttc,
+)
+from core.challenge2_driver import DriverStatePredictor  # noqa: E402
+from core.challenge3_fusion import predicted_risk_score  # noqa: E402
 
-logger = logging.getLogger("run_inference")
-
-
-def _find_team_kit() -> Optional[Path]:
-    """Locate the starter-kit `team_kit/` (holds dataset_loader.py)."""
-    for cand in AI_ROOT.rglob("team_kit/dataset_loader.py"):
-        return cand.parent.parent  # dir to add to sys.path
-    return None
-
-
-def _load_config(path: Optional[Path]) -> Dict[str, Any]:
-    if path is None:
-        return {}
-    try:
-        import yaml
-        return yaml.safe_load(path.read_text()) or {}
-    except ModuleNotFoundError:
-        logger.warning("pyyaml not installed — using built-in defaults, ignoring %s", path)
-        return {}
+LOGGER = logging.getLogger("run_inference")
+CSV_FIELDS = [
+    "frame_id",
+    "timestamp",
+    "predicted_ttc",
+    "predicted_driver_state",
+    "predicted_risk_score",
+]
 
 
-def run_trip(trip_dir: Path, out_dir: Path, config: Dict[str, Any]) -> Path:
+def install_starterkit(starterkit_root: Path | None) -> None:
+    candidates = []
+    if starterkit_root is not None:
+        candidates.append(starterkit_root.resolve())
+    candidates.extend([Path.cwd(), AI_ROOT.parent])
+    for candidate in candidates:
+        if (candidate / "team_kit" / "dataset_loader.py").is_file():
+            sys.path.insert(0, str(candidate))
+            return
+    raise FileNotFoundError(
+        "Could not find team_kit/dataset_loader.py. Pass "
+        "--starterkit-root <Package_starterkit>."
+    )
+
+
+def load_yaml(path: Path) -> dict[str, Any]:
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def run_trip(
+    trip_dir: Path,
+    output_dir: Path,
+    road_config: dict[str, Any],
+    driver_config: Path,
+    driver_model: Path,
+) -> Path:
     from team_kit.dataset_loader import TripDataset
 
-    ds = TripDataset(trip_dir)
-    calib = ds.load_calibration()
-    if not calib:
-        raise RuntimeError(f"No calibration_info.txt in {trip_dir}/kitti/")
-
-    predictor = RoadTTCPredictor(calib, config)
-    predictor.set_trip_dir(trip_dir)
-    if not predictor.use_detector:
-        logger.warning(
-            "YOLO detector unavailable (%s) — falling back to stereo-ROI baseline.",
-            predictor.detector.load_error,
-        )
-    predictor.reset()
-
-    rows = []
-    n = len(ds)
-    for i, frame in enumerate(ds.iter_frames()):
-        left = ds.load_left(frame.frame_id)
-        right = ds.load_right(frame.frame_id)
-        try:
-            ttc = predictor.predict_frame(
-                frame.frame_id, frame.timestamp, left, right, frame.speed_kmh
+    dataset = TripDataset(trip_dir)
+    road = RoadTTCPredictor(dataset.load_calibration(), road_config)
+    road.set_trip_dir(trip_dir)
+    road.reset()
+    driver = DriverStatePredictor(driver_model, driver_config)
+    rows: list[dict[str, object]] = []
+    try:
+        for index, frame in enumerate(dataset.iter_frames()):
+            left = dataset.load_left(frame.frame_id)
+            right = dataset.load_right(frame.frame_id)
+            cabin = dataset.load_driver(frame.frame_id)
+            try:
+                ttc = road.predict_frame(
+                    frame.frame_id,
+                    frame.timestamp,
+                    left,
+                    right,
+                    frame.speed_kmh,
+                )
+            except Exception as exc:
+                LOGGER.warning(
+                    "%s frame %d TTC failed: %s",
+                    dataset.trip_id,
+                    frame.frame_id,
+                    exc,
+                )
+                ttc = float("inf")
+            driver_result = driver.predict_frame(
+                frame.frame_id,
+                round(frame.timestamp * 1000),
+                cabin,
             )
-        except Exception as e:  # never let one frame kill the whole trip
-            logger.warning("frame %d failed: %s", frame.frame_id, e)
-            ttc = float("inf")
-        rows.append(
-            {
+            state = str(driver_result["state"])
+            rows.append({
                 "frame_id": frame.frame_id,
-                "timestamp": round(frame.timestamp, 3),
+                "timestamp": f"{frame.timestamp:.3f}",
                 "predicted_ttc": format_ttc(ttc),
-            }
-        )
-        if i % 100 == 0 or i == n - 1:
-            logger.info("%s: frame %d/%d  ttc=%s", ds.trip_id, i, n - 1, rows[-1]["predicted_ttc"])
+                "predicted_driver_state": state,
+                "predicted_risk_score": predicted_risk_score(ttc, state),
+            })
+            if (index + 1) % 100 == 0 or index + 1 == len(dataset):
+                LOGGER.info(
+                    "%s: %d/%d frames",
+                    dataset.trip_id,
+                    index + 1,
+                    len(dataset),
+                )
+    finally:
+        driver.close()
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{ds.trip_id}.csv"
-    with open(out_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["frame_id", "timestamp", "predicted_ttc"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"{dataset.trip_id}.csv"
+    with output_path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=CSV_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
-    logger.info("wrote %d rows → %s", len(rows), out_path)
-    return out_path
+    LOGGER.info("Wrote %d rows -> %s", len(rows), output_path)
+    return output_path
+
+
+def discover_trips(
+    trip_dir: Path | None,
+    data_dir: Path | None,
+) -> list[Path]:
+    if trip_dir is not None:
+        return [trip_dir.resolve()]
+    assert data_dir is not None
+    return sorted(
+        path
+        for path in data_dir.resolve().iterdir()
+        if path.is_dir()
+        and re.match(r"^T\d+(d|-Sample)?$", path.name)
+    )
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Challenge 1 TTC inference → submission CSV.")
-    g = ap.add_mutually_exclusive_group(required=True)
-    g.add_argument("--trip-dir", type=Path, help="single trip directory")
-    g.add_argument("--data-dir", type=Path, help="root containing multiple T*/ trip dirs")
-    ap.add_argument("--out", type=Path, required=True, help="output dir for CSVs")
-    ap.add_argument("--config", type=Path, default=AI_ROOT / "configs" / "challenge1.yaml")
-    ap.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING"])
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Unified BTC inference for Challenges 1, 2 and 3"
+    )
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--trip-dir", type=Path)
+    source.add_argument("--data-dir", type=Path)
+    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument(
+        "--starterkit-root",
+        type=Path,
+        help="Directory containing team_kit/dataset_loader.py",
+    )
+    parser.add_argument(
+        "--road-config",
+        type=Path,
+        default=AI_ROOT / "configs" / "challenge1.yaml",
+    )
+    parser.add_argument(
+        "--driver-config",
+        type=Path,
+        default=AI_ROOT / "configs" / "challenge2.yaml",
+    )
+    parser.add_argument(
+        "--driver-model",
+        type=Path,
+        default=AI_ROOT / "models" / "driver_state_rf.joblib",
+    )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING"],
+    )
+    args = parser.parse_args()
 
     logging.basicConfig(
         level=getattr(logging, args.log_level),
         format="%(asctime)s | %(levelname)s | %(message)s",
         datefmt="%H:%M:%S",
     )
-
-    kit = _find_team_kit()
-    if kit is None:
-        logger.error("Could not find team_kit/dataset_loader.py under %s", AI_ROOT)
-        return 2
-    sys.path.insert(0, str(kit))
-
-    config = _load_config(args.config if args.config.exists() else None)
-
-    if args.trip_dir:
-        run_trip(args.trip_dir, args.out, config)
-    else:
-        import re
-        trips = sorted(
-            p for p in args.data_dir.iterdir()
-            if p.is_dir() and re.match(r"^T\d+d?(-Sample)?$", p.name)
+    install_starterkit(args.starterkit_root)
+    trips = discover_trips(args.trip_dir, args.data_dir)
+    if not trips:
+        parser.error("No BTC trip directories found")
+    road_config = load_yaml(args.road_config)
+    for trip in trips:
+        run_trip(
+            trip,
+            args.out,
+            road_config,
+            args.driver_config,
+            args.driver_model,
         )
-        if not trips:
-            logger.error("No trip dirs found under %s", args.data_dir)
-            return 2
-        for trip in trips:
-            run_trip(trip, args.out, config)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

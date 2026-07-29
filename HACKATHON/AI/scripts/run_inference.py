@@ -20,6 +20,7 @@ from core.challenge1_road.predict_ttc import (  # noqa: E402
 )
 from core.challenge2_driver import DriverStatePredictor  # noqa: E402
 from core.challenge3_fusion import predicted_risk_score  # noqa: E402
+from core.btc_trip import TripDataset  # noqa: E402
 
 LOGGER = logging.getLogger("run_inference")
 CSV_FIELDS = [
@@ -57,8 +58,6 @@ def run_trip(
     driver_config: Path,
     driver_model: Path,
 ) -> Path:
-    from team_kit.dataset_loader import TripDataset
-
     dataset = TripDataset(trip_dir)
     road = RoadTTCPredictor(dataset.load_calibration(), road_config)
     road.set_trip_dir(trip_dir)
@@ -160,7 +159,7 @@ def main() -> int:
     parser.add_argument(
         "--driver-model",
         type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf.joblib",
+        default=AI_ROOT / "models" / "driver_state_rf_v2.joblib",
     )
     parser.add_argument(
         "--log-level",
@@ -174,7 +173,6 @@ def main() -> int:
         format="%(asctime)s | %(levelname)s | %(message)s",
         datefmt="%H:%M:%S",
     )
-    install_starterkit(args.starterkit_root)
     trips = discover_trips(args.trip_dir, args.data_dir)
     if not trips:
         parser.error("No BTC trip directories found")

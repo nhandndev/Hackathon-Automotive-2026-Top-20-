@@ -25,7 +25,13 @@ import numpy as np
 
 from .detection import ObjectDetector
 from .depth import MAX_TRUST_DEPTH_M, StereoDepth
-from .ttc_engine import TTCEngine
+from .ttc_engine import (
+    TTCEngine,
+    in_collision_cone,
+    lateral_from_pixels,
+    ttc_1d,
+    ttc_2d,
+)
 
 
 def format_ttc(ttc: float) -> str:
@@ -138,6 +144,8 @@ class RoadTTCPredictor:
         self._confirm_band = float(ttc_cfg.get("danger_confirm_band", 3.0))
         self._demote_to = float(ttc_cfg.get("danger_demote_to", 2.5))
         self._recent_out: deque = deque(maxlen=max(self._confirm_frames, 1))
+        # Read-only diagnostics for UIs. This never feeds back into TTC.
+        self.last_debug: Dict[str, Any] = {}
 
     def set_trip_dir(self, trip_dir: Any) -> None:
         """Point the predictor at a trip directory so it can pick up
@@ -181,25 +189,113 @@ class RoadTTCPredictor:
         if gt_depth is not None:
             self._gt_depth_hits += 1
             depth_map = gt_depth.astype(np.float32)
+            depth_source = "metric_depth"
         else:
             self._gt_depth_misses += 1
             disparity = self.depth.disparity(left_bgr, right_bgr)
             depth_map = self.depth.depth_map(disparity)
+            depth_source = "stereo_sgbm"
 
         if not self.use_detector:
-            return self._baseline_ttc(timestamp, depth_map, ego_speed_kmh)
+            raw_ttc = self._baseline_ttc(
+                timestamp, depth_map, ego_speed_kmh
+            )
+            h, w = depth_map.shape
+            self.last_debug = {
+                "mode": "stereo_roi_fallback",
+                "depth_source": depth_source,
+                "objects": [],
+                "roi": [
+                    int(w * self._roi_cfg["x_start_frac"]),
+                    int(h * self._roi_cfg["y_start_frac"]),
+                    int(w * self._roi_cfg["x_end_frac"]),
+                    int(h * self._roi_cfg["y_end_frac"]),
+                ],
+                "raw_ttc": raw_ttc,
+                "output_ttc": raw_ttc,
+                "detector_error": self.detector.load_error,
+            }
+            return raw_ttc
 
         detections = self.detector.track(left_bgr)
         observations: List[Tuple[int, float, float, float]] = []
+        depth_by_track: Dict[int, float] = {}
         for det in detections:
             z = self.depth.estimate(depth_map, det)
             if z is None:
                 continue
             observations.append((det.track_id, z, det.cx, det.height_px))
+            depth_by_track[det.track_id] = z
 
-        ttc = self.engine.update_and_compute(timestamp, observations, ego_speed_kmh)
-        ttc = self._apply_hold(timestamp, ttc)
-        return self._smooth_out(ttc)
+        raw_ttc = self.engine.update_and_compute(
+            timestamp, observations, ego_speed_kmh
+        )
+        held_ttc = self._apply_hold(timestamp, raw_ttc)
+        output_ttc = self._smooth_out(held_ttc)
+        self.last_debug = {
+            "mode": "object_detector",
+            "depth_source": depth_source,
+            "objects": self._build_object_debug(
+                detections, depth_by_track, ego_speed_kmh
+            ),
+            "roi": None,
+            "raw_ttc": raw_ttc,
+            "output_ttc": output_ttc,
+            "detector_error": None,
+        }
+        return output_ttc
+
+    def _build_object_debug(
+        self,
+        detections: list[Any],
+        depth_by_track: Dict[int, float],
+        ego_speed_kmh: float,
+    ) -> list[Dict[str, Any]]:
+        """Build per-object UI metadata after the engine update.
+
+        This method is deliberately diagnostic-only: it reads track histories
+        after the production TTC value has already been computed.
+        """
+        objects: list[Dict[str, Any]] = []
+        closing_cap = max(0.0, ego_speed_kmh / 3.6 * 1.25)
+        for det in detections:
+            z = depth_by_track.get(det.track_id)
+            x_lat = None
+            object_ttc = float("inf")
+            closing = None
+            in_cone = False
+            if z is not None:
+                x_lat = lateral_from_pixels(
+                    det.cx, self.engine.image_cx, self.fx, z
+                )
+                in_cone = in_collision_cone(x_lat, z)
+                track = self.engine._tracks.get(det.track_id)
+                if track is not None:
+                    measured_closing = track.closing_speed()
+                    if measured_closing is not None:
+                        closing = min(measured_closing, closing_cap)
+                        object_ttc = ttc_2d(
+                            z, x_lat, closing, track.lateral_speed()
+                        )
+                        if in_cone:
+                            object_ttc = min(
+                                object_ttc, ttc_1d(z, closing)
+                            )
+                    looming = track.looming_ttc() if in_cone else None
+                    if looming is not None:
+                        object_ttc = min(object_ttc, looming)
+            objects.append({
+                "track_id": int(det.track_id),
+                "class": str(det.target_class),
+                "bbox": [int(v) for v in det.bbox],
+                "confidence": float(det.confidence),
+                "depth_m": z,
+                "lateral_m": x_lat,
+                "closing_mps": closing,
+                "ttc": object_ttc,
+                "in_collision_cone": in_cone,
+            })
+        return objects
 
     def _smooth_out(self, ttc: float) -> float:
         """Short median over recent outputs (inf mapped to a large sentinel)
@@ -250,6 +346,7 @@ class RoadTTCPredictor:
         self._gap_count = 0
         self._ttc_out_hist.clear()
         self._recent_out.clear()
+        self.last_debug = {}
         if self.use_detector:
             self.detector.reset()
 

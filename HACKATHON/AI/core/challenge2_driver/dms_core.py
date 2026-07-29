@@ -53,6 +53,20 @@ def angle_delta(angle: float, reference: float) -> float:
     return (float(angle) - float(reference) + 180.0) % 360.0 - 180.0
 
 
+def landmark_bbox(
+    points: np.ndarray,
+    width: int,
+    height: int,
+    padding: int = 4,
+) -> list[int]:
+    """Return a clipped pixel bounding box [x1, y1, x2, y2]."""
+    x1 = max(0, int(np.floor(points[:, 0].min())) - padding)
+    y1 = max(0, int(np.floor(points[:, 1].min())) - padding)
+    x2 = min(width - 1, int(np.ceil(points[:, 0].max())) + padding)
+    y2 = min(height - 1, int(np.ceil(points[:, 1].max())) + padding)
+    return [x1, y1, x2, y2]
+
+
 @dataclass
 class _Sample:
     timestamp_ms: int
@@ -64,8 +78,13 @@ class _Sample:
 class DMSCore:
     """MediaPipe feature extraction plus deterministic temporal state engine."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(
+        self,
+        config: dict[str, Any],
+        driver_profile: Any | None = None,
+    ):
         self.cfg = config
+        self.driver_profile = driver_profile
         face = config["face"]
         self.mesh = mp.solutions.face_mesh.FaceMesh(
             static_image_mode=False,
@@ -89,6 +108,17 @@ class DMSCore:
 
     def close(self) -> None:
         self.mesh.close()
+
+    def reset_temporal(self) -> None:
+        """Reset sequence state without discarding subject calibration."""
+        self.last_face_ms = None
+        self.eye_closed_since = None
+        self.mouth_open_since = None
+        self.off_road_since = None
+        self.eye_closed_latched = False
+        self.history.clear()
+        self.ear_filter.clear()
+        self.mar_filter.clear()
 
     def _pose(self, pts: np.ndarray, width: int, height: int) -> tuple[np.ndarray, bool]:
         image_points = pts[list(POSE_LANDMARKS)].astype(np.float64)
@@ -126,9 +156,10 @@ class DMSCore:
             "mouth_event": "none", "head_state": "unknown", "features": {},
             "observation": {"face_detected": False, "face_confidence": 0.0,
                 "left_eye_valid": False, "right_eye_valid": False, "mouth_valid": False,
-                "head_pose_valid": False, "coverage_30s": 0.0,
+            "head_pose_valid": False, "coverage_30s": 0.0,
                 "quality_status": "face_missing", "missing_duration_ms": max(0, missing),
                 "monitoring_available": False},
+            "visualization": {},
         }
 
     def process(self, frame: np.ndarray, frame_id: int, timestamp_ms: int) -> dict[str, Any]:
@@ -143,6 +174,23 @@ class DMSCore:
         self.last_face_ms = timestamp_ms
         raw = result.multi_face_landmarks[0].landmark
         pts = np.array([(p.x * width, p.y * height) for p in raw], dtype=np.float64)
+        mouth_indices = sorted(
+            set(MOUTH_CORNERS).union(
+                point for pair in MOUTH_VERTICAL for point in pair
+            )
+        )
+        visualization = {
+            "face_bbox": landmark_bbox(pts, width, height, padding=8),
+            "left_eye_bbox": landmark_bbox(
+                pts[list(EYE_A)], width, height, padding=8
+            ),
+            "right_eye_bbox": landmark_bbox(
+                pts[list(EYE_B)], width, height, padding=8
+            ),
+            "mouth_bbox": landmark_bbox(
+                pts[mouth_indices], width, height, padding=10
+            ),
+        }
         ear_left = eye_aspect_ratio(pts[list(EYE_A)])
         ear_right = eye_aspect_ratio(pts[list(EYE_B)])
         ear = float(np.median([x for x in (ear_left, ear_right) if x is not None]))
@@ -154,19 +202,69 @@ class DMSCore:
         mar = float(np.median(self.mar_filter))
         pose, pose_valid = self._pose(pts, width, height)
 
-        calibrating = timestamp_ms - self.started_ms < int(self.cfg["eye"]["calibration_seconds"] * 1000)
+        calibrating = (
+            self.driver_profile is None
+            and timestamp_ms - self.started_ms
+            < int(self.cfg["eye"]["calibration_seconds"] * 1000)
+        )
         if calibrating:
             self.open_ears.append(ear)
             self.closed_mars.append(mar)
             if pose_valid:
                 self.neutral_poses.append(pose)
-        ear_open = float(np.median(self.open_ears)) if self.open_ears else max(ear, 0.25)
-        ear_closed = max(0.05, ear_open * 0.45)
+        if self.driver_profile is None:
+            ear_open = (
+                float(np.median(self.open_ears))
+                if self.open_ears
+                else max(ear, 0.25)
+            )
+            ear_closed = max(0.05, ear_open * 0.45)
+        else:
+            ear_open = float(self.driver_profile.ear_open)
+            ear_closed = float(self.driver_profile.ear_closed)
         closure = _clamp((ear_open - ear) / max(1e-6, ear_open - ear_closed))
-        mar_base = float(np.median(self.closed_mars)) if self.closed_mars else mar
-        mar_mad = float(np.median(np.abs(np.asarray(self.closed_mars) - mar_base))) if self.closed_mars else 0.0
-        mar_threshold = max(mar_base + 3 * 1.4826 * mar_mad, mar_base * 1.45)
-        neutral = np.median(self.neutral_poses, axis=0) if self.neutral_poses else np.zeros(3)
+        if self.driver_profile is None:
+            mar_base = (
+                float(np.median(self.closed_mars))
+                if self.closed_mars
+                else mar
+            )
+            mar_mad = (
+                float(
+                    np.median(
+                        np.abs(np.asarray(self.closed_mars) - mar_base)
+                    )
+                )
+                if self.closed_mars
+                else 0.0
+            )
+            mar_threshold = max(
+                mar_base + 3 * 1.4826 * mar_mad, mar_base * 1.45
+            )
+            neutral = (
+                np.median(self.neutral_poses, axis=0)
+                if self.neutral_poses
+                else np.zeros(3)
+            )
+            closure_enter = float(self.cfg["eye"]["closure_ratio_enter"])
+            closure_exit = float(self.cfg["eye"]["closure_ratio_exit"])
+        else:
+            mar_threshold = float(self.driver_profile.mar_yawn)
+            neutral = np.asarray(
+                [
+                    self.driver_profile.neutral_pitch_deg,
+                    self.driver_profile.neutral_yaw_deg,
+                    self.driver_profile.neutral_roll_deg,
+                ],
+                dtype=float,
+            )
+            closure_enter = float(
+                self.driver_profile.eye_closure_threshold
+            )
+            closure_exit = min(
+                float(self.cfg["eye"]["closure_ratio_exit"]),
+                closure_enter - 0.10,
+            )
         pitch, yaw, roll = (
             angle_delta(pose[0], neutral[0]),
             angle_delta(pose[1], neutral[1]),
@@ -176,9 +274,9 @@ class DMSCore:
         # Hysteresis prevents one noisy frame around the threshold from
         # splitting a prolonged eye closure into several short blinks.
         if self.eye_closed_latched:
-            closed = closure > float(self.cfg["eye"]["closure_ratio_exit"])
+            closed = closure > closure_exit
         else:
-            closed = closure >= float(self.cfg["eye"]["closure_ratio_enter"])
+            closed = closure >= closure_enter
         self.eye_closed_latched = closed
         if closed and self.eye_closed_since is None:
             self.eye_closed_since = timestamp_ms
@@ -231,13 +329,25 @@ class DMSCore:
                 "ear_robust": round(ear, 3), "closure_ratio": round(closure, 3),
                 "perclos_30s": round(perclos, 3), "mar": round(mar, 3),
                 "yaw_deg": round(float(yaw), 2), "pitch_deg": round(float(pitch), 2),
-                "roll_deg": round(float(roll), 2), "off_road_duration_ms": off_road_ms,
+                "roll_deg": round(float(roll), 2),
+                "raw_yaw_deg": round(float(pose[1]), 2),
+                "raw_pitch_deg": round(float(pose[0]), 2),
+                "raw_roll_deg": round(float(pose[2]), 2),
+                "continuous_eye_closure_ms": closure_ms,
+                "off_road_duration_ms": off_road_ms,
             },
             "observation": {
                 "face_detected": True, "face_confidence": 1.0, "left_eye_valid": ear_left is not None,
                 "right_eye_valid": ear_right is not None, "mouth_valid": True,
                 "head_pose_valid": pose_valid, "coverage_30s": round(coverage, 3),
-                "quality_status": "calibrating" if calibrating else "valid",
+                "quality_status": (
+                    "calibrating"
+                    if calibrating
+                    else "valid_profile"
+                    if self.driver_profile is not None
+                    else "valid"
+                ),
                 "monitoring_available": True,
             },
+            "visualization": visualization,
         }

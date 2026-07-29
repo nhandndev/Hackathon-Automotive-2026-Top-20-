@@ -1,0 +1,14 @@
+name: driver_state_rf_v2
+version: 2.0.0
+framework: scikit-learn
+artifact: driver_state_rf_v2.joblib
+sha256: 378227F19F8E2755AA52063D17F4D425DE1ADB42410A7DBAA1B9A0B167D30DCF
+feature_schema_version: 2
+feature_count: 59
+runtime_config: ../configs/challenge2.yaml
+classes:
+  - alert
+  - distracted
+  - drowsy
+  - microsleep
+  - yawning

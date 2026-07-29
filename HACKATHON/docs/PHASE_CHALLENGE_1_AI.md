@@ -1,4 +1,4 @@
-s# Phase Challenge 1 AI — Road / TTC Estimation
+# Phase Challenge 1 AI — Road / TTC Estimation
 
 File này ghi nhận trạng thái sau khi merge phần **Challenge 1 AI** vào repository. Đây chỉ là đánh giá tài liệu/kỹ thuật hiện tại, chưa chỉnh code.
 
@@ -25,6 +25,7 @@ Phần Challenge 1 hiện nằm trong:
 ```text
 AI/
 ├── configs/
+│   ├── bytetrack_vru.yaml
 │   └── challenge1.yaml
 ├── core/
 │   └── challenge1_road/
@@ -36,7 +37,10 @@ AI/
     ├── run_inference.py
     ├── eval_practice.py
     ├── extract_features.py
-    └── train_ttc_model.py
+    ├── loto_postprocess.py
+    ├── train_ttc_model.py
+    ├── train_ttc_model2.py
+    └── tune_output_map.py
 ```
 
 ## 3. Những gì đã đạt được
@@ -224,23 +228,72 @@ AI/scripts/train_ttc_model.py
 - Có anti-overfit check theo trip.
 - Hướng train inverse-TTC hợp lý vì `inf` map về 0.
 
+### 3.9 Cập nhật mới: TTC post-processing tốt hơn trước
+
+Sau lần cập nhật mới, Challenge 1 TTC có thêm nhiều xử lý thực tế hơn để tăng điểm scoring:
+
+File chính:
+
+```text
+AI/core/challenge1_road/predict_ttc.py
+AI/core/challenge1_road/ttc_engine.py
+AI/configs/challenge1.yaml
+AI/scripts/loto_postprocess.py
+AI/scripts/tune_output_map.py
+```
+
+Các điểm tốt mới:
+
+- Có đọc depth keyframe `.npy` từ `kitti/depth/*.npy` nếu trip có dữ liệu này.
+- Có normalize depth sentinel lớn thành `inf`, tránh lấy depth rác làm depth thật.
+- Có optical/looming TTC từ bbox expansion để bắt các object cut-in/transient nhanh.
+- Có hold TTC qua vài frame mất detection, tránh output `inf` ngắt quãng ở đoạn nguy hiểm.
+- Có `no_detection_floor`, giảm rủi ro báo `inf` khi detector hụt object.
+- Có danger confirmation filter, giảm false positive khi TTC nhảy xuống dưới 2 giây do nhiễu.
+- Có script leave-one-trip-out validation cho post-processing knobs.
+- Có script tune output mapping để kiểm tra scale/demote/floor.
+
+Nhận xét:
+
+- Đây là cập nhật có giá trị thật cho Challenge 1, vì nó xử lý đúng các lỗi hay làm mất điểm: missing detection, TTC jitter, depth nhiễu, false danger và `inf` sai thời điểm.
+- Việc thành viên báo điểm tăng là hợp lý về mặt kỹ thuật.
+- Tuy nhiên repo hiện chưa có file prediction/report score được commit, nên chưa thể xác nhận con số điểm tăng cụ thể nếu chưa chạy lại `eval_practice.py`.
+
+Command cần yêu cầu AI team gửi log để xác nhận điểm:
+
+```bash
+python AI/scripts/eval_practice.py
+```
+
+Dòng cần xem:
+
+```text
+AVERAGE COMPOSITE: xx.x / 100
+```
+
 ## 4. Readiness hiện tại
 
 | Hạng mục | Mức sẵn sàng | Nhận xét |
 |---|---:|---|
-| Core TTC logic | 75% | Có pipeline rõ, nhưng chưa verify chạy trên dataset thật trong repo hiện tại |
-| Inference CSV Challenge 1 | 65% | Có script xuất CSV, còn phụ thuộc dataset/starter kit/dependency |
-| Evaluation practice | 55% | Có script, nhưng hardcode path dataset |
-| Learned model workflow | 45% | Có ý tưởng/code, nhưng cần dependency + feature artifacts + kiểm chứng |
+| Core TTC logic | 82% | Có pipeline rõ hơn, thêm depth `.npy`, looming TTC, hold gap, floor và danger confirmation |
+| Inference CSV Challenge 1 | 70% | Có script xuất CSV, nhưng vẫn phụ thuộc dataset/starter kit/dependency |
+| Evaluation practice | 62% | Có script eval và LOTO tuning, nhưng vẫn hardcode path dataset |
+| Learned model workflow | 50% | Có thêm hướng train/tune, nhưng cần dependency + feature artifacts + kiểm chứng |
 | Tích hợp Backend AITrip JSON | 35% | Chưa có adapter từ TTC CSV/core sang AI canonical JSON |
 | Demo realtime với HMI | 30% | Chưa có stream realtime từ AI Challenge 1 vào Backend/HMI |
 
 Đánh giá tổng Challenge 1 AI hiện tại:
 
 ```text
-Khoảng 60–70% cho phần research/inference foundation.
+Khoảng 70–78% cho phần research/inference foundation.
 Khoảng 35–45% cho phần integration với Backend/demo realtime.
 ```
+
+Ghi chú merge:
+
+- Chưa merge Challenge 1 vào pipeline full Backend/HMI cho đến khi có log `eval_practice.py`, dependency rõ ràng và output CSV sample.
+- Khi Challenge 1 đủ ổn, merge theo hướng adapter/export, không sửa Backend contract để chạy theo nội bộ của Challenge 1.
+- Challenge 1 chỉ chịu trách nhiệm `predicted_ttc`; driver state và risk score sẽ ghép sau từ Challenge 2/3.
 
 ## 5. Những rủi ro/chưa hoàn thiện
 
@@ -668,6 +721,44 @@ Gợi ý:
 - Không sửa Challenge 1 để tự biết driver/risk.
 - Tạo fusion/export layer ở Challenge 3 hoặc shared script.
 - Backend/AI integration nhận TTC từ Challenge 1 và ghép với Challenge 2/3.
+
+### 6.11 Lưu ý mới: config và tuning script có thể đang lệch giá trị
+
+File:
+
+```text
+AI/configs/challenge1.yaml
+AI/scripts/loto_postprocess.py
+```
+
+Config hiện ghi:
+
+```yaml
+no_detection_floor: 15.0
+danger_confirm_frames: 8
+danger_confirm_band: 3.0
+danger_demote_to: 2.5
+```
+
+Nhưng trong `loto_postprocess.py` phần committed config vẫn có:
+
+```python
+committed = dict(hold_frames=6, floor=12.0, confirm_frames=8, confirm_band=3.0, demote_to=2.5)
+```
+
+Vấn đề:
+
+- Có thể điểm mà team báo dựa trên config khác với config đang chạy thật.
+- Cần xác nhận `eval_practice.py` đang chạy đúng `AI/configs/challenge1.yaml`.
+- Khi báo điểm, phải ghi rõ config/version nào được dùng.
+
+Mức độ: `Medium`.
+
+Gợi ý:
+
+- AI team gửi kèm log `eval_practice.py`.
+- Ghi rõ commit/config dùng để tạo prediction.
+- Nếu `floor=15.0` là giá trị chốt, cập nhật script validation cho đồng bộ.
 
 ## 7. Smoke test nên yêu cầu AI team bổ sung
 

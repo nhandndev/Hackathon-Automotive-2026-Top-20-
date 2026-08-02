@@ -1,4 +1,34 @@
 /carsky/
 
+# OS/editor noise
+.DS_Store
+**/.DS_Store
+
+# Python virtual environments and caches
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+
+# Node dependencies and build outputs
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+
+# Logs and local env
+*.log
+.env
+**/.env
+!.env.example
+!**/.env.example
+
 # Progress reports for internal use — not part of the submission/repo docs
 docs/MockDataSet/BaoCao_*.md

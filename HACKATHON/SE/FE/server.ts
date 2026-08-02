@@ -94,21 +94,9 @@ app.post("/api/copilot", async (req, res) => {
     }
   }
 
-  // Smart fallback response if API key is not present or API call fails
-  const lowerMsg = message.toLowerCase();
-  let fallbackReply = "";
-
-  if (lowerMsg.includes("vi ngủ") || lowerMsg.includes("ngủ nhiều") || lowerMsg.includes("tài xế a")) {
-    fallbackReply = `**Tài xế A (Xe VH-04) đang có rủi ro cao nhất — Safe Score 42/100**\n\n- 2 lần vi ngủ (microsleep)\n- TTC thấp nhất: 1.2s\n- Khung giờ vi phạm: 2h-4h sáng\n\nTài xế A sụt điểm do 2 khoảnh khắc vi ngủ nguy hiểm vào khung 2h-4h sáng, dẫn đến phanh gấp liên tiếp. Mức độ tỉnh táo giảm xuống dưới 15% trong giai đoạn này. Khuyến nghị can thiệp cho nghỉ 30 phút.`;
-  } else if (lowerMsg.includes("bảo trì") || lowerMsg.includes("xe nào")) {
-    fallbackReply = `**KHUYẾN NGHỊ BẢO TRÌ & LỊCH TRÌNH:**\n\n1. **Xe VH-04 (Tài xế A):** Cần điều chỉnh ngay lịch trình, tránh chạy liên tục quá 4 tiếng vào ban đêm.\n2. **Xe VH-08:** Phát hiện 24 lần phanh gấp trong tuần này. Cần kiểm tra má phanh và đĩa phanh trước chuyến đi tiếp theo (dự kiến mòn phanh tăng 15%).\n3. **Xe VH-05:** Thời gian chạy không tải (Idle) đạt 4.2h - cần nhắc nhở tắt máy để tiết kiệm nhiên liệu.`;
-  } else if (lowerMsg.includes("so sánh") || lowerMsg.includes("tài xế b")) {
-    fallbackReply = `**So sánh Tài xế A vs Tài xế B:**\n\n- **Tài xế A (ID: 8842 - VH-04):** Điểm an toàn 42/100. Vi phạm chính: Vi ngủ x2, Phanh gấp x1, Dùng điện thoại x1.\n- **Tài xế B (ID: 9102 - VH-01):** Điểm an toàn 68.2/100. Vi phạm chính: Ngáp liên tục (x4), Mức độ tỉnh táo 38%.\n\n-> Cả 2 tài xế đều thể hiện dấu hiệu kiệt sức trong ca đêm, cần phân công tài xế phụ.`;
-  } else {
-    fallbackReply = `Hệ thống Fleet AI Copilot đã ghi nhận yêu cầu: "${message}". Dựa trên phân tích telemetry thời gian thực, đội xe có 1 phương tiện (VH-04) ở mức Báo động đỏ CRITICAL và 1 phương tiện (VH-01) ở mức Cảnh báo HIGH. Bạn có muốn thực hiện lệnh can thiệp gửi thông báo đến cabin xe VH-04 không?`;
-  }
-
-  res.json({ reply: fallbackReply });
+  res.status(503).json({
+    error: "Copilot provider is not configured; synthetic answers are disabled.",
+  });
 });
 
 async function startServer() {
@@ -131,8 +119,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "localhost", () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  app.listen(PORT, "127.0.0.1", () => {
+    console.log(`Server is running on http://127.0.0.1:${PORT}`);
   });
 }
 

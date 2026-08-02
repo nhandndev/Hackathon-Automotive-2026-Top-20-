@@ -26,6 +26,20 @@ Sản phẩm demo mở rộng năm output thành Driver HUD, Fleet Manager Dashb
 
 ## 2. Kiến trúc tổng thể
 
+Sản phẩm có hai nhánh độc lập, không lấy output của evaluator để điều khiển demo:
+
+```text
+SUBMISSION: BTC dataset → AI C1/C2/C3 → CSV → AI/team_kit/evaluation.py
+
+PRODUCT: BTC road/telemetry + webcam → AI Decision Engine → DecisionEvent
+                                                       ├→ Backend → Dashboard live
+                                                       └→ Backend → CarSky → Android HMI
+```
+
+Trong product demo, AI gửi `DecisionEvent` trực tiếp tới Backend. `AITrip` là
+contract phục vụ các API trip/replay hiện có của Backend, không phải payload cảnh
+báo realtime của `end_to_end_demo.py`.
+
 ```text
 Road camera ──→ AI Road/TTC ─────────┐
 Cabin camera → AI Driver State ──────┼→ AI Fusion/Risk → AITrip JSON
@@ -168,6 +182,65 @@ frame_id,timestamp,predicted_ttc,predicted_driver_state,predicted_risk_score
 Mỗi trip mục tiêu: `T01d`–`T10d`, 1.800 dòng, frame `0..1799`, 20 FPS và timestamp bước 0,05 giây. Nếu file BTC thật khác, file BTC và evaluator chính thức ưu tiên hơn giả định này.
 
 ## 7. Contract SE và runtime
+
+### Demo end-to-end AI ↔ SE
+
+Chạy toàn bộ sản phẩm bằng một lệnh (CarSky, SE Backend, Fleet Dashboard và
+AI hybrid):
+
+```powershell
+cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON
+conda activate automotive
+.\scripts\run_product_demo.ps1 `
+  -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  -Camera 0 `
+  -DriverId driver_001 `
+  -OpenDashboard
+```
+
+Script kiểm tra CarSky, chạy Backend và Dashboard ở background, sau đó chạy AI
+ở foreground. Nhấn `Q` hoặc `Esc` trong cửa sổ AI để kết thúc; các process do
+script tạo sẽ được dừng tự động. CarSky là cloud deployment nên script không tạo
+lại room: nó preflight deployment/node, còn Backend publish event realtime theo
+`SE/BE/.env`; APK HMI realtime phải được cài và mở sẵn trên Android node. Trước
+lần chạy đầu, cần `npm install` trong `SE/FE` và enroll
+`driver_001`; bỏ `-DriverId` nếu muốn dùng global model không personalization.
+
+Demo hybrid dùng road-left, road-right và telemetry của BTC, còn driver camera
+lấy từ webcam thật. Mở hai cửa sổ terminal:
+
+```powershell
+# Terminal 1 — Backend SE (Python 3.11)
+cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\SE\BE
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+```powershell
+# Terminal 2 — AI (conda automotive, Python 3.13)
+cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON
+conda activate automotive
+python AI\scripts\end_to_end_demo.py `
+  --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  --camera 0 `
+  --driver-id driver_001 `
+  --se-endpoint http://127.0.0.1:8000/api/v1/alerts
+```
+
+Health và event nhận được:
+
+```text
+GET http://127.0.0.1:8000/health
+GET http://127.0.0.1:8000/api/v1/alerts/recent
+WS  ws://127.0.0.1:8000/api/v1/alerts/live
+```
+
+AI là nơi duy nhất quyết định alert type/severity/lifecycle. SE validate,
+deduplicate, lưu và phân phối sang Fleet Dashboard/CarSky; không tính lại risk.
+
+Để demo đủ bốn lớp, phải chạy thêm Frontend và bật CarSky external trong
+`SE/BE/.env`. Runbook thao tác, preflight, backup và tiêu chí pass nằm tại
+[`reportbtc/C2_END_TO_END_DEMO_SCRIPT.md`](reportbtc/C2_END_TO_END_DEMO_SCRIPT.md).
+Inference/evaluate BTC là nhánh riêng và không cần Backend, Frontend hoặc CarSky.
 
 ### Backend
 

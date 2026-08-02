@@ -11,6 +11,7 @@ import yaml
 
 from .dms_core import DMSCore
 from .driver_profile import DriverProfile
+from .face_landmarker import LANDMARK_BACKEND
 from .ml_features import (
     CausalFeatureBuffer,
     feature_names,
@@ -67,7 +68,7 @@ def fuse_driver_state(
 
 
 class DriverStatePredictor:
-    """MediaPipe feature extraction plus the production Random Forest."""
+    """ONNX feature extraction plus the production Random Forest."""
 
     def __init__(
         self,
@@ -84,6 +85,11 @@ class DriverStatePredictor:
         if self.artifact.get("feature_names") != feature_names():
             raise ValueError(
                 "Model feature schema does not match Challenge 2 runtime"
+            )
+        if self.artifact.get("landmark_backend") != LANDMARK_BACKEND:
+            raise ValueError(
+                "Model was not trained with the active ONNX landmark backend; "
+                "use driver_state_rf_v3_onnx.joblib or retrain it"
             )
         model_classes = set(self.artifact.get("model_classes", []))
         if not model_classes or not model_classes <= DRIVER_STATES:
@@ -118,6 +124,7 @@ class DriverStatePredictor:
             primitive,
             int(self.config["eye"]["microsleep_min_ms"]),
         )
+        observation = primitive.get("observation", {})
         return {
             "state": fused.state,
             "confidence": fused.confidence,
@@ -128,7 +135,16 @@ class DriverStatePredictor:
             "mouth_state": primitive["mouth_state"],
             "head_pose": primitive["head_state"],
             "rule_state": primitive["driver_state"],
-            "quality_status": primitive["observation"]["quality_status"],
+            "quality_status": observation.get("quality_status", "invalid"),
+            "face_detected": bool(observation.get("face_detected", False)),
+            "left_eye_valid": bool(observation.get("left_eye_valid", False)),
+            "right_eye_valid": bool(observation.get("right_eye_valid", False)),
+            "monitoring_available": bool(
+                observation.get("monitoring_available", False)
+            ),
+            "valid_window_ratio": float(
+                observation.get("coverage_30s", 0.0) or 0.0
+            ),
             "features": primitive["features"],
             "visualization": primitive.get("visualization", {}),
         }

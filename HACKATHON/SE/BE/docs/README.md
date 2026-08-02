@@ -49,6 +49,38 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+### Nhận cảnh báo live từ AI Decision Engine
+
+Backend nhận canonical event tại:
+
+```text
+POST /api/v1/alerts
+Idempotency-Key: <giống idempotency_key trong payload>
+```
+
+Response `202` xác nhận đã nhận. Retry cùng key trả `duplicate=true` và không
+tạo cảnh báo thứ hai. Endpoint demo để Dashboard/SE kiểm tra dữ liệu gần nhất:
+
+```text
+GET /api/v1/alerts/recent?limit=100
+WS  /api/v1/alerts/live
+```
+
+Store hiện tại là RAM tối đa 1.000 event, phù hợp demo local. SE cần thay bằng
+database/outbox trước production nhưng phải giữ nguyên schema, event lifecycle
+và idempotency do AI phát. Dashboard kết nối WebSocket `alerts/live`; Backend
+broadcast nguyên canonical event mới nhận và không broadcast duplicate.
+
+Event được xử lý theo đúng hai audience do AI cung cấp:
+
+- `fleet_dashboard`: broadcast canonical payload qua `/api/v1/alerts/live`;
+- `driver_display`: map sang VSS và enqueue bất đồng bộ tới CarSky nếu integration
+  external đã bật.
+
+Mapper chỉ dịch field/vocabulary (`open → START`, `resolved → END`, alert type →
+action code), không tính lại `severity` hoặc risk của AI. Runbook tích hợp chính:
+[`../../../reportbtc/C2_END_TO_END_DEMO_SCRIPT.md`](../../../reportbtc/C2_END_TO_END_DEMO_SCRIPT.md).
+
 Sau khi khởi động:
 
 - Swagger: `http://localhost:8000/docs`

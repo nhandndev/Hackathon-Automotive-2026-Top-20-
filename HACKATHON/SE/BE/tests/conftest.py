@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from fastapi.testclient import TestClient
 
 from app.core.config import Settings
 from app.main import create_app
@@ -81,3 +82,9 @@ def app_factory(tmp_path: Path):
         return create_app(make_settings(tmp_path, **overrides))
 
     return factory
+
+
+@pytest.fixture
+def client(app_factory):
+    with TestClient(app_factory()) as test_client:
+        yield test_client

@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Any
 
 
-PROFILE_SCHEMA_VERSION = 2
+PROFILE_SCHEMA_VERSION = 3
+PROFILE_LANDMARK_BACKEND = "onnx-yunet-facemesh468"
 DRIVER_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{3,64}$")
 
 
@@ -48,6 +49,7 @@ class DriverProfile:
     eye_closure_threshold: float
     quality_score: float
     created_at: str
+    landmark_backend: str = PROFILE_LANDMARK_BACKEND
     schema_version: int = PROFILE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -56,6 +58,12 @@ class DriverProfile:
             raise ValueError(
                 f"Unsupported profile schema {self.schema_version}; "
                 f"expected {PROFILE_SCHEMA_VERSION}"
+            )
+        if self.landmark_backend != PROFILE_LANDMARK_BACKEND:
+            raise ValueError(
+                f"Unsupported profile landmark backend "
+                f"'{self.landmark_backend}'; expected "
+                f"'{PROFILE_LANDMARK_BACKEND}'"
             )
         open_ear = _finite("ear_open", self.ear_open, 0.05, 0.8)
         closed_ear = _finite("ear_closed", self.ear_closed, 0.01, 0.7)

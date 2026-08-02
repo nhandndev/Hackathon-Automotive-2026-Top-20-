@@ -45,7 +45,6 @@ Backend DMS
   -> loa Android phát câu cảnh báo
 ```
 
-<<<<<<< Updated upstream
 File upload lên CarSky phải là JSON object/map, không phải JSON array.
 
 Đúng:
@@ -84,9 +83,8 @@ SE/BE/carsky/dms-vss-signals.json
 - [ ] Đặt tên `fleet-driver-safety-vss-v1`.
 - [ ] Save.
 - [ ] Ghi artifact ID/version.
-=======
+
 Các tên trong giao diện thật:
->>>>>>> Stashed changes
 
 - Thanh dọc bên trái: `Devices`, `Videos`, `Artifacts`, `Nydus`, `Hubs`, `Registry`, `Dashboard`.
 - Bánh răng góc trái dưới: `Settings`.

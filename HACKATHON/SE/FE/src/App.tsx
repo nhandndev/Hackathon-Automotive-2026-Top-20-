@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { ViewMode, TripData } from './types';
-import { mockTripData } from './data/mockData';
+import React, { useEffect, useState } from 'react';
+import { DecisionAlert, ViewMode, TripData } from './types';
+import { btcTripData } from './data/btcTripData';
 import { Header } from './components/Header';
 import { SidebarNav } from './components/SidebarNav';
 import { FleetMapView } from './components/FleetMapView';
@@ -12,11 +12,30 @@ import { InterventionModal } from './components/InterventionModal';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('MAP');
-  const [vehicles] = useState<TripData[]>(mockTripData);
-  const [selectedVehicle, setSelectedVehicle] = useState<TripData>(mockTripData[0]); // VH-04 default
+  const [vehicles] = useState<TripData[]>(btcTripData);
+  const [selectedVehicle, setSelectedVehicle] = useState<TripData>(btcTripData[0]);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isInterventionOpen, setIsInterventionOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [liveAlerts, setLiveAlerts] = useState<DecisionAlert[]>([]);
+  const [alertsConnected, setAlertsConnected] = useState(false);
+
+  useEffect(() => {
+    const endpoint = import.meta.env.VITE_ALERTS_WS_URL || 'ws://127.0.0.1:8000/api/v1/alerts/live';
+    const socket = new WebSocket(endpoint);
+    socket.onopen = () => setAlertsConnected(true);
+    socket.onclose = () => setAlertsConnected(false);
+    socket.onerror = () => setAlertsConnected(false);
+    socket.onmessage = (message) => {
+      try {
+        const alert = JSON.parse(message.data) as DecisionAlert;
+        setLiveAlerts((current) => [alert, ...current].slice(0, 20));
+      } catch {
+        // Invalid external messages are ignored; Backend owns validation.
+      }
+    };
+    return () => socket.close();
+  }, []);
 
   // Handle vehicle selection
   const handleSelectVehicle = (vehicle: TripData) => {
@@ -76,7 +95,9 @@ export default function App() {
 
           {currentView === 'VEHICLE_LIVE' && (
             <VehicleLiveView
-              vehicle={selectedVehicle || vehicles[1]} // Default VH-01 if none
+              vehicle={selectedVehicle}
+              liveAlerts={liveAlerts}
+              alertsConnected={alertsConnected}
               onIntervene={() => handleOpenIntervention(selectedVehicle)}
             />
           )}
@@ -84,6 +105,8 @@ export default function App() {
           {currentView === 'TRIP_DETAIL' && (
             <TripDetailView
               vehicle={selectedVehicle}
+              liveAlerts={liveAlerts}
+              alertsConnected={alertsConnected}
               onViewLiveFeed={() => handleViewLiveFeed(selectedVehicle)}
               onOpenCopilot={() => setIsCopilotOpen(true)}
             />
@@ -91,6 +114,7 @@ export default function App() {
 
           {currentView === 'INSIGHTS' && (
             <PerformanceInsightsView
+              vehicle={selectedVehicle}
               onOpenCopilot={() => setIsCopilotOpen(true)}
             />
           )}

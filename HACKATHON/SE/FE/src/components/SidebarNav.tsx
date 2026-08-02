@@ -27,11 +27,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       {/* Top Logo / Avatar */}
       <div className="flex flex-col items-center gap-6 w-full">
         <div className="w-9 h-9 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shadow-inner">
-          <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-            alt="User"
-            className="w-full h-full object-cover"
-          />
+          <User className="h-5 w-5 text-slate-300" aria-label="User" />
         </div>
 
         {/* Navigation Items */}

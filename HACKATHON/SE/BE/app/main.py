@@ -22,12 +22,14 @@ from app.modules.fleet.router import router as fleet_router
 from app.modules.insurance.router import router as insurance_router
 from app.modules.risk_fusion.router import router as risk_router
 from app.modules.streaming.router import router as streaming_router
+from app.modules.ai_alerts.router import router as ai_alerts_router
 from app.integrations.carsky.client import CarSkyClient
 from app.integrations.carsky.service import CarSkyPublisher
 
 
 EXPECTED_TRIP_IDS = frozenset(f"T{index:02d}d" for index in range(1, 11))
 REST_ROUTERS = (
+    ai_alerts_router,
     fleet_router,
     event_router,
     risk_router,

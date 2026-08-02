@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Mapping
 
 from app.domain.schemas.ai_contract import AIFrame, TripMetadata
 
@@ -88,4 +88,81 @@ class CarSkySignalMapper:
         if math.isfinite(frame.headway_sec):
             values.append((self.paths.headway, frame.headway_sec))
 
+        return {"signals": [{"path": path, "value": value} for path, value in values]}
+
+    def map_decision_event(
+        self,
+        event: Mapping[str, Any],
+        *,
+        data_age_ms: int = 0,
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Map the AI-owned DecisionEvent without recomputing its decision.
+
+        Only evidence already emitted by AI is forwarded. Missing telemetry is
+        omitted instead of fabricated. Alert type/severity/lifecycle remain
+        owned by AI; Backend only translates them to the stable VSS vocabulary.
+        """
+        if data_age_ms < 0:
+            raise ValueError("data_age_ms must not be negative")
+        status = str(event.get("status", "update")).lower()
+        severity = str(event.get("severity", "warning")).lower()
+        alert_type = str(event.get("alert_type", "unknown"))
+        evidence = event.get("evidence") or {}
+        if not isinstance(evidence, Mapping):
+            evidence = {}
+
+        hmi_state = (
+            CarSkyHMIState.RECOVERY
+            if status == "resolved"
+            else CarSkyHMIState.CRITICAL
+            if severity == "critical"
+            else CarSkyHMIState.WARNING
+        )
+        transition = {
+            "open": EventTransition.START,
+            "update": EventTransition.UPDATE,
+            "resolved": EventTransition.END,
+        }.get(status, EventTransition.UPDATE)
+        reason_code = {
+            "collision_risk": "TTC_CRITICAL",
+            "microsleep": "MICROSLEEP",
+            "driver_drowsiness": "DROWSY",
+            "driver_distraction": "DISTRACTED",
+            "yawning": "YAWNING",
+            "tailgating": "TAILGATING",
+            "speeding": "SPEEDING",
+            "harsh_brake": "HARSH_BRAKE",
+            "harsh_accel": "HARSH_ACCEL",
+            "harsh_corner": "HARSH_CORNER",
+        }.get(alert_type, "NONE")
+        action_code = {
+            "collision_risk": "BRAKE_SAFE",
+            "microsleep": "TAKE_BREAK",
+            "driver_drowsiness": "TAKE_BREAK",
+            "driver_distraction": "FOCUS_FORWARD",
+            "speeding": "REDUCE_SPEED",
+        }.get(alert_type, "NONE")
+
+        values: list[tuple[str, Any]] = [
+            (self.paths.critical_alert, hmi_state is CarSkyHMIState.CRITICAL),
+            (self.paths.display_severity, hmi_state.value),
+            (self.paths.alert_reason, reason_code),
+            (self.paths.recommended_action, action_code),
+            (self.paths.event_transition, transition.value),
+            (self.paths.ai_status, AIStatus.ONLINE.value),
+            (self.paths.data_age_ms, data_age_ms),
+        ]
+        optional = (
+            ("driver_state", self.paths.driver_state),
+            ("alertness_score", self.paths.alertness_score),
+            ("speed_kmh", self.paths.speed),
+            ("c3_risk_score", self.paths.final_risk_score),
+        )
+        for key, path in optional:
+            value = evidence.get(key)
+            if value is not None:
+                values.append((path, value))
+        ttc = evidence.get("predicted_ttc_sec")
+        if isinstance(ttc, (int, float)) and math.isfinite(float(ttc)):
+            values.append((self.paths.min_ttc, float(ttc)))
         return {"signals": [{"path": path, "value": value} for path, value in values]}

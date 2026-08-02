@@ -1,188 +1,188 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Gauge, Video, AlertCircle, RefreshCw, Volume2, VolumeX, ShieldAlert } from 'lucide-react';
-import { TripData } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Gauge, ShieldAlert, Video, Wifi, WifiOff } from 'lucide-react';
+import { DecisionAlert, LiveSnapshot, TripData } from '../types';
+import { LiveCameraFrame } from './LiveCameraFrame';
 
 interface VehicleLiveViewProps {
   vehicle: TripData;
+  liveAlerts: DecisionAlert[];
+  alertsConnected: boolean;
   onIntervene?: () => void;
 }
 
-export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({ vehicle, onIntervene }) => {
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const [meshPulse, setMeshPulse] = useState(0);
+const formatTtc = (value: number | null | undefined) => {
+  if (value === null) return '∞';
+  if (value === undefined) return '--';
+  return value.toFixed(2);
+};
 
-  const lastFrame = vehicle.frames?.[vehicle.frames.length - 1];
-  const initialSpeed = lastFrame?.ego?.speed_kmh || 0;
-  const [mockSpeed, setMockSpeed] = useState(initialSpeed);
-  const [mockGear, setMockGear] = useState('D');
-  const [mockDriveMode, setMockDriveMode] = useState('NORMAL');
+const formatEventTime = (timestampMs: number) => `${(timestampMs / 1000).toFixed(1)}s`;
+
+export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
+  vehicle,
+  liveAlerts,
+  alertsConnected,
+  onIntervene,
+}) => {
+  const [snapshot, setSnapshot] = useState<LiveSnapshot | null>(null);
+  const [snapshotConnected, setSnapshotConnected] = useState(false);
+  const snapshotEndpoint = import.meta.env.VITE_LIVE_SNAPSHOT_URL
+    || 'http://127.0.0.1:8000/api/v1/alerts/snapshot';
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMeshPulse((prev) => (prev + 1) % 100);
-    }, 150);
-    return () => clearInterval(interval);
-  }, []);
+    let stopped = false;
+    let inFlight = false;
+    const refresh = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const separator = snapshotEndpoint.includes('?') ? '&' : '?';
+        const response = await fetch(
+          `${snapshotEndpoint}${separator}trip_id=${encodeURIComponent(vehicle.trip_id)}&v=${Date.now()}`,
+          { cache: 'no-store' },
+        );
+        if (!response.ok) throw new Error(`snapshot ${response.status}`);
+        const payload = await response.json() as LiveSnapshot;
+        if (!stopped) {
+          setSnapshot(payload);
+          setSnapshotConnected(true);
+        }
+      } catch {
+        if (!stopped) setSnapshotConnected(false);
+      } finally {
+        inFlight = false;
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 200);
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+    };
+  }, [snapshotEndpoint, vehicle.trip_id]);
 
-  // Limit log items so they don't scroll infinitely
-  const displayEvents = vehicle.events_log?.slice(0, 5) || [];
+  const tripAlerts = useMemo(
+    () => liveAlerts.filter((alert) => alert.trip_id === vehicle.trip_id),
+    [liveAlerts, vehicle.trip_id],
+  );
+  const activeAlert = useMemo(() => {
+    const latestStatus = new Set<string>();
+    for (const alert of tripAlerts) {
+      if (latestStatus.has(alert.event_id)) continue;
+      latestStatus.add(alert.event_id);
+      if (alert.status !== 'resolved') return alert;
+    }
+    return undefined;
+  }, [tripAlerts]);
+
+  const riskScore = snapshot?.risk_score;
+  const riskPercent = Math.max(0, Math.min(100, riskScore ?? 0));
+  const severityClass = activeAlert?.severity === 'critical'
+    ? 'from-red-700 to-red-600 border-red-400/30'
+    : activeAlert?.severity === 'warning'
+      ? 'from-amber-700 to-orange-600 border-amber-400/30'
+      : 'from-emerald-800 to-emerald-700 border-emerald-400/30';
 
   return (
-    <div className="h-full bg-[#070A12] p-4 md:p-6 overflow-hidden text-white flex flex-col gap-4">
-      
-      {/* Top Section Stats Grid (Shrink 0) */}
-      <div className="shrink-0 grid grid-cols-1 lg:grid-cols-12 gap-4 h-28">
-        {/* Risk Score */}
-        <div className="lg:col-span-2 bg-[#0B0F19] border border-[#1E293B] rounded-xl p-2 flex flex-col items-center justify-center relative overflow-hidden group">
-          <span className="text-[9px] font-bold tracking-widest text-slate-400 uppercase mb-1">RISK SCORE</span>
-          <div className="relative w-16 h-16 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+    <div className="flex h-full flex-col gap-4 overflow-hidden bg-[#070A12] p-4 text-white md:p-6">
+      <div className="grid h-28 shrink-0 grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl border border-[#1E293B] bg-[#0B0F19] p-2 lg:col-span-2">
+          <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-slate-400">RISK SCORE</span>
+          <div className="relative flex h-16 w-16 items-center justify-center">
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="40" stroke="#1E293B" strokeWidth="12" fill="transparent" />
-              <circle cx="50" cy="50" r="40" stroke="#ef4444" strokeWidth="12" fill="transparent" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - (lastFrame?.risk?.final_risk_score || 0) / 100)} strokeLinecap="round" />
+              <circle cx="50" cy="50" r="40" stroke="#ef4444" strokeWidth="12" fill="transparent" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - riskPercent / 100)} strokeLinecap="round" />
             </svg>
-            <span className="absolute text-xl font-extrabold text-white">{lastFrame?.risk?.final_risk_score || 0}</span>
+            <span className="absolute text-xl font-extrabold">{riskScore === undefined ? '--' : riskScore.toFixed(1)}</span>
           </div>
         </div>
 
-        {/* Alert Banner + Speed Meter */}
-        <div className="lg:col-span-8 bg-[#0B0F19] border border-[#1E293B] rounded-xl p-3 flex flex-col justify-between">
-          <div className="bg-gradient-to-r from-amber-600 to-red-600 rounded-lg p-3 flex items-center justify-between text-white border border-orange-400/30">
+        <div className="flex flex-col justify-between rounded-xl border border-[#1E293B] bg-[#0B0F19] p-3 lg:col-span-8">
+          <div className={`flex items-center justify-between rounded-lg border bg-gradient-to-r p-3 ${severityClass}`}>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-200 animate-bounce" />
+              {activeAlert ? <AlertTriangle className="h-5 w-5 text-amber-200" /> : <ShieldAlert className="h-5 w-5 text-emerald-200" />}
               <div>
-                <h3 className="text-sm font-black tracking-wide leading-none">CRITICAL: DROWSY DRIVER DETECTED (US-01)</h3>
-                <p className="text-[10px] text-orange-100 font-medium mt-1">Phát hiện tài xế vi ngủ. Cần thực hiện can thiệp khẩn cấp.</p>
+                <h3 className="text-sm font-black uppercase tracking-wide leading-none">
+                  {activeAlert ? `${activeAlert.severity}: ${activeAlert.alert_type.replaceAll('_', ' ')}` : snapshotConnected ? 'NO ACTIVE SAFETY ALERT' : 'WAITING FOR LIVE AI DATA'}
+                </h3>
+                <p className="mt-1 text-[10px] text-slate-100">
+                  {activeAlert?.recommended_action || (snapshotConnected ? `Driver state: ${snapshot?.driver_state}` : 'Start the AI end-to-end pipeline')}
+                </p>
               </div>
             </div>
-            <button onClick={() => setIsAudioMuted(!isAudioMuted)} className="p-1.5 bg-black/30 hover:bg-black/50 rounded-lg transition-colors">
-              {isAudioMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-amber-300 animate-pulse" />}
-            </button>
+            <div className="flex items-center gap-2 text-xs font-bold">
+              {snapshotConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+              {snapshotConnected ? 'LIVE' : 'OFFLINE'}
+            </div>
           </div>
-          <div className="flex items-center justify-end gap-2 mt-2 pr-2">
-            <Gauge className="w-4 h-4 text-slate-400" />
-            <span className="text-xl font-black text-white">{mockSpeed} <span className="text-xs font-normal text-slate-400">km/h</span></span>
+          <div className="mt-2 flex items-center justify-end gap-2 pr-2">
+            <Gauge className="h-4 w-4 text-slate-400" />
+            <span className="text-xl font-black">{snapshot ? snapshot.speed_kmh.toFixed(1) : '--'} <span className="text-xs font-normal text-slate-400">km/h</span></span>
           </div>
         </div>
 
-        {/* TTC */}
-        <div className="lg:col-span-2 bg-[#0B0F19] border border-red-900/50 rounded-xl p-3 flex flex-col justify-between items-center text-center">
-          <span className="text-[9px] font-bold tracking-widest text-slate-400 uppercase">TTC KPI</span>
-          <div className="text-3xl font-extrabold text-red-500 flex items-baseline gap-1 my-1">
-            {lastFrame?.min_ttc || 0}<span className="text-sm text-red-400">s</span>
+        <div className="flex flex-col items-center justify-between rounded-xl border border-red-900/50 bg-[#0B0F19] p-3 text-center lg:col-span-2">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">TTC</span>
+          <div className="my-1 flex items-baseline gap-1 text-3xl font-extrabold text-red-500">
+            {formatTtc(snapshot?.predicted_ttc_sec)}<span className="text-sm text-red-400">s</span>
           </div>
-          {onIntervene && (
-            <button onClick={onIntervene} className="w-full py-1 bg-red-600 text-white font-bold text-[10px] rounded uppercase tracking-wider">
-              Can Thiệp
-            </button>
+          {onIntervene && activeAlert && (
+            <button onClick={onIntervene} className="w-full rounded bg-red-600 py-1 text-[10px] font-bold uppercase tracking-wider">Can thiệp</button>
           )}
         </div>
       </div>
 
-      {/* Main Bottom Section (Flex-1) */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
-        
-        {/* Left Col (8) - Videos + Workbench */}
-        <div className="lg:col-span-8 flex flex-col gap-4 min-h-0">
-          <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
-            {/* Road Cam */}
-            <div className="bg-[#0B0F19] border border-[#1E293B] rounded-xl p-2 flex flex-col">
-              <div className="flex justify-between items-center px-1 mb-1 shrink-0">
-                <span className="text-[10px] font-bold text-slate-300 tracking-wider uppercase flex items-center gap-1.5">
-                  <Video className="w-3 h-3 text-sky-400" /> ROAD CAM
-                </span>
-                <span className="text-[9px] text-slate-500 font-mono">1080P</span>
-              </div>
-              <div className="relative flex-1 bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
-                <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Road" className="w-full h-full object-cover filter brightness-90 contrast-110" />
-                <div className="absolute top-[35%] left-[38%] w-[28%] h-[40%] border-2 border-red-500/90 rounded bg-red-500/10 animate-pulse pointer-events-none">
-                  <div className="absolute -top-5 left-0 bg-red-900/90 border border-red-500 text-[8px] text-red-100 font-mono px-1 rounded whitespace-nowrap">VEH AHEAD 2.4s</div>
-                </div>
-              </div>
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="grid min-h-0 grid-cols-2 gap-4 lg:col-span-8">
+          <div className="flex flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-2">
+            <div className="mb-1 flex shrink-0 items-center justify-between px-1">
+              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Video className="h-3 w-3 text-sky-400" /> ROAD CAM</span>
+              <span className="font-mono text-[9px] text-slate-500">FRAME {snapshot?.frame_id ?? '--'}</span>
             </div>
-
-            {/* Cabin Cam */}
-            <div className="bg-[#0B0F19] border border-[#1E293B] rounded-xl p-2 flex flex-col">
-              <div className="flex justify-between items-center px-1 mb-1 shrink-0">
-                <span className="text-[10px] font-bold text-slate-300 tracking-wider uppercase flex items-center gap-1.5">
-                  <Video className="w-3 h-3 text-indigo-400" /> CABIN CAM
-                </span>
-                <div className="flex items-center gap-1 bg-amber-950/80 border border-amber-500/50 text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                  <ShieldAlert className="w-3 h-3" /> {Math.round((lastFrame?.driver?.alertness_score || 0) * 100)}%
-                </div>
-              </div>
-              <div className="relative flex-1 bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
-                <img src="https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Cabin" className="w-full h-full object-cover filter brightness-75 contrast-125" />
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
-                  <circle cx="48" cy="42" r="1.5" fill="#38bdf8" opacity="0.8" />
-                  <circle cx="56" cy="42" r="1.5" fill="#38bdf8" opacity="0.8" />
-                  <polygon points="42,35 62,35 65,58 52,65 39,58" fill="none" stroke="#38bdf8" strokeWidth="0.3" strokeDasharray="1,1" />
-                  <line x1="35" y1={30 + (meshPulse % 40)} x2="68" y2={30 + (meshPulse % 40)} stroke="#ef4444" strokeWidth="0.5" opacity="0.6" />
-                </svg>
-                <div className="absolute bottom-2 left-2 bg-black/70 px-2 py-0.5 rounded text-[9px] font-mono text-slate-300 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" /> FATIGUE: HIGH
-                </div>
-              </div>
+            <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
+              <LiveCameraFrame tripId={vehicle.trip_id} camera="road" className="h-full w-full object-cover" />
             </div>
           </div>
 
-          {/* Workbench (Shrink 0) */}
-          <div className="shrink-0 bg-[#111827] border border-[#374151] rounded-xl p-3 flex gap-4 items-center">
-            <h2 className="text-[10px] font-bold text-sky-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
-              <Gauge className="w-3 h-3" /> Workbench
-            </h2>
-            <div className="flex-1 flex gap-4">
-              <div className="flex-1">
-                <label className="text-[9px] text-slate-400 font-bold block mb-1">Speed ({mockSpeed})</label>
-                <input type="range" min="0" max="180" value={mockSpeed} onChange={(e) => setMockSpeed(parseInt(e.target.value))} className="w-full accent-sky-500 h-1" />
+          <div className="flex flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-2">
+            <div className="mb-1 flex shrink-0 items-center justify-between px-1">
+              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Video className="h-3 w-3 text-indigo-400" /> CABIN CAM</span>
+              <div className="flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-950/80 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                <ShieldAlert className="h-3 w-3" /> {snapshot ? `${Math.round(snapshot.alertness_score * 100)}%` : '--'}
               </div>
-              <div className="flex-1">
-                <label className="text-[9px] text-slate-400 font-bold block mb-1">Gear</label>
-                <div className="flex gap-1">
-                  {['P', 'R', 'N', 'D'].map(g => (
-                    <button key={g} onClick={() => setMockGear(g)} className={`flex-1 py-1 text-[9px] font-bold rounded ${mockGear === g ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400'}`}>{g}</button>
-                  ))}
-                </div>
-              </div>
+            </div>
+            <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
+              <LiveCameraFrame tripId={vehicle.trip_id} camera="cabin" className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
 
-        {/* Right Col (4) - Event Log Table */}
-        <div className="lg:col-span-4 bg-[#0B0F19] border border-[#1E293B] rounded-xl overflow-hidden flex flex-col min-h-0">
-          <div className="px-4 py-2.5 border-b border-[#1E293B] flex items-center justify-between shrink-0">
-            <h2 className="text-[10px] font-bold tracking-wider text-slate-300 uppercase">EVENT LOG</h2>
-            <button className="text-slate-400 hover:text-white" title="Refresh"><RefreshCw className="w-3 h-3" /></button>
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-[#1E293B] bg-[#0B0F19] lg:col-span-4">
+          <div className="flex shrink-0 items-center justify-between border-b border-[#1E293B] px-4 py-2.5">
+            <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-300">DECISION EVENT LOG</h2>
+            <span className={`text-[9px] font-bold ${alertsConnected ? 'text-emerald-400' : 'text-slate-500'}`}>{alertsConnected ? 'LIVE' : 'OFFLINE'}</span>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <table className="w-full text-left text-[10px]">
-              <thead className="bg-[#0F172A] text-slate-400 font-bold uppercase border-b border-[#1E293B]">
-                <tr>
-                  <th className="py-2 px-3">TIME</th>
-                  <th className="py-2 px-3">EVENT</th>
-                  <th className="py-2 px-3 text-right">SEV</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1E293B] font-mono">
-                {displayEvents.map((item, idx) => {
-                  const severity = item.params?.severity || 'LOW';
-                  return (
-                    <tr key={idx} className={severity === 'CRITICAL' ? 'bg-red-950/50 text-red-200 border-l-2 border-l-red-500' : 'text-slate-200'}>
-                      <td className="py-2.5 px-3 text-slate-400">{item.t}</td>
-                      <td className="py-2.5 px-3 font-sans truncate max-w-[120px]">{item.type}</td>
-                      <td className="py-2.5 px-3 text-right font-bold">
-                        {severity === 'CRITICAL' && <span className="text-red-400">CRIT</span>}
-                        {severity === 'HIGH' && <span className="text-orange-400">HIGH</span>}
-                        {severity === 'MEDIUM' && <span className="text-amber-400">MED</span>}
-                        {severity === 'LOW' && <span className="text-slate-400">LOW</span>}
-                      </td>
+          <div className="flex-1 overflow-y-auto">
+            {tripAlerts.length === 0 ? (
+              <div className="flex h-full items-center justify-center p-5 text-center text-xs text-slate-500">No DecisionEvent received for this trip.</div>
+            ) : (
+              <table className="w-full text-left text-[10px]">
+                <thead className="sticky top-0 border-b border-[#1E293B] bg-[#0F172A] font-bold uppercase text-slate-400">
+                  <tr><th className="px-3 py-2">Time</th><th className="px-3 py-2">Event / action</th><th className="px-3 py-2 text-right">State</th></tr>
+                </thead>
+                <tbody className="divide-y divide-[#1E293B]">
+                  {tripAlerts.slice(0, 30).map((alert) => (
+                    <tr key={`${alert.event_id}-${alert.status}-${alert.trip_timestamp_ms}`} className={alert.severity === 'critical' ? 'bg-red-950/35' : ''}>
+                      <td className="px-3 py-2 font-mono text-slate-400">{formatEventTime(alert.trip_timestamp_ms)}</td>
+                      <td className="px-3 py-2"><div className="font-bold uppercase text-slate-100">{alert.alert_type.replaceAll('_', ' ')}</div><div className="max-w-[180px] truncate text-slate-400">{alert.recommended_action}</div></td>
+                      <td className="px-3 py-2 text-right font-bold uppercase"><div className={alert.severity === 'critical' ? 'text-red-400' : 'text-amber-400'}>{alert.severity}</div><div className="text-slate-500">{alert.status}</div></td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
-
       </div>
     </div>
   );

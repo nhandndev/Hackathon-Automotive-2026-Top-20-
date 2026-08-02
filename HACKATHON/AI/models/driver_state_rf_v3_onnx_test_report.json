@@ -1,0 +1,83 @@
+{
+  "model": "driver_state_rf_v3_onnx.joblib",
+  "test_directory": "E:\\automotive_cc\\Package_starterkit\\data\\augmented_driver_state\\test",
+  "test_frames": 3600,
+  "accuracy": 0.7847,
+  "macro_f1": 0.8028,
+  "labels": [
+    "alert",
+    "drowsy",
+    "yawning",
+    "distracted",
+    "microsleep"
+  ],
+  "confusion_matrix": [
+    [
+      538,
+      3,
+      0,
+      59,
+      0
+    ],
+    [
+      33,
+      691,
+      0,
+      160,
+      16
+    ],
+    [
+      0,
+      0,
+      600,
+      0,
+      0
+    ],
+    [
+      255,
+      249,
+      0,
+      396,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      600
+    ]
+  ],
+  "per_trip": [
+    {
+      "trip": "T_test_01",
+      "frames": 720,
+      "accuracy": 0.7986,
+      "macro_f1": 0.8178
+    },
+    {
+      "trip": "T_test_02",
+      "frames": 720,
+      "accuracy": 0.7694,
+      "macro_f1": 0.7902
+    },
+    {
+      "trip": "T_test_03",
+      "frames": 720,
+      "accuracy": 0.7931,
+      "macro_f1": 0.8074
+    },
+    {
+      "trip": "T_test_04",
+      "frames": 720,
+      "accuracy": 0.7681,
+      "macro_f1": 0.7878
+    },
+    {
+      "trip": "T_test_05",
+      "frames": 720,
+      "accuracy": 0.7944,
+      "macro_f1": 0.8085
+    }
+  ]
+}

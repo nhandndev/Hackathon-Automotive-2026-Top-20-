@@ -15,6 +15,28 @@ from app.integrations.carsky.mapper import (
 from app.integrations.carsky.service import CarSkyPublisher, DeliveryKind
 
 
+def test_decision_event_maps_without_recomputing_ai_severity():
+    payload = CarSkySignalMapper().map_decision_event({
+        "status": "open",
+        "severity": "critical",
+        "alert_type": "collision_risk",
+        "evidence": {
+            "driver_state": "drowsy",
+            "alertness_score": 0.3,
+            "speed_kmh": 62.0,
+            "predicted_ttc_sec": 1.2,
+            "c3_risk_score": 55.0,
+        },
+    })
+    values = {item["path"]: item["value"] for item in payload["signals"]}
+    assert values["Vehicle.ADAS.DisplaySeverity"] == "CRITICAL"
+    assert values["Vehicle.ADAS.EventTransition"] == "START"
+    assert values["Vehicle.ADAS.RecommendedActionCode"] == "BRAKE_SAFE"
+    assert values["Vehicle.ADAS.AlertReasonCode"] == "TTC_CRITICAL"
+    assert values["Vehicle.ADAS.MinTTC"] == 1.2
+    assert values["Vehicle.Driver.State"] == "drowsy"
+
+
 def make_metadata() -> TripMetadata:
     return TripMetadata(
         trip_id="T01d",

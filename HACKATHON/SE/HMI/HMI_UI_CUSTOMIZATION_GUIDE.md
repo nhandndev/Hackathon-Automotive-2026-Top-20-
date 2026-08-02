@@ -1,5 +1,10 @@
 # HMI UI customization guide
 
+> Cập nhật realtime: source of truth hiện là
+> `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java`. REST polling và
+> mock fallback trong `demo-live` đã bị loại bỏ. Khi mất VHAL, UI phải hiện
+> `AI OFFLINE`, không tự chạy chu kỳ trạng thái.
+
 File này dùng cho lần sau khi cần chỉnh giao diện Android HMI demo trên CarSky. Đọc file này trước khi sửa UI để không phải dò lại từ đầu.
 
 ## 1. App HMI hiện tại nằm ở đâu

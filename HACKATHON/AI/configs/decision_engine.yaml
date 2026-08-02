@@ -1,0 +1,105 @@
+version: decision_engine_v1
+enabled: true
+
+general:
+  moving_speed_kmh: 5.0
+  driver_warning_min_speed_kmh: 20.0
+  max_source_skew_ms: 100
+  max_realtime_age_ms: 500
+  min_valid_window_ratio: 0.80
+  min_driver_confidence: 0.70
+  startup_warmup_ms: 5000
+  perclos_warmup_ms: 10000
+  update_interval_ms: 1000
+
+ttc:
+  watch_sec: 5.0
+  warning_sec: 3.0
+  critical_sec: 1.5
+  warning_persistence_ms: 500
+  recovery_sec: 4.0
+  recovery_ms: 2000
+  cooldown_ms: 5000
+
+microsleep:
+  reliable_closure_ms: 1000
+  ml_confidence: 0.80
+  ml_persistence_ms: 2000
+  stopped_warning_closure_ms: 3000
+  stopped_fleet_closure_ms: 10000
+  recovery_ms: 3000
+  cooldown_ms: 30000
+
+distraction:
+  high_speed_kmh: 50.0
+  high_speed_duration_ms: 3500
+  medium_speed_kmh: 20.0
+  medium_speed_duration_ms: 6000
+  critical_duration_ms: 10000
+  gaze_gap_tolerance_ms: 100
+  recovery_ms: 2000
+  cooldown_ms: 30000
+
+drowsiness:
+  perclos_watch: 0.15
+  perclos_warning: 0.25
+  perclos_critical: 0.40
+  perclos_persistence_ms: 3000
+  ml_watch_confidence: 0.65
+  ml_watch_persistence_ms: 2000
+  warning_confidence: 0.70
+  warning_alertness_max: 0.55
+  warning_persistence_ms: 5000
+  critical_warning_persistence_ms: 15000
+  strong_yawn_ms: 2000
+  yawn_count: 2
+  yawn_window_ms: 60000
+  yawn_perclos_min: 0.15
+  yawn_alertness_max: 0.60
+  recovery_alertness_min: 0.65
+  recovery_perclos_max: 0.15
+  recovery_ms: 10000
+  cooldown_ms: 60000
+
+speeding:
+  warning_over_limit_kmh: 5.0
+  warning_persistence_ms: 10000
+  critical_over_limit_kmh: 15.0
+  critical_persistence_ms: 5000
+  recovery_over_limit_kmh: 3.0
+  recovery_ms: 5000
+  cooldown_ms: 60000
+
+harsh_behavior:
+  brake_g: 0.40
+  accel_g: 0.35
+  corner_g: 0.30
+  episode_confirm_ms: 100
+  episode_end_ms: 500
+  warning_count: 3
+  warning_window_ms: 60000
+  cooldown_ms: 60000
+
+risk_tiers:
+  thresholds: [25.0, 50.0, 75.0]
+
+sensor_health:
+  carsky_after_ms: 2000
+  fleet_after_ms: 10000
+  recovery_ms: 5000
+  cooldown_ms: 60000
+
+vigilance_lapse:
+  enabled: false
+  shadow_only: true
+  watch_probability: 0.70
+  watch_persistence_ms: 5000
+  prompt_probability: 0.80
+  prompt_persistence_ms: 3000
+  warning_probability: 0.85
+  warning_persistence_ms: 3000
+  critical_probability: 0.90
+  response_timeout_ms: 3000
+  reset_probability: 0.50
+  reset_persistence_ms: 10000
+  prompt_cooldown_ms: 300000

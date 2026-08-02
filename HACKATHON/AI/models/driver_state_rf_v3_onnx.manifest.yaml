@@ -1,0 +1,23 @@
+name: driver_state_rf_v3_onnx
+challenge: 2
+artifact: driver_state_rf_v3_onnx.joblib
+report: driver_state_rf_v3_onnx_report.json
+test_report: driver_state_rf_v3_onnx_test_report.json
+model_type: RandomForestClassifier
+model_version: 3
+feature_schema_version: 2
+feature_count: 59
+landmark_backend: onnx-yunet-facemesh468
+python_version: 3.13.14
+scikit_learn_version: 1.9.0
+training_data: data/augmented_driver_state/train
+training_frames: 28800
+test_frames: 3600
+test_accuracy: 0.7847
+test_macro_f1: 0.8028
+classes:
+  - alert
+  - distracted
+  - drowsy
+  - microsleep
+  - yawning

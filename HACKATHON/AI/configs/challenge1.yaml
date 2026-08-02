@@ -21,6 +21,7 @@ detector:
   iou: 0.5                 # NMS IoU
   imgsz: 640
   device: null             # null = auto (cuda if available else cpu)
+  cpu_threads: 4           # avoids PyTorch/OpenCV/ONNX CPU oversubscription
 
 # Stereo SGBM disparity parameters (OpenCV camelCase names — do NOT snake_case).
 sgbm:

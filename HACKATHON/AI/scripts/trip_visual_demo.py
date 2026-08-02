@@ -26,7 +26,7 @@ from core.challenge1_road.predict_ttc import (  # noqa: E402
     format_ttc,
 )
 from core.challenge2_driver import DriverStatePredictor  # noqa: E402
-from core.challenge3_fusion import predicted_risk_score  # noqa: E402
+from core.challenge3_fusion import FleetSafeDrivingScorer  # noqa: E402
 from core.btc_trip import TripDataset  # noqa: E402
 
 PANEL_SIZE = (640, 360)
@@ -289,18 +289,19 @@ def draw_dashboard(
         ("TTC", f"{format_ttc(ttc)} s"),
         ("DRIVER", f"{driver['state']}  conf {driver['confidence']:.2f}"),
         ("ALERTNESS", f"{driver['alertness_score']:.2f}"),
-        ("RISK SCORE", f"{risk:.1f} / 100"),
+        ("BTC RISK", f"{risk:.1f} / 100"),
+        ("SAFE SCORE", f"{100.0 - risk:.1f} / 100"),
     ]
-    y = 72
+    y = 62
     for key, value in rows:
         put_text(canvas, key, (24, y), (145, 155, 165), 0.48, 1)
         color = (
-            risk_color(risk) if key == "RISK SCORE"
+            risk_color(risk) if key == "BTC RISK"
             else ttc_color(ttc) if key == "TTC"
             else (240, 240, 240)
         )
         put_text(canvas, value, (190, y), color, 0.58, 2)
-        y += 39
+        y += 34
     cv2.rectangle(canvas, (20, 302), (620, 306), (70, 75, 80), -1)
     status = "PAUSED" if paused else f"PLAYING {speed:g}x"
     put_text(canvas, status, (24, 333), (0, 220, 255), 0.52, 2)
@@ -388,7 +389,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--driver-model", type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf_v2.joblib",
+        default=AI_ROOT / "models" / "driver_state_rf_v3_onnx.joblib",
     )
     parser.add_argument("--start-frame", type=int, default=0)
     parser.add_argument(
@@ -396,6 +397,13 @@ def main() -> int:
         help="0 processes until the trip ends",
     )
     parser.add_argument("--speed", type=float, default=1.0)
+    parser.add_argument(
+        "--speed-limit-kmh",
+        type=float,
+        help=(
+            "Override metadata.speed_limit_kmh for a derived demo trip"
+        ),
+    )
     parser.add_argument(
         "--no-label-fallback", action="store_true",
         help="Do not draw explicitly marked KITTI labels when YOLO is absent",
@@ -415,6 +423,18 @@ def main() -> int:
     road.set_trip_dir(dataset.trip_dir)
     road.reset()
     driver = DriverStatePredictor(args.driver_model, args.driver_config)
+    try:
+        speed_limit_kmh = (
+            float(args.speed_limit_kmh)
+            if args.speed_limit_kmh is not None
+            else float(dataset.metadata["speed_limit_kmh"])
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(
+            f"{dataset.trip_id}: metadata.speed_limit_kmh is required "
+            "for BTC Challenge 3"
+        ) from exc
+    fleet = FleetSafeDrivingScorer(speed_limit_kmh)
     fps = float(dataset.metadata.get("fps", 20.0) or 20.0)
     writer = None
     rows: list[dict[str, object]] = []
@@ -430,12 +450,18 @@ def main() -> int:
                 left = dataset.load_left(frame.frame_id)
                 right = dataset.load_right(frame.frame_id)
                 cabin = dataset.load_driver(frame.frame_id)
-                road.predict_frame(
+                warm_ttc = road.predict_frame(
                     frame.frame_id, frame.timestamp, left, right,
                     frame.speed_kmh,
                 )
                 driver.predict_frame(
                     frame.frame_id, round(frame.timestamp * 1000), cabin,
+                )
+                fleet.update(
+                    warm_ttc,
+                    frame.speed_kmh,
+                    frame.longitudinal_accel,
+                    frame.lateral_accel,
                 )
                 continue
             left = dataset.load_left(frame.frame_id)
@@ -448,7 +474,13 @@ def main() -> int:
             driver_result = driver.predict_frame(
                 frame.frame_id, round(frame.timestamp * 1000), cabin,
             )
-            risk = predicted_risk_score(ttc, driver_result["state"])
+            fleet_score = fleet.update(
+                ttc,
+                frame.speed_kmh,
+                frame.longitudinal_accel,
+                frame.lateral_accel,
+            )
+            risk = fleet_score.risk_score
             annotations: list[dict[str, Any]] = []
             if (
                 not road.last_debug.get("objects")
@@ -539,6 +571,18 @@ def main() -> int:
     print(
         f"{dataset.trip_id}: {processed} frames, "
         f"{processed / elapsed:.2f} processing FPS"
+    )
+    final_score = fleet.snapshot()
+    print(
+        "Challenge 3 BTC: "
+        f"safe={final_score.safe_driving_score:.1f}, "
+        f"risk={final_score.risk_score:.1f}, "
+        f"near_miss={final_score.near_miss_count}, "
+        "harsh="
+        f"{final_score.harsh_brake_count}/"
+        f"{final_score.harsh_accel_count}/"
+        f"{final_score.harsh_corner_count}, "
+        f"speeding={final_score.speeding_pct_time:.1f}%"
     )
     if not road.use_detector:
         print(

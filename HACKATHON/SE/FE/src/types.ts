@@ -165,3 +165,30 @@ export interface DriverLeaderboard {
   badge?: string;
   type: 'SAFE' | 'AT_RISK';
 }
+
+export interface DecisionAlert {
+  event_id: string;
+  trip_id: string;
+  frame_id: number;
+  trip_timestamp_ms: number;
+  status: 'open' | 'update' | 'resolved';
+  alert_type: string;
+  severity: 'info' | 'warning' | 'critical';
+  confidence: number;
+  audiences: string[];
+  recommended_action: string;
+  evidence: Record<string, unknown>;
+}
+
+export interface LiveSnapshot {
+  schema_version: '1.0';
+  trip_id: string;
+  frame_id: number;
+  trip_timestamp_ms: number;
+  speed_kmh: number;
+  predicted_ttc_sec: number | null;
+  risk_score: number;
+  driver_state: string;
+  driver_confidence: number;
+  alertness_score: number;
+}

@@ -1,201 +1,360 @@
-# FPTU DMS Vision — Production AI Runtime
+# FPTU DMS Vision — AI Runtime
 
-Thư mục `AI/` là runtime chính thức của sản phẩm. Repo chỉ chứa code inference,
-runtime config, model đã train và một trip nhỏ phục vụ demo; không chứa
-training, augmentation hay cross-validation.
+`AI/` là runtime inference chính thức của sản phẩm. Pipeline xử lý hai road
+camera, cabin camera và telemetry để tạo output cho ba challenge, sau đó
+Decision Engine phát cảnh báo cho Fleet Dashboard và CarSky qua Backend SE.
 
-## Chức năng
+Repo sản phẩm chỉ chứa inference code, config, model đã train, manifest và tài
+liệu chạy. Training, augmentation, prediction tạm và driver profile không được
+commit.
 
-- **Challenge 1 — Road/TTC:** xử lý hai road camera, phát hiện và tracking
-  phương tiện, ước lượng depth và Time-to-Collision.
-- **Challenge 2 — Driver State:** xử lý face camera, dự đoán
-  `alert | drowsy | yawning | distracted | microsleep`.
-- **Challenge 3 — Risk Fusion:** kết hợp TTC và driver state thành risk score
-  từ 0 đến 100.
-
-## Cấu trúc
+## 1. Kiến trúc
 
 ```text
-AI/
-├── core/
-│   ├── btc_trip.py
-│   ├── challenge1_road/
-│   ├── challenge2_driver/
-│   │   ├── dms_core.py
-│   │   ├── ml_features.py
-│   │   ├── predict_state.py
-│   │   ├── driver_enrollment.py
-│   │   └── driver_profile.py
-│   └── challenge3_fusion/
-├── configs/
-│   ├── challenge1.yaml
-│   └── challenge2.yaml
-├── models/
-│   ├── driver_state_rf_v2.joblib
-│   └── driver_state_rf_v2.manifest.yaml
-├── scripts/
-│   ├── run_inference.py
-│   ├── trip_visual_demo.py
-│   └── webcam_driver_demo.py
-├── demo_trips/
-│   └── T_test_01/
-├── artifacts/
-├── requirements.txt
-└── README.md
+Road-left + road-right → Challenge 1: detection/depth/TTC ─┐
+Cabin camera → Challenge 2: driver state ──────────────────┼→ CSV BTC
+Telemetry + TTC → Challenge 3: safe/risk score ────────────┘
+                              │
+                              ▼
+                       Decision Engine
+                       │             │
+                       ▼             ▼
+                Fleet Dashboard    CarSky HMI
+                       └────── FastAPI SE ──────┘
 ```
 
-`demo_trips/T_test_01` là một augmented test trip 720 frame có đủ cấu trúc BTC
-và đủ năm driver-state. Nó chỉ dùng để trình diễn, không được dùng để báo cáo
-generalization hoặc train lại model.
-
-## Cài đặt
-
-Khuyến nghị Python 3.10 hoặc 3.11:
-
-```powershell
-cd HACKATHON\AI
-python -m pip install -r requirements.txt
-```
-
-## Challenge 2 v2
-
-Pipeline production:
-
-```text
-Face camera
-→ MediaPipe Face Mesh
-→ EAR, MAR, head pose, continuous eye closure
-→ causal rolling windows 3/10/30 giây
-→ 59 features
-→ Random Forest v2
-→ safety fusion
-→ driver state + confidence
-```
-
-Model mặc định:
-
-```text
-models/driver_state_rf_v2.joblib
-```
-
-Runtime so sánh chính xác danh sách 59 feature trong model artifact. Model 49
-feature cũ không thể bị load nhầm. Safety fusion chỉ override thành
-`microsleep` khi face/eyes hợp lệ và mắt nhắm liên tục vượt ngưỡng trong
-`configs/challenge2.yaml`.
-
-## Personalized driver
-
-Personalization không nhận diện khuôn mặt. Tài xế nhập một `driver_id`; hệ
-thống chỉ lưu các baseline số như EAR mở/đóng, MAR trung tính/ngáp và neutral
-head pose. Không lưu frame, ảnh, video hoặc face embedding.
-
-Lần đầu hoặc khi muốn đo lại profile:
-
-```powershell
-python scripts\webcam_driver_demo.py `
-  --driver-id driver_001 `
-  --enroll
-```
-
-UI lần lượt yêu cầu nhìn thẳng, chớp mắt, quay trái/phải, nhìn xuống, thả lỏng
-miệng, ngáp và nhắm mắt ngắn. Mỗi bước chỉ được chấp nhận khi:
-
-1. đủ thời gian và số landmark sample hợp lệ;
-2. action tương ứng đã được phát hiện;
-3. người dùng nhấn `Space`.
-
-Nếu action chưa hợp lệ, `Space` xóa sample của bước hiện tại và cho làm lại.
-Profile hợp lệ được lưu tại:
-
-```text
-artifacts/driver_profiles/driver_001.json
-```
-
-Những lần sau:
-
-```powershell
-python scripts\webcam_driver_demo.py --driver-id driver_001
-```
-
-Camera khác:
-
-```powershell
-python scripts\webcam_driver_demo.py `
-  --camera 1 `
-  --driver-id driver_001
-```
-
-Trong hành trình:
-
-- `R`: reset temporal history nhưng giữ personal profile.
-- `Q` hoặc `Esc`: thoát.
-
-Log được ghi vào `artifacts/webcam_driver_state.jsonl`.
-
-## Demo trip ba camera
-
-Chạy trip augmented được đóng gói cùng repo:
-
-```powershell
-python scripts\trip_visual_demo.py `
-  --trip-dir demo_trips\T_test_01
-```
-
-Cửa sổ 1280×720 hiển thị:
-
-- road-left: bounding box, track ID, depth và TTC;
-- road-right: stereo reference;
-- face camera: box mặt/mắt/miệng, driver state và continuous eye closure;
-- fusion dashboard: tốc độ, TTC, alertness và risk score.
-
-Điều khiển:
-
-- `Space`: pause/resume;
-- `N`: chạy một frame khi pause;
-- `+` / `-`: thay đổi tốc độ phát;
-- `Q` hoặc `Esc`: thoát.
-
-Lưu video và CSV chuẩn BTC:
-
-```powershell
-python scripts\trip_visual_demo.py `
-  --trip-dir demo_trips\T_test_01 `
-  --output-video artifacts\T_test_01-demo.mp4 `
-  --output-csv artifacts\T_test_01.csv
-```
-
-Nếu Ultralytics/YOLO weights chưa khả dụng, Challenge 1 vẫn tính TTC bằng
-stereo ROI fallback. Box lấy từ `kitti/label_2`, nếu được hiển thị, luôn có
-nhãn `KITTI LABELS (visual only)` và không tham gia tính TTC hoặc CSV.
-
-## Inference BTC
-
-Một trip:
-
-```powershell
-python scripts\run_inference.py `
-  --trip-dir <BTC_DATA_DIR>\T01-Sample `
-  --out artifacts\predictions
-```
-
-Nhiều trip:
-
-```powershell
-python scripts\run_inference.py `
-  --data-dir <BTC_DATA_DIR> `
-  --out artifacts\predictions
-```
-
-Mỗi trip tạo một file theo contract:
+CSV chuẩn BTC:
 
 ```csv
 frame_id,timestamp,predicted_ttc,predicted_driver_state,predicted_risk_score
 ```
 
-## Quy tắc production
+Driver state: `alert | drowsy | yawning | distracted | microsleep`.
+Decision Engine không thay đổi CSV; event được lưu JSONL và gửi riêng sang SE.
 
-- Không đưa training/augmentation/CV vào `AI/`.
-- Không commit log, prediction hoặc driver profile.
-- Model mới phải có manifest, feature schema và SHA-256 tương ứng.
-- Reset temporal state giữa các trip.
-- Xử lý frame theo đúng thứ tự timestamp; không shuffle khi inference.
+## 2. Global và personalized driver
+
+### Global pipeline — dataset BTC
+
+Dùng model chung `driver_state_rf_v3_onnx.joblib`. Đây là chế độ bắt buộc cho 6
+practice trip và 10 scored trip vì BTC không có bước enrollment theo tài xế.
+
+Trong `run_inference.py`, `--driver-id` chỉ gắn ID vào DecisionEvent, không load
+profile và không thay đổi dự đoán CSV.
+
+### Personalized pipeline — webcam
+
+Tài xế nhập `driver_id` và thực hiện guided enrollment. Hệ thống chỉ lưu baseline
+số như EAR mở/đóng, MAR trung tính/ngáp và neutral head pose; không lưu ảnh,
+video, face embedding hoặc dữ liệu nhận diện.
+
+```text
+AI/artifacts/driver_profiles/<driver_id>.json
+```
+
+`webcam_driver_demo.py` và `end_to_end_demo.py` thực sự load profile này. Không
+truyền `--driver-id` thì dùng global model.
+
+## 3. Cấu trúc runtime
+
+```text
+AI/
+├── core/
+│   ├── challenge1_road/       # detection, stereo depth, tracking, TTC
+│   ├── challenge2_driver/     # ONNX landmarks, RF, profile
+│   ├── challenge3_fusion/     # công thức safe/risk BTC
+│   └── decision_engine/       # alert policy và lifecycle
+├── configs/                   # C1, C2, Decision Engine
+├── models/                    # RF v3, YuNet, 468-landmark ONNX
+├── integrations/se_client.py
+├── scripts/
+│   ├── run_inference.py
+│   ├── webcam_driver_demo.py
+│   ├── trip_visual_demo.py
+│   └── end_to_end_demo.py
+├── artifacts/                 # runtime output, không commit
+├── requirements.txt
+└── README.md
+```
+
+## 4. Yêu cầu
+
+- Python 3.13 cho AI.
+- Webcam cho live/personalized demo.
+- RAM từ 8 GB; 16 GB phù hợp hơn khi chạy C1 và C2 cùng lúc.
+- GPU CUDA là tùy chọn. CPU vẫn chạy được nhưng có thể không realtime.
+- Dataset BTC đặt ngoài repo, ví dụ `E:\automotive_cc\Practice_Dataset`.
+
+Backend SE dùng môi trường Python 3.11 riêng; không cài requirements SE vào
+conda `automotive`.
+
+## 5. Setup AI
+
+```powershell
+cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON
+
+conda create -n automotive python=3.13 -y
+conda activate automotive
+python -m pip install --upgrade pip
+python -m pip install -r AI\requirements.txt
+```
+
+Nếu môi trường đã có:
+
+```powershell
+conda activate automotive
+python --version
+python -m pip install -r AI\requirements.txt
+```
+
+Kiểm tra môi trường và model:
+
+```powershell
+python -c "import cv2, onnxruntime, sklearn, ultralytics; print('AI environment OK')"
+
+python -c "from pathlib import Path; p=Path('AI/models'); r=['driver_state_rf_v3_onnx.joblib','face_detection_yunet_2023mar.onnx','face_landmark_468.onnx']; assert all((p/x).is_file() for x in r); print('AI models OK')"
+```
+
+## 6. Challenge 2 v3
+
+```text
+Cabin frame
+→ YuNet face detector
+→ ONNX FaceMesh-compatible 468 landmarks
+→ EAR, MAR, head pose, continuous eye closure
+→ causal rolling features 3/10/30 giây
+→ Random Forest v3 với 59 features
+→ reliable-microsleep safety fusion
+```
+
+Artifact khóa đúng feature schema và backend
+`onnx-yunet-facemesh468`; model MediaPipe/49-feature cũ bị từ chối. Report hiện
+tại ghi accuracy `0.7847`, macro-F1 `0.8028` trên 3.600 augmented test frames;
+đây không phải hidden BTC test score.
+
+## 7. Enrollment và webcam Challenge 2
+
+Tạo hoặc đo lại profile:
+
+```powershell
+python AI\scripts\webcam_driver_demo.py `
+  --camera 0 `
+  --driver-id driver_001 `
+  --enroll
+```
+
+UI chỉ nhận bước khi action và landmark sample hợp lệ.
+
+- `Space`: xác nhận; nếu chưa hợp lệ thì reset bước và làm lại.
+- `R`: reset temporal state nhưng giữ profile.
+- `Q` hoặc `Esc`: thoát.
+
+Chạy personalized:
+
+```powershell
+python AI\scripts\webcam_driver_demo.py --camera 0 --driver-id driver_001
+```
+
+Chạy global model:
+
+```powershell
+python AI\scripts\webcam_driver_demo.py --camera 0
+```
+
+Camera khác dùng `--camera 1`. Log mặc định nằm tại
+`AI/artifacts/webcam_driver_state.jsonl`.
+
+## 8. Demo ba camera từ BTC
+
+Cả road và cabin frame đều lấy từ dataset:
+
+```powershell
+python AI\scripts\trip_visual_demo.py `
+  --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample
+```
+
+`Space`: pause/resume; `N`: chạy một frame khi pause; `+/-`: tốc độ; `Q/Esc`:
+thoát.
+
+## 9. End-to-end: BTC road + webcam driver + SE
+
+Đây là demo sản phẩm chính:
+
+- road-left, road-right và telemetry lấy từ BTC;
+- cabin frame lấy từ webcam;
+- `--driver-id` load personalized profile thật;
+- C1, C2, C3 và Decision Engine cùng chạy;
+- event mới được POST ngay sang Backend SE.
+
+CSV giữ timestamp BTC. C2 và Decision Engine dùng monotonic wall-clock của
+webcam để thời lượng nhắm mắt/ngáp vẫn là thời gian thật khi road inference chậm.
+
+Chạy Backend trước, sau đó:
+
+```powershell
+python AI\scripts\end_to_end_demo.py `
+  --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  --camera 0 `
+  --driver-id driver_001 `
+  --se-endpoint http://127.0.0.1:8000/api/v1/alerts `
+  --output-csv AI\artifacts\predictions\T01-Sample-live.csv `
+  --events AI\artifacts\decision_events\T01-Sample-live.events.jsonl
+```
+
+Bỏ `--driver-id` để dùng global model. Bỏ `--se-endpoint` nếu chỉ test AI/UI.
+
+SE endpoints:
+
+```text
+GET http://127.0.0.1:8000/api/v1/alerts/recent
+WS  ws://127.0.0.1:8000/api/v1/alerts/live
+```
+
+Đây là nhánh product demo và không đi qua evaluator. Backend phải bật CarSky
+external để chuyển các event có audience `driver_display` sang HMI; Frontend
+nhận cùng event qua WebSocket. Hướng dẫn đủ bốn cửa sổ, preflight và backup:
+[`../reportbtc/C2_END_TO_END_DEMO_SCRIPT.md`](../reportbtc/C2_END_TO_END_DEMO_SCRIPT.md).
+
+## 10. Inference BTC
+
+Đây là nhánh submission độc lập: dataset → CSV → evaluator. Không cần chạy
+Backend, Frontend, webcam hoặc CarSky.
+
+Một trip:
+
+```powershell
+python AI\scripts\run_inference.py `
+  --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  --output-csv AI\artifacts\predictions\T01-Sample.csv
+```
+
+Sáu practice trip:
+
+```powershell
+python AI\scripts\run_inference.py `
+  --data-dir E:\automotive_cc\Practice_Dataset `
+  --samples-only `
+  --out AI\artifacts\predictions_6_samples
+```
+
+Mười scored trip:
+
+```powershell
+python AI\scripts\run_inference.py `
+  --data-dir E:\automotive_cc\Competition_Dataset `
+  --scored-only `
+  --out AI\artifacts\predictions_scored
+```
+
+Thêm Decision Engine:
+
+```powershell
+python AI\scripts\run_inference.py `
+  --data-dir E:\automotive_cc\Practice_Dataset `
+  --samples-only `
+  --out AI\artifacts\predictions_6_samples `
+  --decision-events-dir AI\artifacts\decision_events `
+  --driver-id btc_practice
+```
+
+Trong batch, `--driver-id` chỉ là event metadata, không personalization.
+
+### Evaluate sau inference
+
+`AI/team_kit` là bản evaluator đi kèm Starter Kit, được giữ trong repo sản phẩm
+để inference và evaluation dùng cùng một workspace. Chạy từ Git repo root
+`Hackathon-Automotive-2026`.
+
+Evaluate sáu practice trip:
+
+```powershell
+python HACKATHON\AI\team_kit\evaluation.py `
+  --predictions HACKATHON\AI\artifacts\predictions_6_samples `
+  --data-dir E:\automotive_cc\Practice_Dataset `
+  --output HACKATHON\AI\artifacts\evaluation_6_samples.json
+```
+
+Evaluate một trip:
+
+```powershell
+python HACKATHON\AI\team_kit\evaluation.py `
+  --predictions HACKATHON\AI\artifacts\predictions\T01-Sample.csv `
+  --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  --output HACKATHON\AI\artifacts\evaluation_T01-Sample.json
+```
+
+Evaluator chỉ đọc prediction và ground truth; không chạy lại inference và không
+ghi đè CSV. Tham số đúng để lưu report là `--output`, không phải
+`--output-json`.
+
+## 11. Challenge 3 và Decision Engine
+
+Challenge 3 bám công thức BTC và không dùng driver state:
+
+```text
+penalty = harsh_brake × 3 + harsh_accel × 2 + harsh_corner × 2
+        + near_miss × 5 + speeding_pct_time × 0.15
+safe_driving_score = clip(100 - penalty, 0, 100)
+```
+
+Decision Engine dùng C1/C2/C3, quality gate và temporal persistence để phát
+event `open/update/resolved`. Ngưỡng ở `AI/configs/decision_engine.yaml`; tài
+liệu chi tiết ở `AI/core/decision_engine/README.md`.
+
+## 12. Hiệu năng và hướng tối ưu
+
+Nút thắt hiện tại là:
+
+1. Challenge 1: YOLOv8s và stereo SGBM trên road frames.
+2. Challenge 2: YuNet và ONNX 468-landmark trên mỗi webcam frame.
+
+Random Forest khoảng 15 MB nhưng không phải nút thắt chính; feature extraction
+tốn thời gian hơn bước `predict` của RF.
+
+Tối ưu CPU đã triển khai:
+
+- C1 và C2 chạy song song trên hai worker vì không chia sẻ model/state.
+- PyTorch/YOLO dùng 4 CPU threads thay vì chiếm toàn bộ logical cores.
+- ONNX landmark dùng 1 intra-op thread để tránh tranh CPU với YOLO/OpenCV.
+
+Benchmark 8 frame T01-Sample trên máy phát triển CPU-only: pipeline tuần tự cũ
+khoảng `1.11 FPS`; scheduling mới khoảng `1.97 FPS` sau warm-up. Đây là benchmark
+hiệu năng, không phải cam kết FPS cho mọi máy.
+
+Kiểm tra CUDA:
+
+```powershell
+python -c "import torch; print('CUDA:', torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU mode')"
+```
+
+Nếu có CUDA, đặt `device: 0` trong `AI/configs/challenge1.yaml`. Nếu chỉ smoke
+test luồng, giới hạn số frame:
+
+```powershell
+python AI\scripts\end_to_end_demo.py `
+  --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  --camera 0 `
+  --max-frames 100
+```
+
+Không tự đổi YOLOv8s thành model nhỏ hơn hoặc skip frame vì sẽ thay đổi C1. Bước
+tối ưu sâu tiếp theo là benchmark ONNX execution provider, detector scheduling,
+cache và road model nhẹ hơn rồi đánh giá lại TTC trước khi chấp nhận.
+
+## 13. Troubleshooting
+
+- Webcam không mở: thử `--camera 1`.
+- Profile cũ bị từ chối: chạy lại với `--enroll` để tạo schema v3 ONNX.
+- SE connection refused: chạy Backend trước hoặc bỏ `--se-endpoint`.
+- SE trả 404: kiểm tra đang chạy đúng repo/port và có module `ai_alerts`.
+- Thiếu model: kiểm tra đủ ba artifact được liệt kê trong mục Setup.
+- Warning ONNX/protobuf không phải lỗi nếu không có traceback và vẫn có output.
+
+## 14. Quy tắc production
+
+- Không commit artifacts, prediction, profile, webcam data hoặc secret.
+- Không hard-code dataset path, API key hoặc CarSky credential.
+- Không để Backend tính lại risk/severity của AI.
+- Không sửa Challenge 3 để phục vụ Dashboard.
+- Reset temporal state giữa các trip; batch luôn giữ timestamp order.
+- Model mới phải có manifest, feature schema và report.

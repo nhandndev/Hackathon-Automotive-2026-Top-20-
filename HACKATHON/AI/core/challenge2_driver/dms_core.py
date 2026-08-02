@@ -8,11 +8,13 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 from math import hypot
+from pathlib import Path
 from typing import Any
 
 import cv2
-import mediapipe as mp
 import numpy as np
+
+from .face_landmarker import OnnxFaceLandmarker
 
 EYE_A = (33, 160, 158, 133, 153, 144)
 EYE_B = (362, 385, 387, 263, 373, 380)
@@ -76,7 +78,7 @@ class _Sample:
 
 
 class DMSCore:
-    """MediaPipe feature extraction plus deterministic temporal state engine."""
+    """ONNX feature extraction plus deterministic temporal state engine."""
 
     def __init__(
         self,
@@ -86,12 +88,9 @@ class DMSCore:
         self.cfg = config
         self.driver_profile = driver_profile
         face = config["face"]
-        self.mesh = mp.solutions.face_mesh.FaceMesh(
-            static_image_mode=False,
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=float(face["min_detection_confidence"]),
-            min_tracking_confidence=float(face["min_tracking_confidence"]),
+        self.face_landmarker = OnnxFaceLandmarker(
+            face,
+            default_model_dir=Path(__file__).resolve().parents[2] / "models",
         )
         self.started_ms: int | None = None
         self.last_face_ms: int | None = None
@@ -107,7 +106,7 @@ class DMSCore:
         self.mar_filter: deque[float] = deque(maxlen=int(config["smoothing"]["primitive_median_window_frames"]))
 
     def close(self) -> None:
-        self.mesh.close()
+        self.face_landmarker.close()
 
     def reset_temporal(self) -> None:
         """Reset sequence state without discarding subject calibration."""
@@ -166,14 +165,15 @@ class DMSCore:
         if self.started_ms is None:
             self.started_ms = timestamp_ms
         height, width = frame.shape[:2]
-        result = self.mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        if not result.multi_face_landmarks:
+        result = self.face_landmarker.detect(frame, timestamp_ms)
+        if result is None:
             self.history.append(_Sample(timestamp_ms, False, False, False))
             return self._missing(frame_id, timestamp_ms)
 
         self.last_face_ms = timestamp_ms
-        raw = result.multi_face_landmarks[0].landmark
-        pts = np.array([(p.x * width, p.y * height) for p in raw], dtype=np.float64)
+        pts = np.asarray(result.landmarks[:, :2], dtype=np.float64).copy()
+        pts[:, 0] *= width
+        pts[:, 1] *= height
         mouth_indices = sorted(
             set(MOUTH_CORNERS).union(
                 point for pair in MOUTH_VERTICAL for point in pair
@@ -334,10 +334,11 @@ class DMSCore:
                 "raw_pitch_deg": round(float(pose[0]), 2),
                 "raw_roll_deg": round(float(pose[2]), 2),
                 "continuous_eye_closure_ms": closure_ms,
+                "mouth_open_duration_ms": mouth_ms,
                 "off_road_duration_ms": off_road_ms,
             },
             "observation": {
-                "face_detected": True, "face_confidence": 1.0, "left_eye_valid": ear_left is not None,
+                "face_detected": True, "face_confidence": round(result.confidence, 3), "left_eye_valid": ear_left is not None,
                 "right_eye_valid": ear_right is not None, "mouth_valid": True,
                 "head_pose_valid": pose_valid, "coverage_30s": round(coverage, 3),
                 "quality_status": (

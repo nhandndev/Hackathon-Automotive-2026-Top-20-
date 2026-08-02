@@ -1,0 +1,21 @@
+backend: onnx-yunet-facemesh468
+runtime: onnxruntime
+python_target: "3.13"
+
+detector:
+  artifact: face_detection_yunet_2023mar.onnx
+  source: https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
+  sha256: 8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4
+  license: Apache-2.0
+
+landmarker:
+  artifact: face_landmark_468.onnx
+  upstream_model: https://storage.googleapis.com/mediapipe-assets/face_landmark.tflite
+  converted_artifact_source: https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/791/face_5F00_landmark.onnx
+  sha256: 4b24319bfea45e5d6ee6086e6e4714bdca48089b2f905735b34e7648ea394085
+  input_shape: [1, 192, 192, 3]
+  landmark_output_shape: [1, 1, 1, 1404]
+  topology: "468 landmarks x (x,y,z), MediaPipe FaceMesh-compatible"
+  upstream_license: Apache-2.0
+  note: "Review redistribution terms for the converted artifact before external release."
+

@@ -15,7 +15,7 @@ class LLMCoachingService:
             return fallback_engine.generate_coaching_advice(safe_score, violations)
 
         try:
-            # External LLM API Call (Mock / OpenAI integration structure)
+            # External LLM provider call.
             headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
             prompt = f"Phân tích chuyến đi {trip_id} (Safe Score: {safe_score}, Vi phạm: {violations}) và đưa ra 3 lời khuyên huấn luyện tài xế an toàn."
             

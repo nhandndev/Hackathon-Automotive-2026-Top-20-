@@ -5,8 +5,18 @@ camera:
   expected_fps: 20
   processing_mirror: false
 face:
+  backend: onnx
+  detector_model: face_detection_yunet_2023mar.onnx
+  landmark_model: face_landmark_468.onnx
   min_detection_confidence: 0.50
-  min_tracking_confidence: 0.50
+  min_landmark_confidence: 0.50
+  nms_threshold: 0.30
+  top_k: 5000
+  roi_scale: 1.50
+  roi_vertical_shift: -0.05
+  # One thread is faster and much more stable than ORT auto-threading when
+  # C1 PyTorch/OpenCV runs in parallel on the same CPU.
+  intra_op_num_threads: 1
 eye:
   calibration_seconds: 5
   closure_threshold_ratio: 0.72

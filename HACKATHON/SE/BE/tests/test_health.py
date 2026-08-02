@@ -110,3 +110,18 @@ def test_cors_preflight_allows_local_frontend(app_factory):
 
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+def test_cors_preflight_allows_product_dashboard(app_factory):
+    app = app_factory()
+    with TestClient(app) as client:
+        response = client.options(
+            "/api/v1/alerts/snapshot",
+            headers={
+                "Origin": "http://127.0.0.1:3000",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:3000"

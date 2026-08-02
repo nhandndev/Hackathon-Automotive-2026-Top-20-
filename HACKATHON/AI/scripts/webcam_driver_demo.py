@@ -15,6 +15,7 @@ AI_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(AI_ROOT))
 
 from core.challenge2_driver.dms_core import DMSCore
+from core.challenge2_driver.face_landmarker import LANDMARK_BACKEND
 from core.challenge2_driver.ml_features import (
     CausalFeatureBuffer,
     feature_names,
@@ -294,8 +295,8 @@ def main():
     parser.add_argument(
         "--model",
         type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf_v2.joblib",
-        help="Production Random Forest v2; pass an empty model only in code",
+        default=AI_ROOT / "models" / "driver_state_rf_v3_onnx.joblib",
+        help="Production ONNX-landmark Random Forest v3",
     )
     parser.add_argument(
         "--output",
@@ -330,6 +331,11 @@ def main():
     artifact = joblib.load(args.model) if args.model else None
     if artifact is not None and artifact.get("feature_names") != feature_names():
         raise ValueError("Model feature schema does not match this code; retrain it")
+    if artifact is not None and artifact.get("landmark_backend") != LANDMARK_BACKEND:
+        raise ValueError(
+            "Model was not trained with the active ONNX landmark backend; "
+            "use driver_state_rf_v3_onnx.joblib or retrain it"
+        )
     camera_index = config["camera"]["index"] if args.camera is None else args.camera
     capture = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, config["camera"]["width"])

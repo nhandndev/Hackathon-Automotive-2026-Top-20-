@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, X, Send, ArrowRight, Lightbulb, Clock, ShieldAlert, Bot, User } from 'lucide-react';
 import { ChatMessage } from '../types';
-import { INITIAL_CHAT_MESSAGES } from '../data/mockData';
 
 interface AICopilotDrawerProps {
   isOpen: boolean;
@@ -16,7 +15,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   onNavigateToTrip,
   onSendBreakSchedule,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -59,6 +58,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `Copilot HTTP ${response.status}`);
 
       const assistantMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -73,7 +73,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       const fallbackMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'assistant',
-        text: 'Hệ thống Fleet AI đã phân tích dữ liệu. Tài xế A (VH-04) có rủi ro cao nhất với 2 sự cố vi ngủ liên tiếp.',
+        text: 'Copilot Backend hiện không khả dụng. Không có dữ liệu giả lập được hiển thị.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);

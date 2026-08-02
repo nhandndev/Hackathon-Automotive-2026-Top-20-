@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="h-5 w-[1px] bg-[#334155]" />
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-extrabold tracking-wider text-white">
-                {selectedVehicle ? selectedVehicle.trip_id : 'VH-01'}
+                {selectedVehicle ? selectedVehicle.trip_id : 'NO TRIP'}
               </h1>
               <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-950/80 border border-red-500/40 text-[11px] font-semibold text-red-400 animate-pulse">
                 <Radio className="w-3 h-3 text-red-500" />
@@ -144,8 +144,6 @@ export const Header: React.FC<HeaderProps> = ({
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-ping" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
         </button>
 
         {/* User Profile */}

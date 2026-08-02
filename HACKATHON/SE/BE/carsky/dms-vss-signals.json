@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 {
   "Vehicle": {
     "type": "branch",
@@ -18,162 +17,85 @@
       },
       "Driver": {
         "type": "branch",
-        "description": "Driver monitoring signals inferred from the AI pipeline.",
+        "description": "Driver monitoring signals inferred by AI.",
         "children": {
           "State": {
             "type": "sensor",
             "datatype": "string",
-            "allowed": [
-              "alert",
-              "drowsy",
-              "yawning",
-              "distracted",
-              "microsleep"
-            ],
-            "description": "Driver state from the AI contract."
+            "description": "AI driver state: alert, drowsy, yawning, distracted or microsleep."
           },
           "AlertnessScore": {
             "type": "sensor",
             "datatype": "float",
             "min": 0,
             "max": 1,
-            "description": "Driver alertness score in the range 0..1."
+            "description": "AI driver alertness score in the range 0..1."
           }
-=======
-[
-{
-  "Vehicle": {
-    "type": "branch",
-    "description": "Vehicle root",
-    "children": {
-      "Speed": {"type": "sensor", "datatype": "float", "unit": "km/h", "description": "Vehicle speed"},
-      "SpeedLimit": {"type": "attribute", "datatype": "float", "unit": "km/h", "description": "Current speed limit"},
-      "Driver": {
-        "type": "branch",
-        "description": "Driver monitoring",
-        "children": {
-          "State": {"type": "sensor", "datatype": "string", "description": "alert, drowsy, yawning, distracted or microsleep"},
-          "AlertnessScore": {"type": "sensor", "datatype": "float", "min": 0, "max": 1, "description": "Driver alertness score"}
->>>>>>> Stashed changes
         }
       },
       "ADAS": {
         "type": "branch",
-<<<<<<< Updated upstream
-        "description": "Driver safety and ADAS risk signals for HMI display.",
+        "description": "DMS safety signals for the in-vehicle HMI.",
         "children": {
           "MinTTC": {
             "type": "sensor",
             "datatype": "float",
             "unit": "s",
-            "description": "Minimum time-to-collision in seconds. Do not send Infinity to CarSky."
+            "min": 0,
+            "description": "Minimum finite TTC; Infinity is omitted by Backend."
           },
           "Headway": {
             "type": "sensor",
             "datatype": "float",
             "unit": "s",
-            "description": "Following headway in seconds."
+            "min": 0,
+            "description": "Finite following headway."
           },
           "FinalRiskScore": {
             "type": "sensor",
             "datatype": "float",
             "min": 0,
             "max": 100,
-            "description": "Final risk score from AI/backend enrichment."
+            "description": "Risk evidence emitted by AI; never recomputed by Backend."
           },
           "CriticalAlert": {
-            "type": "sensor",
+            "type": "actuator",
             "datatype": "boolean",
-            "description": "Whether the HMI should enter critical alert mode."
+            "description": "Whether a critical AI safety episode is active."
           },
           "DisplaySeverity": {
-            "type": "sensor",
+            "type": "actuator",
             "datatype": "string",
-            "allowed": [
-              "SAFE",
-              "WARNING",
-              "CRITICAL",
-              "RECOVERY"
-            ],
-            "description": "Display severity for the HMI."
+            "description": "SAFE, WARNING, CRITICAL or RECOVERY."
           },
           "AlertReasonCode": {
-            "type": "sensor",
+            "type": "actuator",
             "datatype": "string",
-            "allowed": [
-              "NONE",
-              "DISTRACTED",
-              "DROWSY",
-              "YAWNING",
-              "MICROSLEEP",
-              "TTC_CRITICAL",
-              "TAILGATING",
-              "SPEEDING",
-              "HARSH_BRAKE",
-              "HARSH_ACCEL",
-              "HARSH_CORNER"
-            ],
-            "description": "Reason code for the active alert."
+            "description": "Upper-case AI alert type translated for HMI display."
           },
           "RecommendedActionCode": {
-            "type": "sensor",
+            "type": "actuator",
             "datatype": "string",
-            "allowed": [
-              "NONE",
-              "FOCUS_FORWARD",
-              "TAKE_BREAK",
-              "BRAKE_SAFE",
-              "REDUCE_SPEED"
-            ],
-            "description": "Recommended driver action for the HMI."
+            "description": "Stable HMI action code selected from the AI alert type."
           },
           "EventTransition": {
-            "type": "sensor",
+            "type": "actuator",
             "datatype": "string",
-            "allowed": [
-              "NONE",
-              "START",
-              "UPDATE",
-              "END"
-            ],
-            "description": "Alert lifecycle transition."
+            "description": "NONE, START, UPDATE or END."
           },
           "AIStatus": {
-            "type": "sensor",
+            "type": "actuator",
             "datatype": "string",
-            "allowed": [
-              "ONLINE",
-              "DEGRADED",
-              "OFFLINE"
-            ],
-            "description": "AI data freshness status for the HMI."
+            "description": "ONLINE, DEGRADED or OFFLINE."
           },
           "DataAgeMs": {
-            "type": "sensor",
+            "type": "actuator",
             "datatype": "uint32",
             "unit": "ms",
-            "description": "Age of the latest AI frame in milliseconds."
+            "description": "Age of the latest AI event."
           }
-=======
-        "description": "DMS safety HMI signals",
-        "children": {
-          "MinTTC": {"type": "sensor", "datatype": "float", "unit": "s", "min": 0, "description": "Minimum finite time to collision"},
-          "Headway": {"type": "sensor", "datatype": "float", "unit": "s", "min": 0, "description": "Finite headway"},
-          "FinalRiskScore": {"type": "sensor", "datatype": "float", "min": 0, "max": 100, "description": "AI final risk score, never recomputed by Backend"},
-          "CriticalAlert": {"type": "actuator", "datatype": "boolean", "description": "Critical episode active"},
-          "DisplaySeverity": {"type": "actuator", "datatype": "string", "description": "SAFE, WARNING, CRITICAL or RECOVERY"},
-          "AlertReasonCode": {"type": "actuator", "datatype": "string", "description": "Deterministic alert reason"},
-          "RecommendedActionCode": {"type": "actuator", "datatype": "string", "description": "Deterministic driver action"},
-          "EventTransition": {"type": "actuator", "datatype": "string", "description": "NONE, START, UPDATE or END"},
-          "AIStatus": {"type": "actuator", "datatype": "string", "description": "ONLINE, DEGRADED or OFFLINE"},
-          "DataAgeMs": {"type": "actuator", "datatype": "uint32", "unit": "ms", "description": "Age of most recent AI frame"}
->>>>>>> Stashed changes
         }
       }
     }
   }
 }
-<<<<<<< Updated upstream
-=======
-]
->>>>>>> Stashed changes

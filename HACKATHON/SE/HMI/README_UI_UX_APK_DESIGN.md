@@ -1,5 +1,9 @@
 # README cho team UI/UX làm lại giao diện APK Android HMI
 
+> Runtime hiện dùng CarSky/KUKSA → bridge → VHAL. Source chính là
+> `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java`; không được đưa REST
+> credential hoặc mock fallback trở lại APK.
+
 File này dành cho thành viên UI/UX trước giờ làm web nhưng muốn phụ thiết kế lại APK Android HMI cho dự án DMS Driver Safety. Mục tiêu là làm giao diện đẹp hơn, rõ hơn, demo tốt hơn trên CarSky Android Screen, nhưng không phá luồng dữ liệu đang chạy.
 
 ## 1. APK này dùng để làm gì

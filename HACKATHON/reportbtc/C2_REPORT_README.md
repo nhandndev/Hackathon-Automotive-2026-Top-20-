@@ -1,63 +1,43 @@
-# Hướng dẫn dùng bộ tài liệu báo cáo C2
+# FPTU DMS Vision — KPI và kế hoạch hoàn thiện Preview
 
-## Vai trò 5 file
+## 1. KPI hiện tại so với mục tiêu đã đăng ký
 
-| File | Vai trò |
-|---|---|
-| `README.md` | Yêu cầu gốc của BTC |
-| `readmeproposal.md` | Cam kết gốc của nhóm ở Proposal |
-| `C2_PROGRESS_REPORT_FPTU_DMS_VISION.md` | Báo cáo tiến độ chính để chuyển thành PDF/slide |
-| `C2_END_TO_END_DEMO_SCRIPT.md` | Runbook thao tác demo |
-| `C2_REPORT_README.md` | File định tuyến và checklist này |
+| Nhóm KPI | Mục tiêu Proposal | Hiện tại | Trạng thái |
+|---|---|---:|---|
+| C1 TTC | Baseline Starter Kit + cải tiến; không chốt score | Composite **65,5/100**; MAE-critical **0,876 s**; F1 retest **69,9%** | Artifact F1 mới chờ đồng bộ |
+| C2 Driver State | Tự xây; không chốt score | Practice composite retest **87,2/100** | Artifact mới chờ đồng bộ |
+| C2 augmented holdout | Không chốt score | Accuracy **78,47%**; macro-F1 **80,28%** | Đã có model test report; không phải hidden test |
+| C3 Safe Driving Risk | TTC + telemetry theo công thức BTC | **100/100** | Không kết luận hoàn hảo vì Safe Score prediction/GT cùng clip về 0 |
+| Local warning | Trong **500 ms** | Chưa có p95 end-to-end | Chưa xác nhận đạt |
+| Data-level latency | Khoảng **<50 ms** | Chưa có p95 delivery | Chưa xác nhận đạt |
+| Product throughput | Realtime, không chốt FPS | Benchmark CPU ngắn **1,97 FPS** (~508 ms/frame) | Cần benchmark một trip đầy đủ |
+| Unified pipeline | Driver + road + telemetry + Decision Engine | Đã nối end-to-end | Đạt MVP |
+| Dashboard | Live Map + Alert Log + Analytics | Live data/multi-trip đạt MVP; analytics một phần | Một phần |
+| Alert filtering | Đo false alarm và gate theo thời gian | Persistence/hysteresis/cooldown/lifecycle đã có; KPI false alarm chưa khóa | Một phần |
+| CarSky local warning | Cảnh báo trên xe | Đến KUKSA/HMI Bridge; VHAL → APK còn blocked | Một phần |
+| Offline-first | Queue + resync | Queue RAM, chưa persistent | Chưa đạt |
+| Privacy | Event-only, không gửi video thô | Event chính + JPEG demo tần suất thấp | Một phần |
+| Pi 5 + Hailo-8L | Có deployment | Chưa có evidence | Chưa đạt |
+| Coaching/Copilot | Post-trip report | Prototype | Chưa đạt production |
 
-Chỉ lấy nội dung báo cáo từ `C2_PROGRESS_REPORT_FPTU_DMS_VISION.md`. Không đưa
-toàn bộ command của runbook vào slide.
+> Kết quả hiện hành là C1 F1 **0,699** và C2 composite **87,2/100** từ lần
+> retest mới nhất trên máy khác. Phải copy evaluation artifact mới vào repo
+> trước khi khóa hồ sơ để số liệu có thể tái lập.
 
-## Thông điệp cần giữ
+## 2. Kế hoạch hoàn thiện Preview
 
-> Hệ thống xử lý TTC, Driver State và telemetry tại AI runtime; Challenge 3 giữ
-> đúng công thức BTC, còn Decision Engine phía sau dùng ngữ cảnh và thời gian để
-> phát cảnh báo có chọn lọc đến Fleet Dashboard và CarSky HMI.
+| Ưu tiên | Việc cần hoàn thành | Bằng chứng pass |
+|---|---|---|
+| P0 | Đồng bộ artifact retest | Evaluation JSON có C1 F1 `0,699`, C2 `87,2`; kèm model/config/checksum |
+| P0 | Portable setup/run | Máy clone mới chạy không cần sửa ổ đĩa tuyệt đối |
+| P0 | Rehearsal toàn luồng | Cùng `event_id` tại AI, Backend, Dashboard và CarSky |
+| P0 | Đóng boundary Android HMI | APK nhận custom signal realtime hoặc có xác nhận platform/fallback rõ ràng |
+| P0 | Benchmark chính thức | FPS trung bình, p95 AI/API delivery, CUDA/ORT provider trên một trip đầy đủ |
+| P0 | Đo alert fatigue | Alert/session, lifecycle, cooldown và duplicate rejection |
+| P0 | Khóa submission | CSV/schema/evaluation/checksum cho Practice và scored trips |
+| P0 | Chuẩn bị backup | Video 5–7 phút, screenshot, JSONL, evaluation JSON; không lộ secret |
+| P1 | Persistent outbox/history | Event retry đúng một lần và trip còn sau Backend restart |
+| P1 | Chốt privacy | Event-only production; consent/retention cho JPEG demo |
+| P1 | Cải thiện C1/C2 | Per-trip/confusion matrix, validation không leakage |
+| P2 | Coaching và hardware | Report từ dữ liệu thật; benchmark Pi 5/Hailo-8L hoặc xác nhận đổi target |
 
-## Những cập nhật phải xuất hiện trong report
-
-- Hai nhánh độc lập: CSV submission và product demo.
-- Hai mode product demo: `hybrid-live` và `dataset-fleet`.
-- Dashboard dùng ảnh, snapshot và event thật theo từng `trip_id`; không còn card
-  fleet hard-code khi Backend đã có session.
-- Dataset fleet đăng ký toàn bộ trip, inference tuần tự và giữ lịch sử trip đã
-  hoàn thành trong phiên Backend.
-- Decision Engine chỉ phát `open`, thay đổi có ý nghĩa và `resolved`; Frontend
-  upsert theo `event_id` để tránh alert spam.
-- Demo dùng multi-rate scheduling; CSV chấm điểm vẫn inference từng frame.
-- CUDA đã được cấu hình cho PyTorch và ONNX Runtime, nhưng FPS end-to-end chính
-  thức vẫn phải đo bằng rehearsal dài.
-- Demo hiện gửi JPEG cabin/road đã annotate ở tần suất thấp đến Dashboard. Đây
-  là ngoại lệ trình diễn; kiến trúc production event-only vẫn là mục tiêu.
-
-## Những điều không được tuyên bố quá mức
-
-- Không dùng C3 `100/100` để kết luận hoàn hảo vì safe score practice bão hòa 0.
-- Không gọi multi-rate demo là pipeline CSV chính thức.
-- Không gọi CarSky/HMI realtime là verified nếu deployment/device chưa được
-  rehearsal trong buổi chạy hiện tại.
-- Không gọi history là persistent qua Backend restart; artifact CSV/JSONL được
-  lưu, còn Dashboard session history hiện ở RAM.
-- Không tuyên bố Pi 5/Hailo, authentication, persistent outbox hoặc hidden-test
-  performance đã hoàn thành.
-
-## Evidence cần chụp trước khi nộp
-
-- Evaluation JSON của 6 practice trips.
-- Một `event_id` giống nhau tại AI JSONL, Backend, Dashboard và CarSky/HMI.
-- Dashboard có nhiều trip với trạng thái `pending/running/completed`.
-- Log CUDA provider và benchmark latency/FPS trên cùng máy demo.
-- `pytest` Backend, Frontend production build và video backup dưới 10 phút.
-
-## Checklist cuối
-
-- [ ] Báo cáo có đủ 9 mục BTC yêu cầu.
-- [ ] KPI ghi rõ phạm vi đo; số chưa đo để `Pending measurement`.
-- [ ] Phân biệt realtime, replay và mock transport scenario.
-- [ ] Không lộ `.env`, token, driver profile hoặc dữ liệu nhạy cảm.
-- [ ] Có kế hoạch P0/P1 đến Code Freeze và phân công đủ 5 thành viên.

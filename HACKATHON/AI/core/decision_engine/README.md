@@ -187,7 +187,20 @@ AND (
 
 `WATCH` không gửi API. Một single-frame signal yếu không được phát cảnh báo.
 
-### 5.3 Collision/TTC
+### 5.3 Event delivery (anti-spam)
+
+Mỗi rule chỉ có một `event_id` trong suốt một episode. Backend nhận event khi:
+
+- `open`: điều kiện WARNING/CRITICAL vừa đủ persistence;
+- `update`: severity tăng, audience thay đổi, hoặc action/message thay đổi;
+- `resolved`: tín hiệu đã ổn định đủ recovery time.
+
+Engine không gửi heartbeat theo từng frame hay từng giây. Evidence realtime như
+TTC, risk score và camera frame đi qua live snapshot endpoint; chúng không tạo
+thêm dòng Decision Event Log. Frontend upsert theo `event_id`, vì vậy một episode
+không bị hiển thị thành nhiều cảnh báo giả.
+
+### 5.4 Collision/TTC
 
 Áp dụng khi `speed_kmh >= 5`, TTC hữu hạn và đã qua danger confirmation của
 Challenge 1. Pipeline C1 hiện đã yêu cầu 8 frame liên tiếp trong band dưới
@@ -208,7 +221,7 @@ vẫn phải mở episode mới; cooldown không được chặn hard safety eve
 vùng cảnh báo va chạm được dùng trong nghiên cứu human factors; nó không phải
 lệnh tự động phanh.
 
-### 5.4 Microsleep và continuous eye closure
+### 5.5 Microsleep và continuous eye closure
 
 | Mức | Điều kiện | Audience |
 |---|---|---|
@@ -225,7 +238,7 @@ thường và thận trọng hơn định nghĩa behavioral microsleep `>500 ms`
 số nghiên cứu naturalistic. Không được hạ xuống 500 ms nếu chưa đo lại false
 alerts với kính, glare và blink dài.
 
-### 5.5 Distraction/off-road glance
+### 5.6 Distraction/off-road glance
 
 Runtime hiện dùng head yaw/pitch làm proxy cho off-road attention, chưa phải
 gaze tracker chuẩn. Vì vậy event phải có face quality hợp lệ và không được mô
@@ -245,7 +258,7 @@ Các mốc `3.5 s @ >=50 km/h` và `6 s @ >=20 km/h` bám warning trigger của 
 ADDW 2023/2590. Vì hệ thống hiện chỉ có head-pose proxy, README không tuyên bố
 tuân thủ ADDW cho đến khi có gaze-zone validation.
 
-### 5.6 Drowsiness, PERCLOS và yawning
+### 5.7 Drowsiness, PERCLOS và yawning
 
 PERCLOS dùng rolling window 30 giây hiện có. Chỉ kích hoạt khi đã có ít nhất
 10 giây dữ liệu và valid coverage `>= 80%`.
@@ -272,7 +285,7 @@ ba vùng tăng dần được báo cáo trong nghiên cứu; chúng vẫn phải
 theo từng driver vì PERCLOS không có một threshold phổ quát cho mọi camera và
 mọi người.
 
-### 5.7 Speeding và harsh behavior
+### 5.8 Speeding và harsh behavior
 
 | Rule | Điều kiện | Audience |
 |---|---|---|
@@ -296,7 +309,7 @@ trong `evidence`.
 Resolve speeding khi `speed <= speed_limit + 3 km/h` liên tục 5 giây.
 Cooldown speeding/harsh behavior là 60 giây.
 
-### 5.8 Challenge 3 risk tier
+### 5.9 Challenge 3 risk tier
 
 `predicted_risk_score` là penalty tích lũy, không phải xác suất tai nạn tức
 thời. Nó chỉ tạo Fleet KPI event một lần khi **đi lên qua** mỗi mốc:
@@ -311,7 +324,7 @@ Không bao giờ tạo `CRITICAL` chỉ từ C3 risk. C3 là monotonic và có t
 do nhiều frame thuộc cùng một near-miss; critical safety phải đến từ TTC,
 driver evidence hoặc compound rule.
 
-### 5.9 Sensor degraded
+### 5.10 Sensor degraded
 
 | Điều kiện | Xử lý |
 |---|---|
@@ -322,7 +335,7 @@ driver evidence hoặc compound rule.
 Sensor degraded không được biến thành `drowsy`, `microsleep` hoặc
 `distracted`. Cooldown system-health là 60 giây.
 
-### 5.10 Compound-risk escalation
+### 5.11 Compound-risk escalation
 
 Nâng đúng một severity level khi:
 
@@ -335,7 +348,7 @@ AND driver evidence hợp lệ
 Nếu `TTC <=1.5 s`, kết quả luôn là `CRITICAL`. Compound event đi cả CarSky và
 Fleet, dùng một `event_id`; không tạo thêm hai event TTC và driver-state riêng.
 
-### 5.11 Hysteresis, lifecycle và chống spam
+### 5.12 Hysteresis, lifecycle và chống spam
 
 ```text
 NORMAL -> WATCH -> WARNING -> CRITICAL -> RECOVERY -> NORMAL
@@ -351,7 +364,7 @@ NORMAL -> WATCH -> WARNING -> CRITICAL -> RECOVERY -> NORMAL
 - Cooldown chỉ chặn event lặp cùng mức; không chặn escalation hoặc hard safety.
 - SE retry cùng `event_id` và `idempotency_key`, không sinh event mới.
 
-### 5.12 Ví dụ đọc policy
+### 5.13 Ví dụ đọc policy
 
 **Ví dụ A — TTC 2.8 giây:** xe chạy 45 km/h, C1 hợp lệ và TTC ở 2.8 giây
 liên tục 0.5 giây. Engine mở `collision_warning`, severity `warning`, gửi cả

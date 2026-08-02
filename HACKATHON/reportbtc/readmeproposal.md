@@ -1,6 +1,9 @@
 # FPTU DMS Vision – Proposal README
 
 > Chuyển đổi nội dung proposal sang tài liệu README.
+>
+> **Vai trò file:** cam kết gốc giai đoạn Proposal, được giữ nguyên để so sánh
+> với kết quả C2. Không dùng file này để mô tả trạng thái triển khai hiện tại.
 
 ---
 

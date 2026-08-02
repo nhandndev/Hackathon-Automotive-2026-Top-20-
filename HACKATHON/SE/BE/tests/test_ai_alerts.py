@@ -77,3 +77,49 @@ def test_driver_alert_is_forwarded_to_carsky_once(client: TestClient):
     }
     assert signals["Vehicle.ADAS.DisplaySeverity"] == "CRITICAL"
     assert signals["Vehicle.ADAS.MinTTC"] == 1.0
+
+
+def test_live_trip_registry_keeps_completed_trip_history(client: TestClient):
+    registration = {
+        "trips": [
+            {"trip_id": "T01-Sample", "metadata": {"fps": 20}},
+            {"trip_id": "T02-Sample", "metadata": {"fps": 20}},
+        ]
+    }
+    assert client.post(
+        "/api/v1/alerts/trips/register", json=registration
+    ).status_code == 202
+
+    def snapshot(trip_id: str, frame_id: int) -> dict:
+        return {
+            "schema_version": "1.0",
+            "trip_id": trip_id,
+            "frame_id": frame_id,
+            "trip_timestamp_ms": frame_id * 50,
+            "speed_kmh": 30,
+            "predicted_ttc_sec": 2.5,
+            "risk_score": 40,
+            "driver_state": "alert",
+            "driver_confidence": 0.9,
+            "alertness_score": 0.9,
+        }
+
+    assert client.post(
+        "/api/v1/alerts/snapshot", json=snapshot("T01-Sample", 1)
+    ).status_code == 202
+    assert client.post(
+        "/api/v1/alerts/trips/T01-Sample/complete"
+    ).status_code == 200
+    assert client.post(
+        "/api/v1/alerts/snapshot", json=snapshot("T02-Sample", 2)
+    ).status_code == 202
+
+    sessions = client.get("/api/v1/alerts/trips").json()["items"]
+    by_id = {item["trip_id"]: item for item in sessions}
+    assert by_id["T01-Sample"]["status"] == "completed"
+    assert by_id["T01-Sample"]["latest_snapshot"]["frame_id"] == 1
+    assert len(by_id["T01-Sample"]["snapshot_history"]) == 1
+    assert by_id["T02-Sample"]["status"] == "running"
+    assert client.get(
+        "/api/v1/alerts/snapshot?trip_id=T01-Sample"
+    ).json()["frame_id"] == 1

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import copy
 import csv
 import json
 import math
@@ -47,6 +48,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--trip-dir", type=Path, required=True)
     parser.add_argument("--camera", type=int, default=0)
+    parser.add_argument(
+        "--driver-source", choices=("webcam", "dataset"), default="webcam",
+        help="Use a live webcam or the trip's driver/frame images",
+    )
     parser.add_argument("--driver-id")
     parser.add_argument(
         "--profiles-dir", type=Path,
@@ -76,6 +81,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--max-frames", type=int, default=0)
     parser.add_argument(
+        "--road-inference-interval", type=int, default=5,
+        help="Demo-only: run C1 every N displayed frames and reuse the latest result",
+    )
+    parser.add_argument(
+        "--face-detector-interval", type=int, default=10,
+        help="Demo-only: rerun YuNet every N frames; landmarks still run every frame",
+    )
+    parser.add_argument(
         "--dashboard-stream-fps", "--cabin-stream-fps",
         dest="dashboard_stream_fps", type=float, default=5.0,
         help="Road/cabin JPEG and metric snapshot rate sent to Dashboard; 0 disables it",
@@ -87,13 +100,20 @@ def parse_args() -> argparse.Namespace:
         default=AI_ROOT / "artifacts" / "decision_events" / "live.events.jsonl",
     )
     args = parser.parse_args()
-    if args.speed <= 0 or args.max_frames < 0 or args.dashboard_stream_fps < 0:
+    if (
+        args.speed <= 0
+        or args.max_frames < 0
+        or args.dashboard_stream_fps < 0
+        or args.road_inference_interval < 1
+        or args.face_detector_interval < 1
+    ):
         parser.error("--speed must be positive; frame limits/rates must be non-negative")
     return args
 
 
 def snapshot_from_outputs(
-    dataset, frame, live_timestamp_ms, speed_limit, ttc, driver, fleet
+    dataset, frame, live_timestamp_ms, speed_limit, ttc, driver, fleet,
+    road_confirmed=True,
 ):
     features = driver.get("features", {})
     return DecisionSnapshot(
@@ -106,8 +126,8 @@ def snapshot_from_outputs(
         longitudinal_accel=frame.longitudinal_accel,
         lateral_accel=frame.lateral_accel,
         predicted_ttc_sec=ttc,
-        ttc_confirmed=True,
-        road_quality_status="valid",
+        ttc_confirmed=bool(road_confirmed),
+        road_quality_status="valid" if road_confirmed else "warming_up",
         driver_state=str(driver["state"]),
         driver_confidence=float(driver["confidence"]),
         alertness_score=float(driver["alertness_score"]),
@@ -152,7 +172,10 @@ def main() -> int:
             )
         profile = store.load(args.driver_id)
     driver = DriverStatePredictor(
-        args.driver_model, args.driver_config, driver_profile=profile
+        args.driver_model,
+        args.driver_config,
+        driver_profile=profile,
+        face_detector_interval_frames=args.face_detector_interval,
     )
     speed_limit = (
         float(args.speed_limit_kmh) if args.speed_limit_kmh is not None
@@ -169,9 +192,16 @@ def main() -> int:
         bearer_token=os.getenv("FPTU_SE_BEARER_TOKEN"),
     ) if args.se_endpoint else None
 
-    capture = cv2.VideoCapture(args.camera, cv2.CAP_DSHOW)
-    if not capture.isOpened():
-        raise RuntimeError(f"Cannot open webcam {args.camera}")
+    if client:
+        client.register_trips([
+            {"trip_id": dataset.trip_id, "metadata": dataset.metadata}
+        ])
+
+    capture = None
+    if args.driver_source == "webcam":
+        capture = cv2.VideoCapture(args.camera, cv2.CAP_DSHOW)
+        if not capture.isOpened():
+            raise RuntimeError(f"Cannot open webcam {args.camera}")
     args.events.parent.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, object]] = []
     last_snapshot = None
@@ -179,30 +209,74 @@ def main() -> int:
     paused = False
     fps = float(dataset.metadata.get("fps", 20.0) or 20.0)
     live_started_ns = time.perf_counter_ns()
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+    # C1 is intentionally decoupled from the UI loop in product-demo mode.
+    # Submission inference remains frame-by-frame in run_inference.py.
+    road_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    road_future: concurrent.futures.Future[tuple[float, dict, int]] | None = None
+    cached_ttc = float("inf")
+    cached_road_debug: dict = {}
+    road_confirmed = False
     media_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     media_future: concurrent.futures.Future[dict[str, object]] | None = None
     next_dashboard_publish_ms = 0.0
+    trip_finished = False
     try:
         with args.events.open("w", encoding="utf-8") as event_stream:
-            for frame in dataset.iter_frames():
-                ok, cabin = capture.read()
-                if not ok:
-                    raise RuntimeError("Webcam stopped returning frames")
+            records = list(dataset.iter_frames())
+            source_index = 0
+            next_frame_due = time.perf_counter()
+            while source_index < len(records):
+                frame = records[source_index]
+                if capture is not None:
+                    ok, cabin = capture.read()
+                    if not ok:
+                        raise RuntimeError("Webcam stopped returning frames")
+                else:
+                    cabin = dataset.load_driver(frame.frame_id)
                 live_timestamp_ms = (
                     time.perf_counter_ns() - live_started_ns
                 ) // 1_000_000
                 left = dataset.load_left(frame.frame_id)
                 right = dataset.load_right(frame.frame_id)
-                road_future = executor.submit(
-                    road.predict_frame, frame.frame_id, frame.timestamp,
-                    left, right, frame.speed_kmh,
+                if road_future is not None and road_future.done():
+                    try:
+                        cached_ttc, cached_road_debug, _ = road_future.result()
+                        road_confirmed = True
+                    except Exception as exc:
+                        road_confirmed = False
+                        print(f"Road inference warning: {exc}", file=sys.stderr)
+                    road_future = None
+                if (
+                    road_future is None
+                    and (
+                        not road_confirmed
+                        or processed % args.road_inference_interval == 0
+                    )
+                ):
+                    road_frame_id = frame.frame_id
+                    road_timestamp = frame.timestamp
+                    road_speed = frame.speed_kmh
+                    road_left = left.copy()
+                    road_right = right.copy()
+
+                    def infer_road(
+                        frame_id=road_frame_id,
+                        timestamp=road_timestamp,
+                        speed_kmh=road_speed,
+                        left_bgr=road_left,
+                        right_bgr=road_right,
+                    ) -> tuple[float, dict, int]:
+                        value = road.predict_frame(
+                            frame_id, timestamp,
+                            left_bgr, right_bgr, speed_kmh,
+                        )
+                        return value, copy.deepcopy(road.last_debug), frame_id
+
+                    road_future = road_executor.submit(infer_road)
+                ttc = cached_ttc
+                driver_out = driver.predict_frame(
+                    frame.frame_id, live_timestamp_ms, cabin
                 )
-                driver_future = executor.submit(
-                    driver.predict_frame, frame.frame_id, live_timestamp_ms, cabin
-                )
-                ttc = road_future.result()
-                driver_out = driver_future.result()
                 annotated_cabin = draw_face(cabin, driver_out)
                 fleet_out = fleet.update(
                     ttc, frame.speed_kmh,
@@ -210,7 +284,7 @@ def main() -> int:
                 )
                 last_snapshot = snapshot_from_outputs(
                     dataset, frame, live_timestamp_ms, speed_limit, ttc,
-                    driver_out, fleet_out
+                    driver_out, fleet_out, road_confirmed=road_confirmed
                 ).model_copy(update={"driver_id": args.driver_id})
                 for event in decision.update(last_snapshot):
                     payload = event.transport_dict()
@@ -218,10 +292,12 @@ def main() -> int:
                     event_stream.flush()
                     if client:
                         client.send(event)
-                annotations = [] if road.last_debug.get("objects") else project_kitti_labels(
+                annotations = [] if cached_road_debug.get("objects") else project_kitti_labels(
                     dataset, frame.frame_id, left.shape
                 )
-                annotated_road = draw_road(left, ttc, road.last_debug, annotations)
+                annotated_road = draw_road(
+                    left, ttc, cached_road_debug, annotations
+                )
                 if (
                     client
                     and args.dashboard_stream_fps > 0
@@ -280,20 +356,54 @@ def main() -> int:
                     ]),
                 ])
                 processed += 1
+                realtime_pacing = not args.no_display or client is not None
+                if realtime_pacing:
+                    frame_period = 1.0 / (fps * args.speed)
+                    next_frame_due += frame_period
                 if not args.no_display:
                     cv2.imshow(WINDOW_NAME + " - LIVE DRIVER", canvas)
-                    key = cv2.waitKey(max(1, round(1000 / (fps * args.speed)))) & 0xFF
+                    wait_ms = max(
+                        1, int((next_frame_due - time.perf_counter()) * 1000)
+                    )
+                    key = cv2.waitKey(wait_ms) & 0xFF
                     if key in (ord("q"), 27):
                         break
+                    if key in (ord("+"), ord("=")):
+                        args.speed = min(8.0, args.speed * 2.0)
+                        next_frame_due = time.perf_counter()
+                        print(f"Playback speed: {args.speed:g}x")
+                    elif key in (ord("-"), ord("_")):
+                        args.speed = max(0.25, args.speed / 2.0)
+                        next_frame_due = time.perf_counter()
+                        print(f"Playback speed: {args.speed:g}x")
+                elif realtime_pacing:
+                    remaining = next_frame_due - time.perf_counter()
+                    if remaining > 0:
+                        time.sleep(remaining)
                 if args.max_frames and processed >= args.max_frames:
                     break
+                # If inference falls behind, discard old BTC road frames. The
+                # live webcam and dashboard therefore stay close to wall time
+                # instead of accumulating an ever-growing delay.
+                source_index += 1
+                if realtime_pacing:
+                    frame_period = 1.0 / (fps * args.speed)
+                    behind = time.perf_counter() - next_frame_due
+                    if behind >= frame_period:
+                        skipped = min(
+                            int(behind / frame_period),
+                            len(records) - source_index,
+                        )
+                        source_index += skipped
+                        next_frame_due += skipped * frame_period
             if last_snapshot is not None:
                 for event in decision.resolve_all(last_snapshot):
                     event_stream.write(json.dumps(event.transport_dict(), ensure_ascii=False) + "\n")
                     if client:
                         client.send(event)
+                trip_finished = True
     finally:
-        executor.shutdown(wait=True, cancel_futures=True)
+        road_executor.shutdown(wait=True, cancel_futures=True)
         media_executor.shutdown(wait=True, cancel_futures=False)
         if media_future is not None:
             try:
@@ -301,9 +411,15 @@ def main() -> int:
             except Exception as exc:
                 print(f"Dashboard stream final warning: {exc}", file=sys.stderr)
         if client:
+            if trip_finished:
+                try:
+                    client.complete_trip(dataset.trip_id)
+                except Exception as exc:
+                    print(f"Trip completion warning: {exc}", file=sys.stderr)
             client.close()
         driver.close()
-        capture.release()
+        if capture is not None:
+            capture.release()
         cv2.destroyAllWindows()
 
     if args.output_csv:

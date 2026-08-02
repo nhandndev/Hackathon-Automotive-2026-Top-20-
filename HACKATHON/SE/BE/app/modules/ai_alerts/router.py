@@ -56,6 +56,20 @@ class LiveSnapshotPayload(BaseModel):
     alertness_score: float = Field(ge=0, le=1)
 
 
+class TripRegistration(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    trip_id: str = Field(min_length=1)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class TripRegistrationPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    trips: list[TripRegistration] = Field(min_length=1)
+    reset_existing: bool = False
+
+
 router = APIRouter(prefix="/alerts", tags=["AI Decision Alerts"])
 live_clients: set[WebSocket] = set()
 carsky_mapper = CarSkySignalMapper()
@@ -80,6 +94,40 @@ def _store(request: Request) -> tuple[deque[dict[str, Any]], set[str]]:
     return request.app.state.decision_alerts, request.app.state.decision_alert_keys
 
 
+def _trip_store(request: Request) -> dict[str, dict[str, Any]]:
+    if not hasattr(request.app.state, "live_trip_sessions"):
+        request.app.state.live_trip_sessions = {}
+    return request.app.state.live_trip_sessions
+
+
+def _ensure_trip(
+    request: Request,
+    trip_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    sessions = _trip_store(request)
+    session = sessions.setdefault(
+        trip_id,
+        {
+            "trip_id": trip_id,
+            "status": "pending",
+            "metadata": {},
+            "latest_snapshot": None,
+            "snapshot_history": deque(maxlen=2400),
+        },
+    )
+    if metadata:
+        session["metadata"] = {**session["metadata"], **metadata}
+    return session
+
+
+def _public_session(session: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **session,
+        "snapshot_history": list(session["snapshot_history"]),
+    }
+
+
 @router.post("", status_code=status.HTTP_202_ACCEPTED)
 async def receive_alert(
     payload: DecisionEventPayload,
@@ -92,6 +140,7 @@ async def receive_alert(
     duplicate = idempotency_key in keys
     if not duplicate:
         document = payload.model_dump(mode="json")
+        _ensure_trip(request, payload.trip_id)
         alerts.append(document)
         keys.add(idempotency_key)
         await _broadcast(document)
@@ -117,6 +166,51 @@ async def recent_alerts(request: Request, limit: int = 100) -> dict[str, Any]:
     return {"count": len(values), "items": values}
 
 
+@router.post("/trips/register", status_code=status.HTTP_202_ACCEPTED)
+async def register_live_trips(
+    payload: TripRegistrationPayload,
+    request: Request,
+) -> dict[str, Any]:
+    sessions = _trip_store(request)
+    if payload.reset_existing:
+        reset_ids = {trip.trip_id for trip in payload.trips}
+        for trip_id in reset_ids:
+            sessions.pop(trip_id, None)
+        for attribute in ("latest_cabin_frames", "latest_road_frames"):
+            frames = getattr(request.app.state, attribute, {})
+            for trip_id in reset_ids:
+                frames.pop(trip_id, None)
+        alerts, keys = _store(request)
+        retained = [
+            item for item in alerts if item.get("trip_id") not in reset_ids
+        ]
+        alerts.clear()
+        alerts.extend(retained)
+        keys.clear()
+        keys.update(item["idempotency_key"] for item in retained)
+    for trip in payload.trips:
+        _ensure_trip(request, trip.trip_id, trip.metadata)
+    return {
+        "accepted": True,
+        "count": len(payload.trips),
+        "trip_ids": [trip.trip_id for trip in payload.trips],
+    }
+
+
+@router.post("/trips/{trip_id}/complete")
+async def complete_live_trip(trip_id: str, request: Request) -> dict[str, Any]:
+    session = _ensure_trip(request, trip_id)
+    session["status"] = "completed"
+    return {"accepted": True, "trip_id": trip_id, "status": "completed"}
+
+
+@router.get("/trips")
+async def live_trips(request: Request) -> dict[str, Any]:
+    sessions = _trip_store(request)
+    items = [_public_session(session) for session in sessions.values()]
+    return {"count": len(items), "items": items}
+
+
 @router.post("/cabin-frame", status_code=status.HTTP_202_ACCEPTED)
 async def receive_cabin_frame(
     request: Request,
@@ -132,7 +226,10 @@ async def receive_cabin_frame(
         raise HTTPException(status_code=413, detail="Cabin frame is empty or exceeds 2 MiB")
     if not frame.startswith(b"\xff\xd8") or not frame.endswith(b"\xff\xd9"):
         raise HTTPException(status_code=400, detail="Cabin frame is not a valid JPEG envelope")
-    request.app.state.latest_cabin_frame = {
+    frames = getattr(request.app.state, "latest_cabin_frames", None)
+    if frames is None:
+        frames = request.app.state.latest_cabin_frames = {}
+    frames[trip_id] = {
         "content": frame,
         "trip_id": trip_id,
         "frame_id": frame_id,
@@ -146,8 +243,11 @@ async def latest_cabin_frame(
     request: Request,
     trip_id: str | None = None,
 ) -> Response:
-    frame = getattr(request.app.state, "latest_cabin_frame", None)
-    if frame is None or (trip_id is not None and frame["trip_id"] != trip_id):
+    frames = getattr(request.app.state, "latest_cabin_frames", {})
+    frame = frames.get(trip_id) if trip_id is not None else next(
+        reversed(frames.values()), None
+    )
+    if frame is None:
         raise HTTPException(status_code=404, detail="No live cabin frame for this trip")
     return Response(
         content=frame["content"],
@@ -177,7 +277,10 @@ async def receive_road_frame(
         raise HTTPException(status_code=413, detail="Road frame is empty or exceeds 2 MiB")
     if not frame.startswith(b"\xff\xd8") or not frame.endswith(b"\xff\xd9"):
         raise HTTPException(status_code=400, detail="Road frame is not a valid JPEG envelope")
-    request.app.state.latest_road_frame = {
+    frames = getattr(request.app.state, "latest_road_frames", None)
+    if frames is None:
+        frames = request.app.state.latest_road_frames = {}
+    frames[trip_id] = {
         "content": frame,
         "trip_id": trip_id,
         "frame_id": frame_id,
@@ -188,8 +291,11 @@ async def receive_road_frame(
 
 @router.get("/road-frame", response_class=Response)
 async def latest_road_frame(request: Request, trip_id: str | None = None) -> Response:
-    frame = getattr(request.app.state, "latest_road_frame", None)
-    if frame is None or (trip_id is not None and frame["trip_id"] != trip_id):
+    frames = getattr(request.app.state, "latest_road_frames", {})
+    frame = frames.get(trip_id) if trip_id is not None else next(
+        reversed(frames.values()), None
+    )
+    if frame is None:
         raise HTTPException(status_code=404, detail="No live road frame for this trip")
     return Response(
         content=frame["content"],
@@ -209,14 +315,23 @@ async def receive_live_snapshot(
     payload: LiveSnapshotPayload,
     request: Request,
 ) -> dict[str, Any]:
-    request.app.state.latest_live_snapshot = payload.model_dump(mode="json")
+    document = payload.model_dump(mode="json")
+    session = _ensure_trip(request, payload.trip_id)
+    session["status"] = "running"
+    session["latest_snapshot"] = document
+    session["snapshot_history"].append(document)
     return {"accepted": True, "trip_id": payload.trip_id, "frame_id": payload.frame_id}
 
 
 @router.get("/snapshot")
 async def latest_live_snapshot(request: Request, trip_id: str | None = None) -> dict[str, Any]:
-    snapshot = getattr(request.app.state, "latest_live_snapshot", None)
-    if snapshot is None or (trip_id is not None and snapshot["trip_id"] != trip_id):
+    sessions = _trip_store(request)
+    if trip_id is not None:
+        session = sessions.get(trip_id)
+    else:
+        session = next(reversed(sessions.values()), None)
+    snapshot = session.get("latest_snapshot") if session is not None else None
+    if snapshot is None:
         raise HTTPException(status_code=404, detail="No live snapshot for this trip")
     return snapshot
 

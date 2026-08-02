@@ -10,7 +10,6 @@ general:
   min_driver_confidence: 0.70
   startup_warmup_ms: 5000
   perclos_warmup_ms: 10000
-  update_interval_ms: 1000
 
 ttc:
   watch_sec: 5.0

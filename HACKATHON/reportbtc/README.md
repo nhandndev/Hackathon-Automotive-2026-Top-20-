@@ -1,5 +1,9 @@
 # M HACKATHON C2 - BÁO CÁO TIẾN ĐỘ MỐC GIỮA KỲ (C2)
 
+> **Vai trò file:** yêu cầu gốc của BTC, dùng làm checklist đối chiếu. Không cập
+> nhật tiến độ sản phẩm vào file này; tiến độ chính nằm ở
+> `C2_PROGRESS_REPORT_FPTU_DMS_VISION.md`.
+
 > **Hạn nộp:** Thứ Hai, 03/08/2026  
 > **Mục đích:** Ban Tổ chức đánh giá mức độ hoàn thiện giải pháp, khả năng vận hành end-to-end và các kết quả đo lường ban đầu.
 

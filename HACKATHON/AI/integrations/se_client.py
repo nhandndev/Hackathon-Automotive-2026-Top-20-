@@ -32,6 +32,7 @@ class SEApiClient:
         self.cabin_frame_endpoint = endpoint.rstrip("/") + "/cabin-frame"
         self.road_frame_endpoint = endpoint.rstrip("/") + "/road-frame"
         self.snapshot_endpoint = endpoint.rstrip("/") + "/snapshot"
+        self.trips_endpoint = endpoint.rstrip("/") + "/trips"
         self.max_retries = max(0, int(max_retries))
         self.retry_backoff_sec = max(0.0, float(retry_backoff_sec))
         headers = {"Content-Type": "application/json"}
@@ -132,6 +133,28 @@ class SEApiClient:
         if errors:
             raise RuntimeError("; ".join(errors))
         return results
+
+    def register_trips(
+        self,
+        trips: list[dict[str, Any]],
+        *,
+        reset_existing: bool = False,
+    ) -> dict[str, Any]:
+        response = self._post_with_retry(
+            self.trips_endpoint + "/register",
+            json={"trips": trips, "reset_existing": reset_existing},
+        )
+        response.raise_for_status()
+        payload = response.json()
+        return payload if isinstance(payload, dict) else {"response": payload}
+
+    def complete_trip(self, trip_id: str) -> dict[str, Any]:
+        response = self._post_with_retry(
+            self.trips_endpoint + f"/{trip_id}/complete"
+        )
+        response.raise_for_status()
+        payload = response.json()
+        return payload if isinstance(payload, dict) else {"response": payload}
 
     def close(self) -> None:
         self._client.close()

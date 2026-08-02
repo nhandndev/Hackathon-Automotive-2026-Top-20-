@@ -1,21 +1,33 @@
 import React from 'react';
 import { AlertTriangle, Gauge, Sparkles, TrendingUp } from 'lucide-react';
-import { TripData } from '../types';
+import { DecisionAlert, TripData } from '../types';
 
 interface PerformanceInsightsViewProps {
   vehicle: TripData;
+  liveAlerts?: DecisionAlert[];
   onOpenCopilot: () => void;
 }
 
-export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = ({ vehicle, onOpenCopilot }) => {
+export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = ({ vehicle, liveAlerts = [], onOpenCopilot }) => {
   const aggregate = vehicle.trip_aggregate;
   const summary = vehicle.driver_summary;
+  const tripSessionAlerts = liveAlerts.filter(
+    (alert) => alert.trip_id === vehicle.trip_id,
+  );
+  const liveMicrosleepCount = new Set(
+    tripSessionAlerts
+      .filter((alert) => alert.alert_type === 'microsleep')
+      .map((alert) => alert.event_id),
+  ).size;
+  const microsleepCount = tripSessionAlerts.length > 0
+    ? liveMicrosleepCount
+    : summary.microsleep_count;
   const metrics = [
     ['Safe driving score', aggregate.safe_driving_score.toFixed(1)],
     ['Near misses', aggregate.near_miss_count.toString()],
     ['Maximum risk', aggregate.max_risk_score.toFixed(1)],
     ['Average headway', `${aggregate.avg_headway_sec.toFixed(2)}s`],
-    ['Microsleep count', summary.microsleep_count.toString()],
+    ['Microsleep count', microsleepCount.toString()],
     ['Average alertness', `${Math.round(summary.average_alertness_score * 100)}%`],
   ];
 

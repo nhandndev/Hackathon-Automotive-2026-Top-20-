@@ -20,7 +20,6 @@ class GeneralPolicy(StrictModel):
     min_driver_confidence: float = Field(ge=0, le=1)
     startup_warmup_ms: int = Field(ge=0)
     perclos_warmup_ms: int = Field(ge=0)
-    update_interval_ms: int = Field(gt=0)
 
 
 class TTCPolicy(StrictModel):

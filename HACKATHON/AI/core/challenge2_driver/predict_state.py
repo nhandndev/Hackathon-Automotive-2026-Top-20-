@@ -1,6 +1,7 @@
 """Stateful, causal driver-state inference shared by batch and webcam flows."""
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -75,11 +76,16 @@ class DriverStatePredictor:
         model_path: str | Path,
         config_path: str | Path,
         driver_profile: DriverProfile | None = None,
+        face_detector_interval_frames: int = 1,
     ) -> None:
         self.model_path = Path(model_path)
         self.config_path = Path(config_path)
         self.config = yaml.safe_load(
             self.config_path.read_text(encoding="utf-8")
+        )
+        self.config = copy.deepcopy(self.config)
+        self.config.setdefault("face", {})["detector_interval_frames"] = max(
+            1, int(face_detector_interval_frames)
         )
         self.artifact: dict[str, Any] = joblib.load(self.model_path)
         if self.artifact.get("feature_names") != feature_names():

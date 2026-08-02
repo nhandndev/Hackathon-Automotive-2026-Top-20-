@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { DecisionAlert, ViewMode, TripData } from './types';
+import React, { useEffect, useRef, useState } from 'react';
+import { DecisionAlert, LiveTripSession, ViewMode, TripData } from './types';
 import { btcTripData } from './data/btcTripData';
+import { sessionToTrip } from './data/liveTripData';
 import { Header } from './components/Header';
 import { SidebarNav } from './components/SidebarNav';
 import { FleetMapView } from './components/FleetMapView';
@@ -12,16 +13,60 @@ import { InterventionModal } from './components/InterventionModal';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('MAP');
-  const [vehicles] = useState<TripData[]>(btcTripData);
+  const [vehicles, setVehicles] = useState<TripData[]>(btcTripData);
   const [selectedVehicle, setSelectedVehicle] = useState<TripData>(btcTripData[0]);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isInterventionOpen, setIsInterventionOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [liveAlerts, setLiveAlerts] = useState<DecisionAlert[]>([]);
   const [alertsConnected, setAlertsConnected] = useState(false);
+  const followRunningTrip = useRef(true);
 
   useEffect(() => {
+    const alertsHttp = import.meta.env.VITE_ALERTS_HTTP_URL || 'http://127.0.0.1:8000/api/v1/alerts';
     const endpoint = import.meta.env.VITE_ALERTS_WS_URL || 'ws://127.0.0.1:8000/api/v1/alerts/live';
+    const upsert = (incoming: DecisionAlert[]) => {
+      setLiveAlerts((current) => {
+        const merged = [...incoming, ...current];
+        return merged.filter(
+          (item, index) => merged.findIndex(
+            (candidate) => candidate.event_id === item.event_id,
+          ) === index,
+        ).slice(0, 1000);
+      });
+    };
+    const loadRecent = async () => {
+      try {
+        const response = await fetch(`${alertsHttp}/recent?limit=1000`);
+        if (!response.ok) return;
+        const payload = await response.json() as { items?: DecisionAlert[] };
+        upsert([...(payload.items ?? [])].reverse());
+      } catch {
+        // WebSocket reconnect/reload can recover later.
+      }
+    };
+    const loadTrips = async () => {
+      try {
+        const response = await fetch(`${alertsHttp}/trips`);
+        if (!response.ok) return;
+        const payload = await response.json() as { items?: LiveTripSession[] };
+        const dynamicTrips = (payload.items ?? []).map(sessionToTrip);
+        if (!dynamicTrips.length) return;
+        setVehicles(dynamicTrips);
+        setSelectedVehicle((current) => (
+          (followRunningTrip.current
+            ? dynamicTrips.find((trip) => trip.runtime_status === 'running')
+            : undefined)
+          ?? dynamicTrips.find((trip) => trip.trip_id === current?.trip_id)
+          ?? dynamicTrips[0]
+        ));
+      } catch {
+        // Keep the last valid dashboard state while Backend is unavailable.
+      }
+    };
+    void loadRecent();
+    void loadTrips();
+    const tripTimer = window.setInterval(loadTrips, 1000);
     const socket = new WebSocket(endpoint);
     socket.onopen = () => setAlertsConnected(true);
     socket.onclose = () => setAlertsConnected(false);
@@ -29,16 +74,20 @@ export default function App() {
     socket.onmessage = (message) => {
       try {
         const alert = JSON.parse(message.data) as DecisionAlert;
-        setLiveAlerts((current) => [alert, ...current].slice(0, 20));
+        upsert([alert]);
       } catch {
         // Invalid external messages are ignored; Backend owns validation.
       }
     };
-    return () => socket.close();
+    return () => {
+      window.clearInterval(tripTimer);
+      socket.close();
+    };
   }, []);
 
   // Handle vehicle selection
   const handleSelectVehicle = (vehicle: TripData) => {
+    followRunningTrip.current = false;
     setSelectedVehicle(vehicle);
   };
 
@@ -115,6 +164,7 @@ export default function App() {
           {currentView === 'INSIGHTS' && (
             <PerformanceInsightsView
               vehicle={selectedVehicle}
+              liveAlerts={liveAlerts}
               onOpenCopilot={() => setIsCopilotOpen(true)}
             />
           )}

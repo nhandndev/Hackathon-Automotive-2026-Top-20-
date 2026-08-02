@@ -203,10 +203,39 @@ python AI\scripts\end_to_end_demo.py `
 
 Bỏ `--driver-id` để dùng global model. Bỏ `--se-endpoint` nếu chỉ test AI/UI.
 
+### Hai loại product demo
+
+Chạy từ thư mục `HACKATHON`:
+
+```powershell
+# Hybrid: một road trip BTC + webcam + personalized profile
+.\scripts\run_product_demo.ps1 `
+  -Mode hybrid-live `
+  -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  -Camera 0 `
+  -DriverId driver_001 `
+  -OpenDashboard
+
+# Dataset fleet: tự phát hiện mọi trip trực tiếp dưới folder
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir E:\automotive_cc\Practice_Dataset `
+  -OpenDashboard
+```
+
+`dataset-fleet` lấy cả road camera và driver camera từ từng trip. Các trip được
+đăng ký cùng lúc nhưng inference tuần tự để giới hạn GPU/RAM. Backend lưu riêng
+theo `trip_id`: trạng thái, snapshot timeline, DecisionEvents, cabin frame và
+road frame cuối. Vì vậy khi chuyển sang trip kế tiếp, trip cũ vẫn chọn/xem lại
+được trên Dashboard. Đổi dataset chỉ cần thay `-DataDir`; tên trip không bị
+hard-code. Sau trip cuối, runner chờ Enter để người demo xem toàn bộ lịch sử
+trước khi dừng Backend và Dashboard.
+
 SE endpoints:
 
 ```text
 GET http://127.0.0.1:8000/api/v1/alerts/recent
+GET http://127.0.0.1:8000/api/v1/alerts/trips
 WS  ws://127.0.0.1:8000/api/v1/alerts/live
 ```
 
@@ -340,6 +369,20 @@ python AI\scripts\end_to_end_demo.py `
 Không tự đổi YOLOv8s thành model nhỏ hơn hoặc skip frame vì sẽ thay đổi C1. Bước
 tối ưu sâu tiếp theo là benchmark ONNX execution provider, detector scheduling,
 cache và road model nhẹ hơn rồi đánh giá lại TTC trước khi chấp nhận.
+
+### Product-demo scheduling (không áp dụng cho CSV chấm điểm)
+
+`end_to_end_demo.py` dùng multi-rate scheduling để giao diện không bị khóa bởi C1:
+
+- Challenge 2 landmark/RF vẫn cập nhật trên mỗi frame webcam;
+- YuNet chỉ hiệu chỉnh ROI mỗi 10 frame và chạy ngay nếu mất landmark;
+- Challenge 1 chạy nền mỗi 5 frame hiển thị, UI dùng TTC gần nhất trong lúc chờ;
+- khi máy xử lý chậm, BTC road frame cũ bị bỏ để demo bám wall-clock;
+- JPEG gửi Dashboard vẫn chạy trên worker riêng.
+
+Hai tham số có thể điều chỉnh là `--face-detector-interval 10` và
+`--road-inference-interval 5`. `run_inference.py` không dùng các tối ưu skip/cache
+này: nhánh CSV BTC vẫn inference đầy đủ từng frame.
 
 ## 13. Troubleshooting
 

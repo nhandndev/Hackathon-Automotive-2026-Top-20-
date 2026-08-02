@@ -190,7 +190,7 @@ AI hybrid):
 
 ```powershell
 cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON
-conda activate automotive
+.\.venv\Scripts\Activate.ps1
 .\scripts\run_product_demo.ps1 `
   -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
   -Camera 0 `
@@ -208,6 +208,31 @@ lần chạy đầu, cần `npm install` trong `SE/FE` và enroll
 
 Demo hybrid dùng road-left, road-right và telemetry của BTC, còn driver camera
 lấy từ webcam thật. Mở hai cửa sổ terminal:
+
+Runner hiện có hai chế độ. Chạy từ thư mục `HACKATHON`:
+
+```powershell
+# 1) Một trip: BTC road cam + webcam tài xế
+.\scripts\run_product_demo.ps1 `
+  -Mode hybrid-live `
+  -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  -Camera 0 `
+  -DriverId driver_001 `
+  -OpenDashboard
+
+# 2) Fleet dataset: tự quét mọi trip trực tiếp trong folder, chạy tuần tự
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir E:\automotive_cc\Practice_Dataset `
+  -OpenDashboard
+```
+
+Ở mode `dataset-fleet`, tất cả trip được đăng ký ngay từ đầu. Chỉ một trip chạy
+AI tại một thời điểm để không nhân GPU/RAM; Dashboard hiển thị `pending`,
+`running`, `completed` và giữ snapshot timeline cùng ảnh cuối của trip đã chạy.
+Muốn dùng bộ dữ liệu mới chỉ cần đổi `-DataDir`; mỗi thư mục con phải có cấu trúc
+trip BTC đầy đủ và file `<trip_id>.json` hoặc `<trip_id>.json.gz`. Sau trip cuối,
+runner giữ Backend/Dashboard mở để xem lịch sử; nhấn Enter tại terminal mới dừng.
 
 ```powershell
 # Terminal 1 — Backend SE (Python 3.11)
@@ -231,6 +256,7 @@ Health và event nhận được:
 ```text
 GET http://127.0.0.1:8000/health
 GET http://127.0.0.1:8000/api/v1/alerts/recent
+GET http://127.0.0.1:8000/api/v1/alerts/trips
 WS  ws://127.0.0.1:8000/api/v1/alerts/live
 ```
 

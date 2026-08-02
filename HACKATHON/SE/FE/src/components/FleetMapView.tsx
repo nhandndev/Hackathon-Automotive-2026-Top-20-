@@ -16,6 +16,8 @@ const finite = (value: unknown, digits = 1) =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : 'N/A';
 
 const statusFor = (trip: TripData) => {
+  if (trip.runtime_status === 'running') return 'LIVE';
+  if (trip.runtime_status === 'pending') return 'PENDING';
   const risk = trip.trip_aggregate?.risk_classification?.toLowerCase();
   if (risk === 'high') return 'CRITICAL';
   if (risk === 'medium') return 'WARNING';
@@ -43,19 +45,19 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
 
   const lastFrame = selected.frames?.[selected.frames.length - 1];
   const status = statusFor(selected);
-  const coordinates = lastFrame?.geolocation;
+  const coordinates = lastFrame?.ego?.geolocation;
 
   return (
     <div className="flex-1 flex flex-col md:flex-row bg-[#070A12] overflow-hidden text-white">
       <aside className="w-full md:w-80 bg-[#0B0F19] border-r border-[#1E293B] flex flex-col shrink-0">
         <div className="p-4 border-b border-[#1E293B]">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold tracking-widest text-slate-300 uppercase">BTC Trips</h2>
+            <h2 className="text-xs font-bold tracking-widest text-slate-300 uppercase">Dataset Fleet</h2>
             <span className="flex items-center gap-1.5 text-[10px] text-sky-300 font-mono">
               <Database className="w-3 h-3" /> ORGANIZER DATA
             </span>
           </div>
-          <p className="mt-2 text-xs text-slate-500">Only trips loaded from the organizer dataset are shown.</p>
+          <p className="mt-2 text-xs text-slate-500">Trips replay sequentially; completed histories remain selectable.</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -73,7 +75,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex items-center gap-2 font-bold"><Truck className="w-4 h-4" />{trip.trip_id}</span>
-                  <span className={`text-[10px] font-bold ${tripStatus === 'CRITICAL' ? 'text-red-400' : tripStatus === 'WARNING' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  <span className={`text-[10px] font-bold ${tripStatus === 'CRITICAL' ? 'text-red-400' : tripStatus === 'WARNING' || tripStatus === 'PENDING' ? 'text-amber-400' : tripStatus === 'LIVE' ? 'text-sky-400' : 'text-emerald-400'}`}>
                     {tripStatus}
                   </span>
                 </div>

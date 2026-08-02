@@ -1,5 +1,12 @@
 /carsky/
 
+# Local BTC datasets (large/private; keep outside Git)
+/Practice_Dataset/
+/practice_dataset/
+/Hackathon_Dataset_Redacted/
+/*_Dataset_Redacted/
+/*_dataset_redacted/
+
 # OS/editor noise
 .DS_Store
 **/.DS_Store

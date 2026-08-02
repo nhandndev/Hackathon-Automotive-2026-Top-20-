@@ -483,6 +483,8 @@ class DecisionEngine:
         critical = perclos_critical or warning_long
         if perclos_critical:
             reason = f"PERCLOS={snapshot.perclos_30s:.3f}"
+        elif perclos_warning:
+            reason = f"PERCLOS={snapshot.perclos_30s:.3f}"
         elif ml_warning:
             reason = (
                 f"drowsy confidence={snapshot.driver_confidence:.2f}, "
@@ -738,13 +740,23 @@ class DecisionEngine:
             )
             escalated = LEVEL_RANK[merged.severity] > LEVEL_RANK[previous.severity]
             audience_changed = merged.audiences != previous.audiences
-            due = bool(
-                runtime.last_emit_ms is None
-                or now - runtime.last_emit_ms
-                >= self.policy.general.update_interval_ms
+            action_changed = (
+                merged.recommended_action != previous.recommended_action
             )
+            previous_code = (
+                previous.driver_message.message_code
+                if previous.driver_message is not None else None
+            )
+            merged_code = (
+                merged.driver_message.message_code
+                if merged.driver_message is not None else None
+            )
+            message_changed = merged_code != previous_code
             runtime.desired = merged
-            if escalated or audience_changed or due:
+            # Snapshot/media endpoints already carry continuous evidence.
+            # DecisionEvent is an episode transition, not a heartbeat: emit
+            # only when the operator-facing meaning materially changes.
+            if escalated or audience_changed or action_changed or message_changed:
                 runtime.last_emit_ms = now
                 return [self._build_event(runtime, merged, "update", snapshot)]
             return []

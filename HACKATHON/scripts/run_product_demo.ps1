@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [ValidateSet("hybrid-live", "dataset-fleet")]
+    [string]$Mode = "hybrid-live",
     [string]$TripDir,
+    [string]$DataDir,
     [int]$Camera = 0,
     [string]$DriverId,
     [int]$MaxFrames = 0,
@@ -19,10 +21,18 @@ $aiRoot = Join-Path $productRoot "AI"
 $beRoot = Join-Path $productRoot "SE\BE"
 $feRoot = Join-Path $productRoot "SE\FE"
 $aiScript = Join-Path $aiRoot "scripts\end_to_end_demo.py"
+$fleetAiScript = Join-Path $aiRoot "scripts\dataset_fleet_demo.py"
 $carSkyScript = Join-Path $beRoot "scripts\carsky_phase05.py"
 $beEnvFile = Join-Path $beRoot ".env"
-$tripPath = (Resolve-Path $TripDir).Path
-$tripName = Split-Path $tripPath -Leaf
+$tripPath = $null
+$dataPath = $null
+if ($Mode -eq "hybrid-live" -and $TripDir) {
+    $tripPath = (Resolve-Path $TripDir).Path
+}
+if ($Mode -eq "dataset-fleet" -and $DataDir) {
+    $dataPath = (Resolve-Path $DataDir).Path
+}
+$tripName = if ($tripPath) { Split-Path $tripPath -Leaf } else { "dataset-fleet" }
 $runStamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $logDir = Join-Path $aiRoot "artifacts\runtime_logs\$runStamp"
 $predictionDir = Join-Path $aiRoot "artifacts\predictions"
@@ -86,16 +96,24 @@ function Show-LogTail([string]$Path) {
 
 try {
     Write-Step "Preflight local environment"
-    if ($env:CONDA_DEFAULT_ENV -ne "automotive") {
-        throw "Activate the expected environment first: conda activate automotive"
+    if ($Mode -eq "hybrid-live" -and !$tripPath) {
+        throw "Mode hybrid-live requires -TripDir."
     }
-
-    $pythonExe = (Get-Command python -ErrorAction Stop).Source
+    if ($Mode -eq "dataset-fleet" -and !$dataPath) {
+        throw "Mode dataset-fleet requires -DataDir."
+    }
+    $projectPython = Join-Path $productRoot ".venv\Scripts\python.exe"
+    if (Test-Path -LiteralPath $projectPython) {
+        $pythonExe = $projectPython
+    }
+    else {
+        $pythonExe = (Get-Command python -ErrorAction Stop).Source
+    }
     Write-Host "Python: $pythonExe"
     & $pythonExe -c "import cv2, fastapi, httpx, onnxruntime, pydantic_settings, sklearn, torch, ultralytics, uvicorn, yaml; assert hasattr(cv2, 'STEREO_SGBM_MODE_SGBM_3WAY'); print('Python dependencies: OK')"
-    if ($LASTEXITCODE -ne 0) { throw "Python dependency check failed in conda environment automotive." }
+    if ($LASTEXITCODE -ne 0) { throw "Python dependency check failed in project .venv/current environment." }
 
-    foreach ($requiredPath in @($aiScript, $carSkyScript, $beEnvFile)) {
+    foreach ($requiredPath in @($aiScript, $fleetAiScript, $carSkyScript, $beEnvFile)) {
         if (!(Test-Path -LiteralPath $requiredPath)) { throw "Required path is missing: $requiredPath" }
     }
     New-Item -ItemType Directory -Force -Path $logDir, $predictionDir, $eventDir | Out-Null
@@ -180,19 +198,34 @@ try {
 
     Write-Host "Backend API docs: http://127.0.0.1:8000/docs"
     Write-Host "Recent events:    http://127.0.0.1:8000/api/v1/alerts/recent"
-    Write-Step "Run AI pipeline: BTC road cameras + live driver webcam"
+    Write-Step $(if ($Mode -eq "dataset-fleet") {
+        "Run AI pipeline: sequential BTC dataset fleet"
+    } else {
+        "Run AI pipeline: BTC road cameras + live driver webcam"
+    })
 
     $outputCsv = Join-Path $predictionDir "$tripName-live-$runStamp.csv"
     $eventFile = Join-Path $eventDir "$tripName-live-$runStamp.events.jsonl"
-    $aiArguments = @(
-        $aiScript,
-        "--trip-dir", $tripPath,
-        "--camera", "$Camera",
-        "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
-        "--output-csv", $outputCsv,
-        "--events", $eventFile
-    )
-    if ($DriverId) { $aiArguments += @("--driver-id", $DriverId) }
+    if ($Mode -eq "dataset-fleet") {
+        $aiArguments = @(
+            $fleetAiScript,
+            "--data-dir", $dataPath,
+            "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
+            "--output-dir", (Join-Path $aiRoot "artifacts\fleet_demo\$runStamp")
+        )
+    }
+    else {
+        $aiArguments = @(
+            $aiScript,
+            "--trip-dir", $tripPath,
+            "--driver-source", "webcam",
+            "--camera", "$Camera",
+            "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
+            "--output-csv", $outputCsv,
+            "--events", $eventFile
+        )
+        if ($DriverId) { $aiArguments += @("--driver-id", $DriverId) }
+    }
     if ($MaxFrames -gt 0) { $aiArguments += @("--max-frames", "$MaxFrames") }
     if ($NoDisplay) { $aiArguments += "--no-display" }
 
@@ -206,9 +239,18 @@ try {
     if ($exitCode -ne 0) { throw "AI pipeline exited with code $exitCode." }
 
     Write-Host "`nDemo completed." -ForegroundColor Green
-    Write-Host "Prediction CSV: $outputCsv"
-    Write-Host "Decision events: $eventFile"
+    if ($Mode -eq "dataset-fleet") {
+        Write-Host "Fleet artifacts: $(Join-Path $aiRoot ('artifacts\fleet_demo\' + $runStamp))"
+    }
+    else {
+        Write-Host "Prediction CSV: $outputCsv"
+        Write-Host "Decision events: $eventFile"
+    }
     Write-Host "Runtime logs:    $logDir"
+    if ($Mode -eq "dataset-fleet" -and !$NoDisplay) {
+        Write-Host "Dashboard is keeping all trip histories. Inspect them now." -ForegroundColor Cyan
+        $null = Read-Host "Press Enter to stop Dashboard and Backend"
+    }
 }
 catch {
     Write-Host "`nPRODUCT DEMO FAILED: $($_.Exception.Message)" -ForegroundColor Red

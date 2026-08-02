@@ -130,6 +130,7 @@ export interface Risk {
 
 export interface TripData {
   trip_id: string;
+  runtime_status?: 'pending' | 'running' | 'completed';
   metadata: Metadata;
   driver_summary: DriverSummary;
   trip_aggregate: TripAggregate;
@@ -191,4 +192,12 @@ export interface LiveSnapshot {
   driver_state: string;
   driver_confidence: number;
   alertness_score: number;
+}
+
+export interface LiveTripSession {
+  trip_id: string;
+  status: 'pending' | 'running' | 'completed';
+  metadata: Partial<Metadata>;
+  latest_snapshot: LiveSnapshot | null;
+  snapshot_history: LiveSnapshot[];
 }

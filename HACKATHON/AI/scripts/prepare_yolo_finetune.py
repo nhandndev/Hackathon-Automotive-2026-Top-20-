@@ -31,6 +31,17 @@ pedestrians, T01 has zero cars/cyclists). Final Challenge-1 quality is
 judged later by the existing LOTO pipeline eval, not by this val split --
 this split only exists to watch for training-time overfitting.
 
+Extra/supplementary trips: drop any additional CARLA-generated trip
+directory into extra_trips/ (must contain kitti/label_2 + kitti/image_2 +
+kitti/calib, same layout as the organizer's trips) and it is picked up
+automatically on the next run -- no code change needed. These may reuse a
+name from the original 6 (e.g. another "T01-Sample" render with a
+different scenario) since output filenames are tagged by source. Unlike
+the original 6, newer exports may already provide a real 2D bbox in
+label_2 (bbox_left/top/right/bottom populated instead of 0.00) -- that is
+detected and used directly, only falling back to the 3D->2D projection
+when the bbox fields are unpopulated.
+
 Usage:
     py -3.13 scripts/prepare_yolo_finetune.py
 """
@@ -47,6 +58,13 @@ import numpy as np
 AI_ROOT = Path(__file__).resolve().parents[1]
 KIT = AI_ROOT / "Package_starterkit" / "Package_starterkit" / "package_starterkit"
 DATA = AI_ROOT / "Practice_Dataset" / "Practice_Dataset"
+# Drop-in folder for additional CARLA-generated trips (more scenarios/
+# lighting than the organizer's original 6): any subdirectory containing
+# kitti/label_2 is picked up automatically, no code change needed to add
+# more later. Trip names may collide with the original 6 (e.g. both call
+# themselves "T01-Sample" even though they're different renders), so
+# output filenames are tagged by SOURCE below, not just trip name.
+EXTRA = AI_ROOT / "extra_trips"
 OUT = AI_ROOT / "datasets" / "yolo_finetune"
 sys.path.insert(0, str(KIT))
 from team_kit.dataset_loader import TripDataset  # noqa: E402
@@ -121,10 +139,13 @@ def project_3d_to_2d_bbox(
 def convert_label_file(label_path: Path, P2: np.ndarray) -> list[str]:
     """One KITTI line -> one YOLO line (class cx cy w h, normalized).
 
-    The dataset's own bbox_left/top/right/bottom fields are always 0.00
-    (never populated by the CARLA export) -- confirmed by scanning many
-    label files, so the 2D box must be derived from the real 3D
-    dimensions+location+rotation_y fields via projection instead.
+    The organizer's original 6 trips never populate bbox_left/top/right/
+    bottom (always 0.00), so those need the 3D dims+location+rotation_y
+    projected via the camera matrix instead (see project_3d_to_2d_bbox).
+    Newer CARLA-generated trips (extra_trips/) DO export a real 2D bbox
+    directly -- used as-is when present, since it's strictly more reliable
+    than a re-derived one. Each label line is checked independently so a
+    single file/trip can't accidentally mix the wrong assumption in.
     """
     out_lines = []
     for line in label_path.read_text().splitlines():
@@ -135,12 +156,17 @@ def convert_label_file(label_path: Path, P2: np.ndarray) -> list[str]:
         coco_id = KITTI_TO_COCO.get(cls_name)
         if coco_id is None:
             continue  # DontCare / Van / Truck / Tram / Misc -- skip
-        h, w, l = (float(v) for v in parts[8:11])
-        x, y, z = (float(v) for v in parts[11:14])
-        ry = float(parts[14])
-        if h <= 0 or w <= 0 or l <= 0:
-            continue  # degenerate/placeholder entry
-        bbox = project_3d_to_2d_bbox(h, w, l, x, y, z, ry, P2)
+
+        x1, y1, x2, y2 = (float(v) for v in parts[4:8])
+        if x2 - x1 >= MIN_BOX_PX and y2 - y1 >= MIN_BOX_PX:
+            bbox = (max(0.0, x1), max(0.0, y1), min(float(IMG_W), x2), min(float(IMG_H), y2))
+        else:
+            h, w, l = (float(v) for v in parts[8:11])
+            x, y, z = (float(v) for v in parts[11:14])
+            ry = float(parts[14])
+            if h <= 0 or w <= 0 or l <= 0:
+                continue  # degenerate/placeholder entry
+            bbox = project_3d_to_2d_bbox(h, w, l, x, y, z, ry, P2)
         if bbox is None:
             continue
         x1, y1, x2, y2 = bbox
@@ -163,14 +189,28 @@ def main() -> int:
     n_by_split = {"train": 0, "val": 0}
     n_boxes_by_split = {"train": 0, "val": 0}
 
-    trips = sorted(p for p in DATA.iterdir() if p.is_dir() and p.name.endswith("-Sample"))
+    # (source_tag, trip_dir) pairs. source_tag disambiguates output
+    # filenames since an extra_trips/ entry can share a name with one of
+    # the organizer's 6 (both may call themselves "T01-Sample").
+    sources: list[tuple[str, Path]] = [
+        ("practice", p) for p in sorted(DATA.iterdir())
+        if p.is_dir() and p.name.endswith("-Sample")
+    ]
+    if EXTRA.is_dir():
+        sources += [
+            ("extra", p) for p in sorted(EXTRA.iterdir())
+            if p.is_dir() and (p / "kitti" / "label_2").is_dir()
+        ]
+
     n_skipped_no_calib = 0
-    for trip in trips:
+    per_source_count = {"practice": 0, "extra": 0}
+    for source_tag, trip in sources:
         label_dir = trip / "kitti" / "label_2"
         image_dir = trip / "kitti" / "image_2"
         if not label_dir.is_dir():
             continue
         ds = TripDataset(trip)  # only used here for load_frame_calibration()
+        n_before = n_by_split["train"] + n_by_split["val"]
         for label_path in sorted(label_dir.glob("*.txt")):
             frame_id_str = label_path.stem
             try:
@@ -189,14 +229,17 @@ def main() -> int:
                 continue
 
             split = "val" if rng.random() < VAL_FRACTION else "train"
-            stem = f"{trip.name}_{frame_id_str}"
+            stem = f"{source_tag}_{trip.name}_{frame_id_str}"
             shutil.copy(img_path, OUT / "images" / split / f"{stem}{img_path.suffix}")
             (OUT / "labels" / split / f"{stem}.txt").write_text("\n".join(yolo_lines) + "\n")
             n_by_split[split] += 1
             n_boxes_by_split[split] += len(yolo_lines)
-        print(f"  {trip.name}: done", flush=True)
+        n_added = (n_by_split["train"] + n_by_split["val"]) - n_before
+        per_source_count[source_tag] += n_added
+        print(f"  [{source_tag}] {trip.name}: {n_added} labeled frames", flush=True)
     if n_skipped_no_calib:
         print(f"(skipped {n_skipped_no_calib} frames with no per-frame calib file)")
+    print(f"By source: practice={per_source_count['practice']} extra={per_source_count['extra']}")
 
     yaml_path = OUT / "dataset.yaml"
     names_block = "\n".join(f"  {i}: {name}" for i, name in enumerate(COCO_NAMES))

@@ -25,11 +25,33 @@ Backend mặc định chạy tại `http://127.0.0.1:8000`. Các endpoint có th
 `.env.local`:
 
 ```dotenv
+AWS_BEARER_TOKEN_BEDROCK=bedrock-api-key-PASTE_SHORT_TERM_KEY_HERE
+AWS_DEFAULT_REGION=ap-southeast-2
+BEDROCK_MODEL_ID=deepseek.v3.2
 VITE_ALERTS_WS_URL=ws://127.0.0.1:8000/api/v1/alerts/live
 VITE_ROAD_FRAME_URL=http://127.0.0.1:8000/api/v1/alerts/road-frame
 VITE_CABIN_FRAME_URL=http://127.0.0.1:8000/api/v1/alerts/cabin-frame
 VITE_LIVE_SNAPSHOT_URL=http://127.0.0.1:8000/api/v1/alerts/snapshot
 ```
+
+## Fleet AI Copilot qua AWS Bedrock
+
+BTC cấp short-term API key dạng Bearer Token. Dashboard server đọc biến:
+
+- `AWS_BEARER_TOKEN_BEDROCK`
+- `AWS_DEFAULT_REGION=ap-southeast-2`
+- `BEDROCK_MODEL_ID=deepseek.v3.2` hoặc `zai.glm-5`
+
+Luồng hiện tại:
+
+```txt
+Fleet Dashboard UI
+→ /api/copilot hoặc /api/copilot/report trong SE/FE/server.ts
+→ AWS Bedrock Converse API
+→ trả card/report insight thật về UI
+```
+
+Không để token trong browser/Vite env `VITE_*`. Token chỉ nằm ở server-side env.
 
 ## Kiểm tra
 

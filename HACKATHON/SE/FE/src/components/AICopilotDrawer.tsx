@@ -1,16 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, X, Send, ArrowRight, Lightbulb, Clock, ShieldAlert, Bot, User } from 'lucide-react';
-import { ChatMessage } from '../types';
+import { Sparkles, X, Send, ArrowRight, Lightbulb, Bot, FileText, BarChart3 } from 'lucide-react';
+import { ChatMessage, TripData } from '../types';
 
 interface AICopilotDrawerProps {
   isOpen: boolean;
+  vehicles: TripData[];
   onClose: () => void;
   onNavigateToTrip?: () => void;
   onSendBreakSchedule?: () => void;
 }
 
+type CopilotReportType = 'compare' | 'maintenance' | 'safety';
+
 export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   isOpen,
+  vehicles,
   onClose,
   onNavigateToTrip,
   onSendBreakSchedule,
@@ -31,6 +35,26 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   }, [isOpen, messages]);
 
   if (!isOpen) return null;
+
+  const openCopilotReport = (type: CopilotReportType, tripIds?: string[]) => {
+    const fallbackCount = type === 'compare' ? 2 : type === 'maintenance' ? 3 : 4;
+    const selectedTripIds = tripIds?.length
+      ? tripIds
+      : vehicles.slice(0, Math.max(1, fallbackCount)).map((vehicle) => vehicle.trip_id);
+    const params = new URLSearchParams({
+      view: 'copilot-report',
+      type,
+      trip_ids: selectedTripIds.join(','),
+    });
+    window.open(`${window.location.origin}${window.location.pathname}?${params.toString()}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const copilotTripContext = vehicles.map((vehicle) => ({
+    trip_id: vehicle.trip_id,
+    metadata: vehicle.metadata,
+    driver_summary: vehicle.driver_summary,
+    trip_aggregate: vehicle.trip_aggregate,
+  }));
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || inputText;
@@ -54,6 +78,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
         body: JSON.stringify({
           message: query,
           chatHistory: messages.map((m) => ({ sender: m.sender, text: m.text || m.cardData?.details || '' })),
+          vehicles: copilotTripContext,
         }),
       });
 
@@ -63,8 +88,10 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       const assistantMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'assistant',
-        text: data.reply || 'Đã nhận yêu cầu.',
+        text: data.reply || '',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        cardType: data.cardType,
+        cardData: data.cardData,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -192,6 +219,33 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                   </div>
                 )}
 
+                {/* 3. Copilot Report Card */}
+                {msg.cardType === 'COMPARISON' && msg.cardData && (
+                  <div className="bg-[#0B1220] border border-sky-900/60 rounded-xl p-4 space-y-3 shadow-lg">
+                    <div className="flex items-center gap-1.5 text-sky-400 text-[10px] font-bold uppercase tracking-wider">
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>FLEET REPORT READY</span>
+                    </div>
+                    <h3 className="text-sm font-extrabold text-white leading-snug">{msg.cardData.title}</h3>
+                    <p className="text-slate-300 text-xs leading-relaxed">{msg.cardData.details}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(msg.cardData.tripIds ?? []).map((tripId: string) => (
+                        <span key={tripId} className="rounded bg-slate-800 px-2 py-0.5 font-mono text-[10px] text-slate-300">
+                          {tripId}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => openCopilotReport(msg.cardData.reportType, msg.cardData.tripIds)}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white hover:bg-sky-500"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Ấn vào đây để xem báo cáo chi tiết
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 {/* Plain Text Message Response */}
                 {msg.text && (
                   <div className="bg-[#111827] border border-[#1F2937] text-slate-200 rounded-2xl rounded-tl-none p-3.5 leading-relaxed shadow-sm whitespace-pre-wrap">
@@ -216,7 +270,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       {/* Quick Suggestion Chips */}
       <div className="p-2 px-4 bg-[#0B0F19] border-t border-[#1E293B] flex items-center gap-2 overflow-x-auto text-[11px] no-scrollbar">
         <button
-          onClick={() => handleSendMessage('So sánh 2 tài xế')}
+          onClick={() => handleSendMessage(`So sánh 2 tài xế ${vehicles.slice(0, 2).map((vehicle) => vehicle.trip_id).join(' và ')}`)}
           className="px-2.5 py-1 bg-[#111827] hover:bg-[#1F2937] border border-[#1F2937] rounded-full text-slate-300 whitespace-nowrap transition-colors"
         >
           So sánh 2 tài xế

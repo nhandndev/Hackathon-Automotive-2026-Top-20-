@@ -8,6 +8,9 @@ import { FleetMapView } from './components/FleetMapView';
 import { VehicleLiveView } from './components/VehicleLiveView';
 import { TripDetailView } from './components/TripDetailView';
 import { PerformanceInsightsView } from './components/PerformanceInsightsView';
+import { DriverRankingView } from './components/DriverRankingView';
+import { DriverRankingAnalysisPage } from './components/DriverRankingAnalysisPage';
+import { CopilotFleetReportPage } from './components/CopilotFleetReportPage';
 import { AICopilotDrawer } from './components/AICopilotDrawer';
 import { InterventionModal } from './components/InterventionModal';
 
@@ -21,6 +24,11 @@ export default function App() {
   const [liveAlerts, setLiveAlerts] = useState<DecisionAlert[]>([]);
   const [alertsConnected, setAlertsConnected] = useState(false);
   const followRunningTrip = useRef(true);
+  const urlParams = new URLSearchParams(window.location.search);
+  const standaloneView = urlParams.get('view');
+  const rankingTripId = urlParams.get('trip_id');
+  const copilotReportType = urlParams.get('type');
+  const copilotReportTripIds = urlParams.get('trip_ids');
 
   useEffect(() => {
     const alertsHttp = import.meta.env.VITE_ALERTS_HTTP_URL || 'http://127.0.0.1:8000/api/v1/alerts';
@@ -106,6 +114,25 @@ export default function App() {
     setIsInterventionOpen(true);
   };
 
+  if (standaloneView === 'ranking-analysis') {
+    return (
+      <DriverRankingAnalysisPage
+        vehicles={vehicles}
+        tripId={rankingTripId}
+      />
+    );
+  }
+
+  if (standaloneView === 'copilot-report') {
+    return (
+      <CopilotFleetReportPage
+        vehicles={vehicles}
+        reportType={copilotReportType}
+        tripIds={copilotReportTripIds}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen w-screen bg-[#070A12] font-sans antialiased overflow-hidden select-none">
       {/* Top Main Navigation Header */}
@@ -169,6 +196,17 @@ export default function App() {
             />
           )}
 
+          {currentView === 'RANKING' && (
+            <DriverRankingView
+              vehicles={vehicles}
+              selectedVehicle={selectedVehicle}
+              liveAlerts={liveAlerts}
+              onSelectVehicle={handleSelectVehicle}
+              onViewTripDetail={handleViewTripDetail}
+              onOpenCopilot={() => setIsCopilotOpen(true)}
+            />
+          )}
+
           {/* Settings or fallback placeholder */}
           {currentView === 'SETTINGS' && (
             <div className="flex-1 bg-[#070A12] p-8 text-white flex flex-col items-center justify-center space-y-4">
@@ -190,6 +228,7 @@ export default function App() {
       {/* Fleet AI Copilot Slide-over Drawer */}
       <AICopilotDrawer
         isOpen={isCopilotOpen}
+        vehicles={vehicles}
         onClose={() => setIsCopilotOpen(false)}
         onNavigateToTrip={() => {
           setIsCopilotOpen(false);

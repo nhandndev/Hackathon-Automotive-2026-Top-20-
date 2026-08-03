@@ -2,11 +2,107 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+
 app.use(express.json());
+
+type TripSummary = {
+  trip_id: string;
+  metadata?: {
+    description?: string;
+    driver_profile?: string;
+    duration_sec?: number;
+    fps?: number;
+    speed_limit_kmh?: number;
+  };
+  driver_summary?: unknown;
+  trip_aggregate?: unknown;
+};
+
+type ChatHistoryItem = { sender: string; text: string };
+
+type CopilotReportType = "compare" | "maintenance" | "safety";
+
+const BEDROCK_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-southeast-2";
+const BEDROCK_MODEL_ID = process.env.BEDROCK_MODEL_ID || "deepseek.v3.2";
+
+function cleanBearerToken(raw?: string): string {
+  return (raw || "").replace(/\n/g, "").replace(/ /g, "").trim();
+}
+
+function getBedrockBearerToken(): string {
+  return cleanBearerToken(process.env.AWS_BEARER_TOKEN_BEDROCK || process.env.BEDROCK_API_KEY);
+}
+
+async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID): Promise<string> {
+  const token = getBedrockBearerToken();
+  if (!token) throw new Error("AWS_BEARER_TOKEN_BEDROCK is not configured");
+
+  const endpoint = `https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com/model/${encodeURIComponent(modelId)}/converse`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          role: "user",
+          content: [{ text: prompt }],
+        },
+      ],
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload?.message || payload?.error || response.statusText;
+    throw new Error(`Bedrock ${response.status}: ${message}`);
+  }
+
+  return payload?.output?.message?.content?.[0]?.text || "";
+}
+
+const availableTripIds = (vehicles: TripSummary[]) => vehicles.map((vehicle) => vehicle.trip_id).filter(Boolean);
+
+const findMentionedTripIds = (message: string, vehicles: TripSummary[]) => {
+  const lower = message.toLowerCase();
+  return availableTripIds(vehicles).filter((tripId) => lower.includes(tripId.toLowerCase()));
+};
+
+const detectReportType = (message: string): { type: CopilotReportType; requestedCount: number } | null => {
+  const lower = message.toLowerCase();
+  const countMatch = lower.match(/(?:so sánh|compare)\s*(\d+)/);
+  if (lower.includes("so sánh") || lower.includes("compare")) {
+    return { type: "compare", requestedCount: Math.max(2, Number(countMatch?.[1] || 2) || 2) };
+  }
+  if (lower.includes("bảo trì") || lower.includes("maintenance")) {
+    return { type: "maintenance", requestedCount: 3 };
+  }
+  if (lower.includes("báo cáo") || lower.includes("an toàn") || lower.includes("safety")) {
+    return { type: "safety", requestedCount: 4 };
+  }
+  return null;
+};
+
+const buildTripContext = (vehicles: TripSummary[]) => JSON.stringify(
+  vehicles.map((vehicle) => ({
+    trip_id: vehicle.trip_id,
+    metadata: vehicle.metadata,
+    driver_summary: vehicle.driver_summary,
+    trip_aggregate: vehicle.trip_aggregate,
+  })),
+  null,
+  2,
+);
 
 // Initialize Gemini Client lazily or safely
 let ai: GoogleGenAI | null = null;
@@ -63,11 +159,102 @@ app.get("/api/health", (_req, res) => {
 
 // AI Copilot endpoint
 app.post("/api/copilot", async (req, res) => {
-  const { message, chatHistory } = req.body;
+  const { message, chatHistory, vehicles = [] } = req.body as {
+    message?: string;
+    chatHistory?: ChatHistoryItem[];
+    vehicles?: TripSummary[];
+  };
 
   if (!message || typeof message !== "string") {
     res.status(400).json({ error: "Thông điệp không hợp lệ" });
     return;
+  }
+
+  const reportRequest = detectReportType(message);
+  if (reportRequest) {
+    const mentionedTripIds = findMentionedTripIds(message, vehicles);
+    const selectedTripIds = reportRequest.type === "compare"
+      ? mentionedTripIds.slice(0, reportRequest.requestedCount)
+      : (mentionedTripIds.length ? mentionedTripIds : availableTripIds(vehicles).slice(0, reportRequest.requestedCount));
+
+    if (reportRequest.type === "compare" && selectedTripIds.length < reportRequest.requestedCount) {
+      res.json({
+        reply: [
+          `Bạn muốn so sánh ${reportRequest.requestedCount} tài xế/trip, nhưng hiện mới thấy ${selectedTripIds.length ? selectedTripIds.join(", ") : "chưa có trip_id nào"}.`,
+          `Bạn gửi thêm ${reportRequest.requestedCount - selectedTripIds.length} trip_id còn thiếu nha.`,
+          `Trip hiện có: ${availableTripIds(vehicles).join(", ") || "chưa có trip nào từ Dashboard"}.`,
+        ].join("\n"),
+      });
+      return;
+    }
+
+    try {
+      const prompt = `
+Bạn là Fleet AI Copilot cho FPTU DMS Vision.
+Nhiệm vụ: tạo lời mở đầu ngắn gọn cho report ${reportRequest.type}.
+Không bịa field mới. Chỉ dựa trên trip_id, metadata, driver_summary, trip_aggregate.
+Trả lời tiếng Việt, 2-3 câu, chuyên nghiệp.
+
+User request: ${message}
+Selected trip_ids: ${selectedTripIds.join(", ")}
+Trip context:
+${buildTripContext(vehicles.filter((vehicle) => selectedTripIds.includes(vehicle.trip_id)))}
+`;
+      const aiReply = await callBedrockConverse(prompt);
+      res.json({
+        reply: "",
+        cardType: "COMPARISON",
+        cardData: {
+          title: reportRequest.type === "compare"
+            ? `Đã tạo báo cáo so sánh ${selectedTripIds.length} tài xế`
+            : reportRequest.type === "maintenance"
+              ? "Đã tạo báo cáo xe cần bảo trì"
+              : "Đã tạo báo cáo an toàn fleet",
+          details: aiReply || "AI Copilot đã tổng hợp dữ liệu fleet để tạo report chi tiết.",
+          functionName: reportRequest.type === "compare"
+            ? "create_driver_comparison_report"
+            : reportRequest.type === "maintenance"
+              ? "create_maintenance_priority_report"
+              : "create_fleet_safety_report",
+          reportType: reportRequest.type,
+          count: selectedTripIds.length,
+          tripIds: selectedTripIds,
+        },
+      });
+      return;
+    } catch (err) {
+      console.error("Bedrock report card error:", err);
+      res.status(503).json({
+        error: err instanceof Error ? err.message : "Bedrock provider error",
+      });
+      return;
+    }
+  }
+
+  if (getBedrockBearerToken()) {
+    try {
+      const historyText = (chatHistory || [])
+        .slice(-8)
+        .map((msg) => `${msg.sender}: ${msg.text}`)
+        .join("\n");
+      const reply = await callBedrockConverse(`
+${fleetSystemContext}
+
+Trip context từ Dashboard:
+${buildTripContext(vehicles)}
+
+Chat history:
+${historyText}
+
+User: ${message}
+
+Trả lời tiếng Việt, dùng số liệu nếu có, không bịa field mới.
+`);
+      res.json({ reply: reply || "Đã phân tích xong dữ liệu đội xe." });
+      return;
+    } catch (err) {
+      console.error("Bedrock API Error:", err);
+    }
   }
 
   const client = getGeminiClient();
@@ -95,8 +282,47 @@ app.post("/api/copilot", async (req, res) => {
   }
 
   res.status(503).json({
-    error: "Copilot provider is not configured; synthetic answers are disabled.",
+    error: "Copilot provider is not configured. Set AWS_BEARER_TOKEN_BEDROCK or GEMINI_API_KEY.",
   });
+});
+
+app.post("/api/copilot/report", async (req, res) => {
+  const { reportType, tripIds, rows, vehicles = [] } = req.body as {
+    reportType?: string;
+    tripIds?: string[];
+    rows?: unknown[];
+    vehicles?: TripSummary[];
+  };
+
+  if (!getBedrockBearerToken()) {
+    res.status(503).json({ error: "AWS_BEARER_TOKEN_BEDROCK is not configured" });
+    return;
+  }
+
+  try {
+    const insight = await callBedrockConverse(`
+Bạn là Fleet AI Copilot Insight cho dashboard quản lý đội xe.
+Hãy phân tích report ${reportType || "compare"} cho các trip: ${(tripIds || []).join(", ")}.
+
+Yêu cầu nội dung:
+- So sánh các driver/trip với nhau.
+- Nêu ưu điểm và nhược điểm từng tài xế.
+- Chỉ ra tài xế tốt nhất và tài xế cần coaching trước.
+- Giải thích dựa trên Safety Score, risk.final_risk_score, driver.state, driver.alertness_score, min_ttc, headway_sec, behavior_flags nếu có.
+- Viết tiếng Việt, giọng chuyên nghiệp, phù hợp business report.
+- Không nói "mock", không bịa field mới.
+
+Ranking rows:
+${JSON.stringify(rows || [], null, 2)}
+
+Trip context:
+${buildTripContext(vehicles)}
+`);
+    res.json({ insight });
+  } catch (err) {
+    console.error("Bedrock report insight error:", err);
+    res.status(503).json({ error: err instanceof Error ? err.message : "Bedrock provider error" });
+  }
 });
 
 async function startServer() {

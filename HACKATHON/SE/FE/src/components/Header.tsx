@@ -135,6 +135,17 @@ export const Header: React.FC<HeaderProps> = ({
           >
             4. Insights
           </button>
+          <button
+            id="nav-tab-ranking"
+            onClick={() => setCurrentView('RANKING')}
+            className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+              currentView === 'RANKING'
+                ? 'bg-sky-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            5. Ranking
+          </button>
         </div>
 
         {/* Notifications Icon */}

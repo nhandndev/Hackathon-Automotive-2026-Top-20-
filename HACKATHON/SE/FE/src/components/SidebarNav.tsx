@@ -1,5 +1,5 @@
 import React from 'react';
-import { Map, BarChart3, AlertTriangle, ShieldCheck, Settings, Sparkles, User, MessageSquare } from 'lucide-react';
+import { Map, BarChart3, AlertTriangle, Settings, Sparkles, User, Trophy, Route } from 'lucide-react';
 import { ViewMode } from '../types';
 
 interface SidebarNavProps {
@@ -15,10 +15,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 }) => {
   const navItems = [
     { id: 'MAP', label: 'MAP', icon: Map, view: 'MAP' as ViewMode },
-    { id: 'INSIGHTS', label: 'INSIGHTS', icon: BarChart3, view: 'INSIGHTS' as ViewMode },
     { id: 'ALERTS', label: 'ALERTS', icon: AlertTriangle, view: 'VEHICLE_LIVE' as ViewMode },
-    { id: 'MESSAGES', label: 'MESSAGES', icon: MessageSquare, view: 'TRIP_DETAIL' as ViewMode },
-    { id: 'SAFETY', label: 'SAFETY', icon: ShieldCheck, view: 'TRIP_DETAIL' as ViewMode },
+    { id: 'TRIP_DETAIL', label: 'TRIP DETAIL', icon: Route, view: 'TRIP_DETAIL' as ViewMode },
+    { id: 'INSIGHTS', label: 'INSIGHTS', icon: BarChart3, view: 'INSIGHTS' as ViewMode },
+    { id: 'RANKING', label: 'RANKING', icon: Trophy, view: 'RANKING' as ViewMode },
     { id: 'SETTINGS', label: 'SETTINGS', icon: Settings, view: 'SETTINGS' as ViewMode },
   ];
 

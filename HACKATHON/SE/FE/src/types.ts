@@ -1,4 +1,4 @@
-export type ViewMode = 'MAP' | 'INSIGHTS' | 'SAFETY' | 'TRIP_DETAIL' | 'VEHICLE_LIVE' | 'SETTINGS';
+export type ViewMode = 'MAP' | 'INSIGHTS' | 'RANKING' | 'SAFETY' | 'TRIP_DETAIL' | 'VEHICLE_LIVE' | 'SETTINGS';
 
 export type EventSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 

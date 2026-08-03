@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import yaml
 
 AI_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(AI_ROOT))
@@ -26,10 +27,18 @@ DATA = AI_ROOT / "Practice_Dataset" / "Practice_Dataset"
 OUT = AI_ROOT / "artifacts" / "features"
 sys.path.insert(0, str(KIT))
 
-from run_inference import _load_config           # noqa: E402
+# Deliberately self-contained -- do NOT import from scripts/run_inference.py.
+# That script was rewritten upstream into a unified Challenge 1+2+3 script
+# that pulls in core.challenge2_driver (needs joblib etc.), which is out of
+# scope here and not installed in every environment this runs in (e.g. the
+# GPU venv used for YOLO fine-tuning). Same fix as eval_practice.py.
 from team_kit.dataset_loader import TripDataset   # noqa: E402
 from core.challenge1_road.predict_ttc import RoadTTCPredictor  # noqa: E402
 from core.challenge1_road.ttc_engine import FEATURE_KEYS       # noqa: E402
+
+
+def _load_config(path: Path) -> dict:
+    return yaml.safe_load(path.read_text()) or {}
 
 
 def extract_trip(trip_dir: Path, cfg: dict) -> pd.DataFrame:

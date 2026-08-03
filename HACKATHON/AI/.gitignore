@@ -2,10 +2,16 @@
 Dataset/
 dataset (1)/
 data/
+Practice_Dataset/
+Hackathon_Dataset_Redacted/
+Package_starterkit/
+Package_starterkit.zip
 
 # Generated outputs
 predictions/
 artifacts/
+datasets/
+runs/
 
 # Model weights (auto-downloaded / trained)
 *.pt

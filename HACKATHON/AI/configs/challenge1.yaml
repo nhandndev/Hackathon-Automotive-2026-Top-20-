@@ -9,7 +9,12 @@ detector:
   # imgsz=1280 was tested and is WORSE -- the release images are already a
   # downscale of the CARLA render, so upsampling adds no information and
   # breaks the pretrained scale prior.)
-  weights: yolov8s.pt      # COCO-pretrained; auto-downloaded by ultralytics on first run
+  # Fine-tuned from yolov8s.pt on this trip's own kitti/label_2 (3D->2D
+  # projected) boxes -- see scripts/prepare_yolo_finetune.py. Val split is
+  # a 90/10 FRAME split within the same 6 trips (not held-out trips), so
+  # its mAP (0.995/0.91 all-class) is optimistic re: true generalization;
+  # the real test is whether the full eval_practice.py composite improves.
+  weights: yolov8s_finetuned_carla.pt
   conf: 0.15               # lowered: the CARLA-rendered VRUs score ~0.17-0.26
   # MUST accompany the low `conf`: ByteTrack's own new_track_thresh would
   # otherwise drop these faint detections before they ever become tracks.

@@ -23,8 +23,8 @@ import yaml
 AI_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(AI_ROOT))
 
-KIT = AI_ROOT / "Dataset" / "Dataset" / "Package_starterkit" / "package_starterkit"
-DATA = AI_ROOT / "Dataset" / "Dataset" / "Practice_Dataset 2"
+KIT = AI_ROOT / "Package_starterkit" / "Package_starterkit" / "package_starterkit"
+DATA = AI_ROOT / "Practice_Dataset" / "Practice_Dataset"
 OUT = AI_ROOT / "predictions" / "FPTU_DMS_Vision"
 sys.path.insert(0, str(KIT))
 

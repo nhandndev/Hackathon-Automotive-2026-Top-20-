@@ -18,7 +18,7 @@ detector:
   # expanded dataset (original 6 practice trips + extra_trips/, e.g. a
   # lead_brake/dusk scenario with 464 more densely-labeled frames using
   # real 2D bboxes). See scripts/prepare_yolo_finetune.py.
-  weights: yolov8s_finetuned_carla_v2.pt
+  weights: models/yolov8s_finetuned_carla_v2.pt
   conf: 0.15               # lowered: the CARLA-rendered VRUs score ~0.17-0.26
   # MUST accompany the low `conf`: ByteTrack's own new_track_thresh would
   # otherwise drop these faint detections before they ever become tracks.

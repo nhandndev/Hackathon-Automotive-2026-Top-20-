@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -138,6 +139,12 @@ class ObjectDetector:
         self._load_error: Optional[str] = None
         try:
             from ultralytics import YOLO  # noqa: WPS433 (lazy import by design)
+            weight_path = Path(weights)
+            if not weight_path.is_absolute() and not weight_path.exists():
+                ai_relative = Path(__file__).resolve().parents[2] / weight_path
+                if ai_relative.exists():
+                    weight_path = ai_relative
+            weights = str(weight_path)
             self._model = YOLO(weights)
         except Exception as e:  # ultralytics/torch missing or weights unfetchable
             self._load_error = str(e)

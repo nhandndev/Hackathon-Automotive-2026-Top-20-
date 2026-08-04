@@ -65,7 +65,7 @@ AI/
 │   ├── challenge3_fusion/     # công thức safe/risk BTC
 │   └── decision_engine/       # alert policy và lifecycle
 ├── configs/                   # C1, C2, Decision Engine
-├── models/                    # RF v3, YuNet, 468-landmark ONNX
+├── models/                    # RF v3, YuNet, 468-landmark ONNX và YOLO C1
 ├── integrations/se_client.py
 ├── scripts/
 │   ├── run_inference.py
@@ -85,26 +85,29 @@ AI/
 - GPU CUDA là tùy chọn. CPU vẫn chạy được nhưng có thể không realtime.
 - Dataset BTC đặt ngoài repo, ví dụ `E:\automotive_cc\Practice_Dataset`.
 
-Backend SE dùng môi trường Python 3.11 riêng; không cài requirements SE vào
-conda `automotive`.
+Demo end-to-end dùng một `.venv` Python 3.13 tại root `HACKATHON`. Không dùng
+Conda và không commit thư mục `.venv` lên Git.
 
 ## 5. Setup AI
 
-```powershell
-cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON
+Chạy từ root `HACKATHON` trên Windows PowerShell:
 
-conda create -n automotive python=3.13 -y
-conda activate automotive
-python -m pip install --upgrade pip
+```powershell
+py -3.13 -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r AI\requirements.txt
+python -m pip install -r SE\BE\requirements.txt
 ```
 
-Nếu môi trường đã có:
+Nếu `.venv` đã tồn tại, chỉ cần activate rồi đồng bộ requirements:
 
 ```powershell
-conda activate automotive
+.\.venv\Scripts\Activate.ps1
 python --version
 python -m pip install -r AI\requirements.txt
+python -m pip install -r SE\BE\requirements.txt
 ```
 
 Kiểm tra môi trường và model:
@@ -112,7 +115,7 @@ Kiểm tra môi trường và model:
 ```powershell
 python -c "import cv2, onnxruntime, sklearn, ultralytics; print('AI environment OK')"
 
-python -c "from pathlib import Path; p=Path('AI/models'); r=['driver_state_rf_v3_onnx.joblib','face_detection_yunet_2023mar.onnx','face_landmark_468.onnx']; assert all((p/x).is_file() for x in r); print('AI models OK')"
+python -c "from pathlib import Path; p=Path('AI/models'); r=['driver_state_rf_v3_onnx.joblib','face_detection_yunet_2023mar.onnx','face_landmark_468.onnx','yolov8s_finetuned_carla_v2.pt']; assert all((p/x).is_file() for x in r); print('AI models OK')"
 ```
 
 ## 6. Challenge 2 v3

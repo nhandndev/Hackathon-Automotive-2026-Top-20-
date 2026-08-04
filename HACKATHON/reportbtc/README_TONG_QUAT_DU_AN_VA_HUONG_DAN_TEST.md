@@ -599,7 +599,7 @@ Một buổi demo được xem là đạt nếu chứng minh được:
 - `SE/FE/README.md` — Frontend/Fleet Dashboard.
 - `SE/FE/docs/AI_COPILOT_FUNCTION_CALLING_REPORTS.md` — Memory AI Copilot.
 - `AI/README.md` — AI workspace.
-- `AI/README_CONDA_E2E_EVALUATION.md` — Môi trường đánh giá challenge.
+- `reportbtc/C2_END_TO_END_DEMO_SCRIPT.md` — Setup `.venv` và runbook demo.
 
 ---
 

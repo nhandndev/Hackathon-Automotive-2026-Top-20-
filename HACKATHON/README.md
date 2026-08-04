@@ -1,416 +1,531 @@
-# FPTU DMS Vision — AI Fleet Management & Driver Intelligence Platform
+# FPTU DMS Vision — Driver Intelligence & Fleet Safety Platform
 
-README này là điểm bắt đầu bắt buộc cho thành viên **AI**, **Backend**, **Frontend** và mọi AI coding agent làm việc trong repository. Đọc file này trước khi Vibe Coding, sau đó đọc code và tài liệu đúng phạm vi task.
+> **Connected Car Hackathon 2026 — DMS-10 Driver Intelligence Platform**  
+> README này là trang tổng quan chính ở root repository để Ban Tổ chức/mentor mở GitHub là hiểu ngay dự án làm gì, đã hoàn thành gì và test như thế nào.
 
-> Repository đang phát triển nhanh. `docs/` chứa toàn bộ context nghiên cứu và kế hoạch của nhóm nhưng có thể có nội dung cũ, giả thuyết hoặc contract chưa cập nhật. Không được dùng một đoạn tài liệu đơn lẻ để ghi đè code/test đang chạy.
+---
 
-## 1. Dự án làm gì?
+## 1. Dự án giải quyết bài toán gì?
 
-FPTU DMS Vision tham gia Connected Car Hackathon 2026, xử lý dữ liệu road camera, cabin camera và telemetry để tạo năm output nộp bài:
+Tai nạn giao thông thường không bắt đầu từ một cảnh báo đơn lẻ, mà từ nhiều tín hiệu nguy hiểm xuất hiện cùng lúc nhưng bị nhìn rời rạc:
 
-1. **Prediction CSV:** 10 file `T01d.csv`–`T10d.csv`, mỗi file 1.800 frame.
-2. **GitHub repository:** code, cấu hình và tài liệu có thể tái lập.
-3. **Demo:** Fleet Dashboard, replay chuyến đi và CarSky HMI khi integration sẵn sàng.
-4. **Implementation Notes:** giải thích thuật toán, thí nghiệm, metric và hạn chế.
-5. **Usage Notes:** hướng dẫn cài đặt và chạy lại bằng lệnh thật.
+- Tài xế mất tập trung, buồn ngủ hoặc microsleep.
+- Khoảng cách với xe/vật thể phía trước giảm nhanh.
+- TTC thấp, headway thấp, tốc độ cao.
+- Phanh gấp, tăng tốc gắt, cua gắt, tailgating.
 
-Ba challenge chính:
+**FPTU DMS Vision** hợp nhất các tín hiệu từ **road camera**, **driver camera** và **telemetry** để tạo:
 
-| Challenge | Đầu ra | Mục tiêu |
+- Collision risk / TTC.
+- Driver state.
+- Unified risk score.
+- Fleet Dashboard cho quản lý đội xe.
+- AI Copilot giải thích rủi ro và tạo báo cáo.
+- CarSky/Android HMI cảnh báo trực tiếp cho tài xế.
+
+Mục tiêu không chỉ là “phát hiện sự kiện”, mà là **hiểu rủi ro và đưa ra hành động kịp thời**.
+
+---
+
+## 2. Ba challenge chính
+
+| Challenge | Mục tiêu | Output |
 |---|---|---|
-| Challenge 1 — Collision Risk | `predicted_ttc` | Ước lượng Time-to-Collision; `inf` khi không có nguy cơ |
-| Challenge 2 — Driver Intelligence | `predicted_driver_state` | Phân loại `alert`, `drowsy`, `yawning`, `distracted`, `microsleep` |
-| Challenge 3 — Risk Fusion | `predicted_risk_score` | Điểm rủi ro frame 0–100 và aggregate an toàn cấp trip |
+| Challenge 1 — Collision Risk / TTC | Ước lượng Time-to-Collision từ road camera/telemetry | `predicted_ttc` |
+| Challenge 2 — Driver Intelligence | Phân loại trạng thái tài xế | `predicted_driver_state` |
+| Challenge 3 — Risk Fusion | Hợp nhất TTC, driver state và behavior thành điểm rủi ro | `predicted_risk_score` |
 
-Sản phẩm demo mở rộng năm output thành Driver HUD, Fleet Manager Dashboard, event timeline, báo cáo doanh nghiệp, AI Copilot và CarSky HMI.
-
-## 2. Kiến trúc tổng thể
-
-Sản phẩm có hai nhánh độc lập, không lấy output của evaluator để điều khiển demo:
-
-```text
-SUBMISSION: BTC dataset → AI C1/C2/C3 → CSV → AI/team_kit/evaluation.py
-
-PRODUCT: BTC road/telemetry + webcam → AI Decision Engine → DecisionEvent
-                                                       ├→ Backend → Dashboard live
-                                                       └→ Backend → CarSky → Android HMI
-```
-
-Trong product demo, AI gửi `DecisionEvent` trực tiếp tới Backend. `AITrip` là
-contract phục vụ các API trip/replay hiện có của Backend, không phải payload cảnh
-báo realtime của `end_to_end_demo.py`.
-
-```text
-Road camera ──→ AI Road/TTC ─────────┐
-Cabin camera → AI Driver State ──────┼→ AI Fusion/Risk → AITrip JSON
-Telemetry ───→ Motion/behavior ──────┘                      │
-                                                            ▼
-                                              FastAPI validate + cache
-                                                │        │        │
-                                                ▼        ▼        ▼
-                                              REST   WebSocket  CarSky
-                                                │      20 FPS    Signals
-                                                └────────┬────────┘
-                                                         ▼
-                                             Dashboard / HUD / HMI
-```
-
-Nguyên tắc output-driven:
-
-- Có một Core AI duy nhất cho inference và evaluation.
-- Script sinh CSV và demo phải gọi lại cùng Core, không copy thuật toán.
-- Backend phân phối và tổng hợp output AI; không tạo một risk truth khác.
-- Extension như Fleet Dashboard, Copilot và CarSky không được làm chậm hoặc phá pipeline CSV bắt buộc.
-
-## 3. Cấu trúc repository
-
-```text
-HACKATHON/
-├── AI/                         # Không gian làm việc của AI team
-│   ├── core/                   # TTC, driver state, fusion/risk
-│   ├── configs/                # Threshold/model/runtime config
-│   ├── scripts/                # Inference, evaluation, export
-│   └── extensions/             # Phần mở rộng không thuộc core submission
-├── SE/
-│   ├── BE/                     # FastAPI Backend — Nhân
-│   │   ├── app/core/           # Settings, errors, lifecycle
-│   │   ├── app/domain/         # Canonical schemas/interfaces
-│   │   ├── app/adapters/       # File/external integrations
-│   │   ├── app/modules/        # Fleet, streaming, coaching, reports
-│   │   ├── tests/              # Automated tests
-│   │   ├── scripts/            # Submission/export utilities
-│   │   └── docs/phases/        # Backend implementation phases
-│   └── FE/
-│       └── index.html          # Dashboard prototype hiện tại
-├── docs/                       # Context, nghiên cứu, kế hoạch, starter-kit
-│   └── MockDataSet/            # Mô tả/mock contract để phối hợp
-├── carsky/                     # Guide local, đã git-ignore
-├── index.html                  # CarSky technical guide bản root/local
-└── README.md                   # Project constitution này
-```
-
-Không tự di chuyển ownership giữa `AI/`, `SE/BE/` và `SE/FE/`. Shared contract được thay đổi tại boundary, không sửa logic của team khác để “chạy tạm”.
-
-## 4. Team ownership
-
-| Nhóm/vai trò | Sở hữu |
-|---|---|
-| AI Road | Object tracking, collision cone, TTC, confidence và evaluation Challenge 1 |
-| AI Driver | Face/eye/mouth/head features, temporal state và evaluation Challenge 2 |
-| AI Fusion | Behavior/risk model, calibration và output Challenge 3 |
-| Nhân — Backend | FastAPI, canonical ingestion, cache, REST, WebSocket, Copilot gateway, CarSky adapter, exporter |
-| Thiện — Frontend | Driver HUD, Fleet Dashboard, replay controls, map/charts, Copilot UI, HMI presentation |
-
-Tên hoặc feature mới của thành viên có thể chưa xuất hiện trong README. Ownership thực tế trong branch/code mới phải được kiểm tra trước khi sửa; không xóa feature chỉ vì README chưa kể đến.
-
-## 5. Source of truth và cách xử lý tài liệu outdated
-
-Khi hai nguồn mâu thuẫn, dùng thứ tự sau:
-
-1. Yêu cầu mới nhất đã được team/owner xác nhận.
-2. Test đang pass và executable schema/interface.
-3. Code đang được sử dụng trong pipeline hiện tại.
-4. Phase/contract đúng subsystem.
-5. Tài liệu nghiên cứu và kế hoạch trong `docs/`.
-
-Quy tắc đọc trạng thái:
-
-- **Implemented:** có code nhưng chưa chắc đúng hoặc đủ test.
-- **Verified:** có test/acceptance pass; đây mới là trạng thái tin cậy.
-- **Proposed:** chỉ có trong tài liệu; không được mô tả như đã triển khai.
-- **Legacy/Outdated:** mâu thuẫn schema/test mới; chỉ dùng để hiểu lịch sử.
-
-Không “sửa code cho giống tài liệu cũ”. Nếu code mới có feature hợp lệ nhưng docs thiếu, giữ feature, kiểm thử và cập nhật tài liệu. Nếu thay đổi contract, phải cập nhật producer, consumer, fixture và test trong cùng thay đổi hoặc cung cấp compatibility layer.
-
-### Bản đồ tài liệu
-
-| Tài liệu | Dùng để làm gì | Mức tin cậy |
-|---|---|---|
-| [`BAO_CAO_STARTER_KIT.md`](docs/BAO_CAO_STARTER_KIT.md) | Quy định starter kit, dataset, evaluation và submission | Nguồn nghiên cứu quan trọng; đối chiếu file BTC thật |
-| [`01_Phan_tich...md`](docs/01_Phan_tich_bai_toan_truoc_khi_build_core%20(3).md) | Driver/TTC/risk reasoning và edge cases | Research/giả thuyết; threshold phải được validate |
-| [`02_Kien_truc...md`](docs/02_Kien_truc_He_thong_Output_Driven%20(3).md) | Kiến trúc Core tạo 5 output | Kiến trúc định hướng |
-| [`03_Ke_hoach...md`](docs/03_Ke_hoach_San_xuat_Output_Nop_Bai%20(2).md) | Lịch sản xuất và checklist output | Kế hoạch; ngày/trạng thái có thể outdated |
-| [`04_Chien_luoc...md`](docs/04_Chien_luoc_Toi_da_hoa_Diem_5_Output%20(1).md) | Chiến lược tối ưu điểm | Tham khảo chiến thuật |
-| [`KeHoach_Dashboard...md`](docs/KeHoach_Dashboard_Agile_Thien_Nhan%20(3).md) | SRS/UI/BE feature map | Context sản phẩm; API/schema có thể legacy |
-| [`DatasetMock.md`](docs/MockDataSet/DatasetMock.md) | Hình dạng output AI nhóm đang thống nhất | Intent/mock; ví dụ chưa chắc là JSON hợp lệ |
-| [`SE/BE/docs/phases`](SE/BE/docs/phases/) | Contract và Definition of Done Backend | Nguồn triển khai Backend hiện hành |
-| [`ai_contract.py`](SE/BE/app/domain/schemas/ai_contract.py) | Pydantic contract Backend đang chạy | Executable source of truth hiện tại |
-
-## 6. Data contract giữa AI và SE
-
-Backend canonical nhận một trip:
-
-```text
-AITrip
-├── trip_id
-├── metadata
-│   ├── trip_id, description, duration_sec, fps, map
-│   ├── driver_profile, carla_version, random_seed
-│   └── speed_limit_kmh
-└── frames[]
-    ├── frame_id, timestamp
-    ├── ego
-    │   ├── speed_kmh, longitudinal_accel, lateral_accel
-    │   └── geolocation {lat, lon, alt}
-    ├── driver
-    │   ├── state, alertness_score
-    │   └── eye_state, head_pose, mouth_state, nthu_subject_id
-    ├── min_ttc, headway_sec
-    ├── behavior_flags
-    └── risk {base_risk, driver_factor, final_risk_score}
-```
-
-Quy tắc bất biến tại integration boundary:
-
-- AI sở hữu `driver`, `min_ttc`, `headway_sec`, `behavior_flags` và `risk` trong output canonical.
-- Backend validate, cache, aggregate và phân phối; không ghi đè `risk.final_risk_score` của AI.
-- Backend enrichment phải nằm namespace riêng, không trộn vào raw AI frame.
-- `trip_id` root phải bằng `metadata.trip_id`.
-- Driver enum: `alert|drowsy|yawning|distracted|microsleep`.
-- Score trong 0–100; `alertness_score` trong 0–1; speed không âm.
-- Positive infinity lưu nội bộ bằng `float("inf")`; REST/WebSocket xuất chuỗi `"Infinity"`.
-- Submission CSV dùng `inf`, không dùng chuỗi JSON `"Infinity"`.
-- Literal `Infinity` không phải JSON chuẩn. Ví dụ trong `DatasetMock.md` chỉ mô tả field, không copy nguyên văn làm fixture.
-- Extra AI fields phải round-trip không mất dữ liệu.
-
-Submission CSV đầy đủ:
+Submission CSV mục tiêu:
 
 ```csv
 frame_id,timestamp,predicted_ttc,predicted_driver_state,predicted_risk_score
 ```
 
-Mỗi trip mục tiêu: `T01d`–`T10d`, 1.800 dòng, frame `0..1799`, 20 FPS và timestamp bước 0,05 giây. Nếu file BTC thật khác, file BTC và evaluator chính thức ưu tiên hơn giả định này.
+---
 
-## 7. Contract SE và runtime
-
-### Demo end-to-end AI ↔ SE
-
-Chạy toàn bộ sản phẩm bằng một lệnh (CarSky, SE Backend, Fleet Dashboard và
-AI hybrid):
-
-```powershell
-cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON
-.\.venv\Scripts\Activate.ps1
-.\scripts\run_product_demo.ps1 `
-  -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
-  -Camera 0 `
-  -DriverId driver_001 `
-  -OpenDashboard
-```
-
-Script kiểm tra CarSky, chạy Backend và Dashboard ở background, sau đó chạy AI
-ở foreground. Nhấn `Q` hoặc `Esc` trong cửa sổ AI để kết thúc; các process do
-script tạo sẽ được dừng tự động. CarSky là cloud deployment nên script không tạo
-lại room: nó preflight deployment/node, còn Backend publish event realtime theo
-`SE/BE/.env`; APK HMI realtime phải được cài và mở sẵn trên Android node. Trước
-lần chạy đầu, cần `npm install` trong `SE/FE` và enroll
-`driver_001`; bỏ `-DriverId` nếu muốn dùng global model không personalization.
-
-Demo hybrid dùng road-left, road-right và telemetry của BTC, còn driver camera
-lấy từ webcam thật. Mở hai cửa sổ terminal:
-
-Runner hiện có hai chế độ. Chạy từ thư mục `HACKATHON`:
-
-```powershell
-# 1) Một trip: BTC road cam + webcam tài xế
-.\scripts\run_product_demo.ps1 `
-  -Mode hybrid-live `
-  -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
-  -Camera 0 `
-  -DriverId driver_001 `
-  -OpenDashboard
-
-# 2) Fleet dataset: tự quét mọi trip trực tiếp trong folder, chạy tuần tự
-.\scripts\run_product_demo.ps1 `
-  -Mode dataset-fleet `
-  -DataDir E:\automotive_cc\Practice_Dataset `
-  -OpenDashboard
-```
-
-Ở mode `dataset-fleet`, tất cả trip được đăng ký ngay từ đầu. Chỉ một trip chạy
-AI tại một thời điểm để không nhân GPU/RAM; Dashboard hiển thị `pending`,
-`running`, `completed` và giữ snapshot timeline cùng ảnh cuối của trip đã chạy.
-Muốn dùng bộ dữ liệu mới chỉ cần đổi `-DataDir`; mỗi thư mục con phải có cấu trúc
-trip BTC đầy đủ và file `<trip_id>.json` hoặc `<trip_id>.json.gz`. Sau trip cuối,
-runner giữ Backend/Dashboard mở để xem lịch sử; nhấn Enter tại terminal mới dừng.
-
-```powershell
-# Terminal 1 — Backend SE (Python 3.11)
-cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\SE\BE
-uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-```powershell
-# Terminal 2 — AI (conda automotive, Python 3.13)
-cd E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON
-conda activate automotive
-python AI\scripts\end_to_end_demo.py `
-  --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
-  --camera 0 `
-  --driver-id driver_001 `
-  --se-endpoint http://127.0.0.1:8000/api/v1/alerts
-```
-
-Health và event nhận được:
+## 3. Kiến trúc end-to-end
 
 ```text
-GET http://127.0.0.1:8000/health
-GET http://127.0.0.1:8000/api/v1/alerts/recent
-GET http://127.0.0.1:8000/api/v1/alerts/trips
-WS  ws://127.0.0.1:8000/api/v1/alerts/live
+BTC Dataset / Road Camera / Driver Camera / Telemetry
+                         │
+                         ▼
+              AI Core / Decision Engine
+       ┌─────────────────┼─────────────────┐
+       ▼                 ▼                 ▼
+ Challenge 1 TTC   Challenge 2 DMS   Challenge 3 Risk
+       └─────────────────┼─────────────────┘
+                         ▼
+                 DecisionEvent / AITrip
+                         │
+                         ▼
+                    FastAPI Backend
+       ┌─────────────────┼────────────────────────┐
+       ▼                 ▼                        ▼
+ REST APIs         WebSocket realtime        CarSky Adapter
+       │                 │                        │
+       ▼                 ▼                        ▼
+ Fleet Dashboard   Live event stream       KUKSA/VHAL/HMI
+       │
+       ▼
+ Fleet AI Copilot qua AWS Bedrock
 ```
 
-AI là nơi duy nhất quyết định alert type/severity/lifecycle. SE validate,
-deduplicate, lưu và phân phối sang Fleet Dashboard/CarSky; không tính lại risk.
+Nguyên tắc tích hợp:
 
-Để demo đủ bốn lớp, phải chạy thêm Frontend và bật CarSky external trong
-`SE/BE/.env`. Runbook thao tác, preflight, backup và tiêu chí pass nằm tại
-[`reportbtc/C2_END_TO_END_DEMO_SCRIPT.md`](reportbtc/C2_END_TO_END_DEMO_SCRIPT.md).
-Inference/evaluate BTC là nhánh riêng và không cần Backend, Frontend hoặc CarSky.
+- AI là nguồn sinh TTC, driver state và risk.
+- Backend validate, cache, aggregate và phát event; không tự ghi đè risk output của AI.
+- Dashboard dùng data thật từ Backend/dataset; không tự tạo trip giả khi bàn giao.
+- CarSky dùng để chứng minh luồng cảnh báo tới HMI/driver display.
+
+---
+
+## 4. Cấu trúc repository
+
+```text
+HACKATHON/
+├── AI/                         # AI core, challenge inference, evaluation
+│   ├── core/                   # TTC, driver state, fusion/risk
+│   ├── models/                 # Model artifacts/report
+│   ├── scripts/                # Inference, demo, evaluation scripts
+│   └── team_kit/               # BTC/team evaluation loader
+├── SE/
+│   ├── BE/                     # FastAPI Backend
+│   │   ├── app/                # API, schemas, services, adapters
+│   │   ├── scripts/            # Export, validation, CarSky scripts
+│   │   └── docs/               # Phase docs, CarSky docs, runbook
+│   ├── FE/                     # Fleet Dashboard + AI Copilot UI
+│   │   ├── src/                # React UI
+│   │   ├── server.ts           # FE server + Copilot gateway
+│   │   └── docs/               # AI Copilot docs/memory
+│   └── HMI/                    # Android HMI/APK handoff
+├── docs/                       # Research, starter-kit notes, architecture
+├── reportbtc/                  # C2/BTC reports and demo scripts
+└── scripts/                    # Product demo runner
+```
+
+---
+
+## 5. Thành phần đã triển khai
+
+### AI
+
+- Challenge inference/evaluation scripts.
+- TTC / Driver State / Risk Fusion pipeline.
+- Product demo script nối AI → Backend.
+- Webcam driver demo cho luồng live camera.
+- Evaluation artifacts cho driver state và practice testing.
+
+File tiêu biểu:
+
+- `AI/scripts/run_inference.py`
+- `AI/scripts/end_to_end_demo.py`
+- `AI/scripts/dataset_fleet_demo.py`
+- `AI/scripts/webcam_driver_demo.py`
+- `AI/team_kit/evaluation.py`
 
 ### Backend
 
-- Runtime chuẩn: Python 3.11.
-- Framework: FastAPI + Pydantic v2.
-- REST prefix chính: `/api/v1`; `/api` là compatibility alias tạm thời.
-- Public endpoints, không authentication/authorization.
-- Không login, JWT, session, role, permission hoặc inbound API-key middleware.
-- Credential AI/LLM/CarSky chỉ dùng cho outbound integration.
-- Health: `GET /health`.
-- Readiness: `GET /ready`.
-- Swagger: `GET /docs`.
-- Replay target: `WS /ws/replay/{trip_id}`, 20 FPS.
+- FastAPI Backend.
+- Health/readiness.
+- AI contract/schema validation.
+- REST APIs cho trip/alert/fleet.
+- WebSocket realtime.
+- CarSky integration script.
+- Submission/export validation utilities.
+
+File tiêu biểu:
+
+- `SE/BE/app/main.py`
+- `SE/BE/app/domain/schemas/ai_contract.py`
+- `SE/BE/scripts/export_submission_csv.py`
+- `SE/BE/scripts/validate_submission.py`
+- `SE/BE/scripts/carsky_phase05.py`
+
+### Fleet Dashboard
+
+- Dashboard hiển thị trạng thái fleet/trip.
+- Driver Ranking.
+- Trip Detail.
+- Alerts.
+- Messages / Fleet AI Copilot UI.
+- Report page mở tab mới.
+- AI Copilot gọi AI thật qua AWS Bedrock ở server-side.
+
+File tiêu biểu:
+
+- `SE/FE/src/App.tsx`
+- `SE/FE/src/components/AICopilotDrawer.tsx`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx`
+- `SE/FE/src/components/DriverRankingView.tsx`
+- `SE/FE/server.ts`
+
+### Fleet AI Copilot
+
+- Endpoint `/api/copilot`.
+- Endpoint `/api/copilot/report`.
+- AWS Bedrock Bearer Token support.
+- Model mặc định: `deepseek.v3.2`.
+- Region theo BTC: `ap-southeast-2`.
+
+Biến môi trường cần có trong `SE/FE/.env.local`:
+
+```env
+AWS_BEARER_TOKEN_BEDROCK=bedrock-api-key-...
+AWS_DEFAULT_REGION=ap-southeast-2
+BEDROCK_MODEL_ID=deepseek.v3.2
+```
+
+Không commit token thật lên repository.
+
+### CarSky / Android HMI
+
+- Đã triển khai CarSky Blueprint với các node:
+  - DMS Signal Broker
+  - DMS HMI Bridge
+  - DMS Android HMI
+- KUKSA custom signals hiển thị được trong Signal Watch.
+- Script gửi scenario safe/warning/critical lên CarSky.
+- Android HMI APK có UI cảnh báo an toàn/cảnh báo/nguy hiểm.
+
+Các bài học kỹ thuật quan trọng:
+
+- VSS artifact cho KUKSA phải là object/map `{...}`, không phải array `[...]`.
+- Nếu gặp `ParseError("invalid type: sequence, expected a map")`, nguyên nhân là file VSS sai format.
+- Android CarProperty/VHAL cần property được register đúng trong car service.
+
+---
+
+## 6. KPI và số liệu hiện tại
+
+| Nhóm KPI | Kết quả hiện tại | Ghi chú |
+|---|---:|---|
+| Challenge 1 — TTC | Composite khoảng **65.5/100**, danger F1 retest khoảng **69.9%** | Cần đồng bộ artifact retest cuối vào repo trước final |
+| Challenge 2 — Driver State | Practice composite retest khoảng **87.2/100** | Cần giữ evaluation log/checksum |
+| Driver state augmented holdout | Accuracy **78.47%**, macro-F1 **80.28%** | Không trộn với hidden/BTC practice score |
+| Challenge 3 — Risk Fusion | Evaluator practice **100/100** | Không kết luận hoàn hảo tuyệt đối vì có hiện tượng clip safe score |
+| Backend tests | Đã từng pass 13/13 ở Phase 01; cần rerun trước final | Tùy môi trường dataset |
+| Frontend build | `npm run build` pass | Có warning bundle size, không phải lỗi runtime |
+| CarSky deploy | Đã có deployment running 3/3 nodes trong cấu hình fixed VSS | HMI realtime còn phụ thuộc VHAL bridge/runtime |
+| Bedrock Copilot | Key/model/region test pass với `deepseek.v3.2`, `ap-southeast-2` | Short-term key có hạn dùng |
+
+---
+
+## 7. Setup môi trường
+
+### 7.1 Yêu cầu
+
+- Python 3.11+ hoặc Python 3.13.
+- Node.js LTS.
+- npm.
+- Git.
+- Dataset BTC/practice nếu chạy full trip thật.
+- Webcam nếu chạy driver camera live.
+- CarSky credential nếu test HMI.
+- AWS Bedrock short-term key nếu test AI Copilot thật.
+
+### 7.2 Python virtual environment
+
+macOS/Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r AI/requirements.txt
+python -m pip install -r SE/BE/requirements.txt
+```
+
+Windows PowerShell:
+
+```powershell
+py -3.13 -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r AI\requirements.txt
+python -m pip install -r SE\BE\requirements.txt
+```
+
+### 7.3 Frontend dependencies
+
+```bash
+cd SE/FE
+npm install
+npm run build
+cd ../..
+```
+
+---
+
+## 8. Cấu hình `.env`
+
+### Backend
+
+```bash
+cp SE/BE/.env.example SE/BE/.env
+```
+
+Các biến chính:
+
+```env
+APP_ENV=development
+API_V1_PREFIX=/api/v1
+DATASET_DIR=./data
+OUTPUT_SUBMISSION_DIR=./submissions
+STREAM_FPS=20
+AI_SOURCE_MODE=file
+CARSKY_ENABLED=false
+```
+
+Nếu test CarSky thật, điền credential CarSky vào `SE/BE/.env`.
+
+### Frontend / Bedrock Copilot
+
+```bash
+cp SE/FE/.env.example SE/FE/.env.local
+```
+
+```env
+AWS_BEARER_TOKEN_BEDROCK=bedrock-api-key-...
+AWS_DEFAULT_REGION=ap-southeast-2
+BEDROCK_MODEL_ID=deepseek.v3.2
+```
+
+Lưu ý:
+
+- Bedrock key là short-term key, có thể hết hạn.
+- Không đưa `.env`, `.env.local`, API key hoặc token lên GitHub/public report.
+
+---
+
+## 9. Cách test
+
+### 9.1 Test Backend
 
 ```bash
 cd SE/BE
-python3.11 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+
+Terminal khác:
+
+```bash
+curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8000/ready
+```
+
+Kỳ vọng `/health`:
+
+```json
+{
+  "status": "ok",
+  "service": "dms-backend",
+  "version": "1.0.0",
+  "stream_fps": 20.0
+}
+```
+
+Chạy test:
 
 ```bash
 cd SE/BE
 source .venv/bin/activate
-pytest -q
+pytest
 ```
 
-Hiện Backend có 23 test PASS trên Python 3.11. `/ready` được phép trả 503 trước khi Phase 02 nạp đủ dataset/cache.
+### 9.2 Test Fleet Dashboard
 
-### Frontend
+```bash
+cd SE/FE
+npm run lint
+npm run build
+npm run dev
+```
 
-- Prototype hiện tại: `SE/FE/index.html`.
-- Dùng Tailwind CDN, Leaflet, Chart.js và Lucide.
-- Một số URL trong prototype còn là legacy, ví dụ `/api/coaching/generate`; phải đối chiếu OpenAPI trước khi khóa integration.
-- Frontend không tự tính lại AI risk; chỉ render raw AI data và Backend enrichment.
-- Replay UI phải có state riêng cho play/pause/seek/speed và không giả định mọi frame đến đúng giờ.
-
-### CarSky HMI
-
-- CarSky guide local được git-ignore; thành viên mới có thể cần nhận guide riêng.
-- Backend gửi qua Signals API; không dùng `/shell`, `/tap`, `/text` làm alert channel production.
-- Signal Watch chỉ debug; Screen Widget chỉ phản chiếu HMI app.
-- HMI consumer phải chạy trong Skycraft Android/custom runtime.
-- Critical alert gửi theo episode transition, không gửi lặp 20 lần/giây.
-- TTS lỗi không được làm hỏng visual critical alert, REST hoặc WebSocket.
-- Runbook: [`PHASE_05_1`](SE/BE/docs/phases/PHASE_05_1_CARSKY_HMI_RUNBOOK.md) và [`PHASE_05_2`](SE/BE/docs/phases/PHASE_05_2_CARSKY_HMI_ACTION_CHECKLIST.md).
-- Contract/change memory bắt buộc đọc trước khi sửa AI payload hoặc CarSky mapping:
-  [`AI_CONTRACT_AND_CHANGELOG`](SE/BE/docs/AI_CONTRACT_AND_CHANGELOG.md).
-
-## 8. Trạng thái hiện tại
-
-| Khu vực | Trạng thái quan sát được |
-|---|---|
-| Backend Phase 01 | Verified: app chạy, canonical schema/config/error/health/readiness; bộ Backend hiện có 23 test PASS |
-| Backend Phase 02–06 | Có spec chi tiết; code legacy tồn tại một phần, chưa được coi là hoàn thành |
-| AI | Đang được thành viên chỉnh sửa; không giả định skeleton/file cũ vẫn là implementation hiện hành |
-| Frontend | Có dashboard prototype một file HTML; integration contract còn cần đồng bộ |
-| CarSky | Có credential local, VSS/bridge/APK và Blueprint valid; deployment runtime còn chờ xử lý visibility của VSS artifact |
-| Submission | Có script khởi đầu; phải validate lại bằng evaluator/file BTC chính thức |
-
-## 9. Quy trình Vibe Coding bắt buộc
-
-### Trước khi code
-
-1. Đọc README này.
-2. Chạy `git status`; mọi thay đổi chưa commit có thể thuộc thành viên khác.
-3. Đọc file phase/spec liên quan và code/test hiện tại.
-4. Xác định owner và consumer của feature.
-5. Ghi rõ feature đang ở `PROPOSED`, `IMPLEMENTED` hay `VERIFIED`.
-6. Chốt acceptance criteria trước khi sửa nhiều file.
-
-### Trong khi code
-
-- Không xóa/reset/format hàng loạt thay đổi của người khác.
-- Không tự thay contract AI, REST, WebSocket hoặc CSV.
-- Không hard-code absolute path, secret, API key, Room ID hoặc Node Key.
-- Không thêm authentication/authorization nếu chưa có quyết định mới của nhóm.
-- Không biến `Infinity` thành `0`.
-- Không để Backend tự tạo risk thay thế AI canonical.
-- Không gọi external AI/LLM/CarSky đồng bộ trong vòng lặp WebSocket 50 ms.
-- Không copy thuật toán Core sang demo/exporter; import và tái sử dụng.
-- Mọi fallback phải deterministic và được gắn nguồn/trạng thái rõ ràng.
-- Thêm hoặc cập nhật test cùng behavior mới.
-
-### Sau khi code
-
-1. Chạy test/lint/smoke test phù hợp.
-2. Kiểm tra producer và mọi consumer của contract.
-3. Cập nhật README/phase nếu kiến trúc, interface hoặc cách chạy thay đổi.
-4. Báo file đã đổi, test đã chạy, phần chưa test và input còn thiếu.
-5. Chỉ ghi `VERIFIED` khi acceptance test thực sự pass.
-
-## 10. Cách xử lý feature mới và README bị outdated
-
-Feature mới của thành viên là bình thường. AI Agent không được xóa feature đó chỉ vì không thấy trong README.
-
-Phân loại thay đổi:
-
-| Loại | Ví dụ | Cách xử lý |
-|---|---|---|
-| Local, không đổi contract | Tối ưu UI, refactor nội bộ | Giữ behavior, thêm test, cập nhật usage nếu cần |
-| Thêm field optional | Thêm confidence/evidence | Producer thêm, consumer bỏ qua được, schema `extra=allow`, thêm round-trip test |
-| Đổi contract | Rename field, endpoint, enum | Cần owner xác nhận, compatibility alias/migration và test hai phía |
-| Đổi ownership/risk formula | Backend tính thay AI | Không tự làm; phải có quyết định nhóm và cập nhật architecture |
-| Thay output nộp bài | Cột CSV, số dòng, tên file | Chỉ theo BTC/evaluator chính thức, cần dry-run |
-
-Khi phát hiện code mới hơn README:
-
-1. Không revert code.
-2. Đọc commit/diff/test và hỏi owner nếu mục đích chưa rõ.
-3. Nếu feature đã verified, cập nhật README và phase.
-4. Nếu mới implemented nhưng chưa test, giữ trạng thái `IMPLEMENTED`, bổ sung acceptance test.
-5. Nếu mâu thuẫn contract ảnh hưởng team khác, dừng integration và lập danh sách producer/consumer cần migrate.
-
-Feature làm thay đổi interface nên có tài liệu ngắn trong `docs/features/` với: mục tiêu, owner, input/output, affected consumers, compatibility, test và trạng thái. Tài liệu này không thay thế test hoặc canonical schema.
-
-## 11. Thứ tự ưu tiên triển khai
+Mở:
 
 ```text
-1. CSV hợp lệ và Core AI tái lập được
-2. Contract AI ↔ Backend ổn định
-3. Backend ingestion/cache
-4. REST fleet/trip APIs
-5. WebSocket replay 20 FPS
-6. Frontend integration
-7. Copilot và CarSky extension
-8. Submission validation, demo và tài liệu cuối
+http://127.0.0.1:3000
 ```
 
-Không để extension bonus làm trễ CSV, evaluation hoặc pipeline core.
+Kỳ vọng:
 
-## 12. Definition of Done chung
+- Dashboard mở được.
+- Driver Ranking hiển thị theo trip/data đang có.
+- Trip Detail/Alerts/Messages hoạt động.
+- AI Copilot Drawer mở được.
 
-Một task chỉ hoàn thành khi:
+### 9.3 Test AWS Bedrock Copilot
 
-- Behavior đúng acceptance criteria.
-- Contract và ownership không bị phá.
-- Test liên quan pass.
-- Không làm mất dữ liệu AI hoặc thay đổi output âm thầm.
-- Cách chạy được ghi lại nếu có thay đổi.
-- Không chứa secret, absolute path hoặc dataset/model lớn trong Git.
-- Có fallback rõ ràng cho external service nếu task yêu cầu.
-- Nêu rõ phần bắt buộc con người kiểm tra: model quality, UI usability, CarSky device hoặc quy định BTC.
+Từ `SE/FE`, sau khi điền `.env.local`:
 
-Nếu chưa đủ bằng chứng, dùng `IMPLEMENTED`, không dùng `DONE/VERIFIED`.
+```bash
+python3 - <<'PY'
+import os
+from pathlib import Path
+for line in Path(".env.local").read_text().splitlines():
+    if "=" in line and not line.lstrip().startswith("#"):
+        k, v = line.split("=", 1)
+        os.environ[k.strip()] = v.strip().strip('"').strip("'")
+
+import boto3
+os.environ["AWS_BEARER_TOKEN_BEDROCK"] = (
+    os.environ.get("AWS_BEARER_TOKEN_BEDROCK", "")
+    .replace("\n", "")
+    .replace(" ", "")
+    .strip()
+)
+
+client = boto3.client(
+    "bedrock-runtime",
+    region_name=os.environ.get("AWS_DEFAULT_REGION", "ap-southeast-2"),
+)
+response = client.converse(
+    modelId=os.environ.get("BEDROCK_MODEL_ID", "deepseek.v3.2"),
+    messages=[{"role": "user", "content": [{"text": "Xin chào, trả lời đúng một câu tiếng Việt."}]}],
+)
+print(response["output"]["message"]["content"][0]["text"])
+PY
+```
+
+Kỳ vọng:
+
+- Bedrock trả lời bằng tiếng Việt.
+- Nếu lỗi `Authentication failed`, kiểm tra key còn hạn, region và model.
+
+### 9.4 Test AI inference / submission
+
+```bash
+python AI/scripts/run_inference.py \
+  --data-dir <PATH_TO_PRACTICE_DATASET> \
+  --samples-only \
+  --out AI/artifacts/predictions_6_samples
+```
+
+Đánh giá:
+
+```bash
+python AI/team_kit/evaluation.py \
+  --predictions AI/artifacts/predictions_6_samples \
+  --data-dir <PATH_TO_PRACTICE_DATASET> \
+  --output AI/artifacts/evaluation_6_samples.json
+```
+
+### 9.5 Test product demo end-to-end
+
+Windows PowerShell từ root `HACKATHON`:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode hybrid-live `
+  -TripDir <PATH_TO_PRACTICE_DATASET>\T01-Sample `
+  -Camera 0 `
+  -DriverId driver_001 `
+  -OpenDashboard
+```
+
+Chế độ nhiều trip:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir <PATH_TO_PRACTICE_DATASET> `
+  -OpenDashboard
+```
+
+Kỳ vọng:
+
+1. AI sinh TTC, driver state và risk.
+2. Backend nhận event.
+3. Dashboard cập nhật trip/alert.
+4. AI Copilot tạo insight/report khi có Bedrock key.
+5. CarSky Signal Watch/HMI đổi trạng thái nếu CarSky external đang enabled và deployment running.
+
+### 9.6 Test CarSky
+
+```bash
+cd SE/BE
+source .venv/bin/activate
+python scripts/carsky_phase05.py status
+python scripts/carsky_phase05.py nodes
+python scripts/carsky_phase05.py scenario critical
+```
+
+Kỳ vọng:
+
+- Deployment status là `RUNNING`.
+- Signal Watch thấy các signal:
+  - `Vehicle.Speed`
+  - `Vehicle.ADAS.FinalRiskScore`
+  - `Vehicle.Driver.State`
+  - `Vehicle.ADAS.DisplaySeverity`
+  - `Vehicle.ADAS.AIStatus`
+- HMI đổi trạng thái safe/warning/critical theo signal.
+
+---
+
+## 10. Lỗi thường gặp
+
+| Lỗi | Nguyên nhân thường gặp | Cách xử lý |
+|---|---|---|
+| `Port 3000 is already in use` | FE server cũ còn chạy | Kill process port 3000/23000 rồi chạy lại `npm run dev` |
+| `Port 8000 is already in use` | Backend cũ còn chạy | Kill process port 8000 rồi chạy lại uvicorn |
+| Backend `/ready` trả 503 | Dataset/cache chưa đủ hoặc external config thiếu | Kiểm tra `DATASET_DIR`, trip cache, CarSky/AI mode |
+| Bedrock `Authentication failed` | Key hết hạn/sai region/copy dính whitespace | Tạo key mới, dùng `ap-southeast-2`, strip newline |
+| Bedrock `Unable to locate credentials` | SDK chưa nhận Bearer Token | Dùng biến `AWS_BEARER_TOKEN_BEDROCK` |
+| CarSky KUKSA `invalid type: sequence, expected a map` | VSS artifact là array `[...]` | Upload VSS dạng object/map `{...}` |
+| CarSky deployment pending lâu | Node/artifact/runtime chưa apply xong hoặc hạ tầng đang lỗi | Xem Dashboard/Logs, gửi BTC nếu stuck > 5–10 phút |
+| Android HMI không nghe voice | AAOS image thiếu TTS engine/default synth | Cần TTS engine APK hoặc xác nhận audio route từ BTC |
+| HMI không update nhưng Signal Watch có data | Android CarProperty/VHAL bridge chưa map đúng property | Kiểm tra HMI Bridge log và registered VHAL property |
+
+---
+
+## 11. Những phần còn đang phát triển / cần hỗ trợ
+
+| Hạng mục | Trạng thái | Cần hỗ trợ/việc còn lại |
+|---|---|---|
+| Full dataset trên mọi máy | Một số máy local chưa có full dataset | Máy chấm/demo nên có dataset đầy đủ |
+| CarSky HMI realtime | Đã deploy và gửi signal được; VHAL/APK realtime cần xác minh từng deployment | BTC hỗ trợ runtime/log nếu VHAL transport lỗi |
+| TTS trên Android HMI | UI có nút voice; AAOS có thể thiếu TTS engine | BTC xác nhận có hỗ trợ TTS/audio route không |
+| Persistent offline outbox | Có queue/runtime MVP | Cần persistent storage qua restart |
+| Final evaluation artifact | Có số liệu preview/retest | Cần đồng bộ artifact cuối, command, checksum |
+| Latency chính thức | Có benchmark thành phần | Cần đo p95 end-to-end trên máy demo cuối |
+
+---
+
+## 12. Tiêu chí nghiệm thu demo
+
+Một buổi demo được xem là đạt nếu chứng minh được:
+
+1. AI chạy từ input thật hoặc dataset BTC thật.
+2. Có output TTC, driver state và risk score.
+3. Backend nhận và phát event đúng contract.
+4. Dashboard hiển thị trip/event/ranking/report.
+5. AI Copilot gọi Bedrock thật, không dùng response mock cho phần insight.
+6. CarSky Signal Watch nhận signal từ Backend/script.
+7. Nếu HMI/VHAL bị lỗi nền tảng, nhóm có log, nguyên nhân và fallback minh bạch.
+
+---
+
+## 13. Tài liệu chi tiết
+
+- `reportbtc/README_TONG_QUAT_DU_AN_VA_HUONG_DAN_TEST.md` — bản báo cáo/test guide chi tiết cho BTC.
+- `reportbtc/C2_PROGRESS_REPORT_FPTU_DMS_VISION.md` — báo cáo tiến độ C2.
+- `reportbtc/C2_END_TO_END_DEMO_SCRIPT.md` — kịch bản demo end-to-end.
+- `reportbtc/readmeproposal.md` — proposal gốc.
+- `SE/BE/docs/README.md` — Backend docs.
+- `SE/BE/docs/phases/` — Backend phase plan.
+- `SE/FE/README.md` — Frontend/Fleet Dashboard.
+- `SE/FE/docs/AI_COPILOT_FUNCTION_CALLING_REPORTS.md` — AI Copilot memory.
+- `AI/README.md` — AI workspace.
+- `AI/README_CONDA_E2E_EVALUATION.md` — môi trường đánh giá challenge.
+
+---
+
+## 14. Ghi chú bảo mật
+
+- Không đưa `.env`, `.env.local`, API key, CarSky token, AWS Bedrock token vào PDF/public repo.
+- Có thể ghi trong báo cáo: “BTC-provided short-term key configured locally”.
+- Nếu BTC cần reproduce, gửi hướng dẫn biến môi trường, không gửi token trong README public.
+

@@ -24,3 +24,6 @@ runs/
 __pycache__/
 *.pyc
 *.pyo
+
+#hide some unsused model
+*.joblib

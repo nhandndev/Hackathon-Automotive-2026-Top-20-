@@ -25,5 +25,9 @@ __pycache__/
 *.pyc
 *.pyo
 
+/models/*.json
+
 #hide some unsused model
 *.joblib
+
+!candidate_013.joblib

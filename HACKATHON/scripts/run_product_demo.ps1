@@ -6,6 +6,7 @@ param(
     [string]$DataDir,
     [int]$Camera = 0,
     [string]$DriverId,
+    [string]$DriverModel,
     [int]$MaxFrames = 0,
     [switch]$NoDisplay,
     [switch]$OpenDashboard,
@@ -37,6 +38,12 @@ $runStamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $logDir = Join-Path $aiRoot "artifacts\runtime_logs\$runStamp"
 $predictionDir = Join-Path $aiRoot "artifacts\predictions"
 $eventDir = Join-Path $aiRoot "artifacts\decision_events"
+$driverModelPath = if ($DriverModel) {
+    (Resolve-Path $DriverModel).Path
+}
+else {
+    Join-Path $aiRoot "models\driver_state_rf_v4_dataset_v2.joblib"
+}
 
 $backendProcess = $null
 $frontendProcess = $null
@@ -113,9 +120,13 @@ try {
     & $pythonExe -c "import cv2, fastapi, httpx, onnxruntime, pydantic_settings, sklearn, torch, ultralytics, uvicorn, yaml; assert hasattr(cv2, 'STEREO_SGBM_MODE_SGBM_3WAY'); print('Python dependencies: OK')"
     if ($LASTEXITCODE -ne 0) { throw "Python dependency check failed in project .venv/current environment." }
 
-    foreach ($requiredPath in @($aiScript, $fleetAiScript, $carSkyScript, $beEnvFile)) {
+    foreach ($requiredPath in @($aiScript, $fleetAiScript, $carSkyScript, $beEnvFile, $driverModelPath)) {
         if (!(Test-Path -LiteralPath $requiredPath)) { throw "Required path is missing: $requiredPath" }
     }
+    if ([System.IO.Path]::GetExtension($driverModelPath) -ne ".joblib") {
+        throw "DriverModel must point to a .joblib artifact: $driverModelPath"
+    }
+    Write-Host "Driver model: $driverModelPath"
     New-Item -ItemType Directory -Force -Path $logDir, $predictionDir, $eventDir | Out-Null
 
     if (!$SkipCarSkyPreflight) {
@@ -210,6 +221,7 @@ try {
         $aiArguments = @(
             $fleetAiScript,
             "--data-dir", $dataPath,
+            "--driver-model", $driverModelPath,
             "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
             "--output-dir", (Join-Path $aiRoot "artifacts\fleet_demo\$runStamp")
         )
@@ -220,6 +232,7 @@ try {
             "--trip-dir", $tripPath,
             "--driver-source", "webcam",
             "--camera", "$Camera",
+            "--driver-model", $driverModelPath,
             "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
             "--output-csv", $outputCsv,
             "--events", $eventFile

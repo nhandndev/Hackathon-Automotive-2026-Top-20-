@@ -36,7 +36,9 @@ Decision Engine không thay đổi CSV; event được lưu JSONL và gửi riê
 
 ### Global pipeline — dataset BTC
 
-Dùng model chung `driver_state_rf_v3_onnx.joblib`. Đây là chế độ bắt buộc cho 6
+Dùng model mặc định `driver_state_rf_v4_dataset_v2.joblib`. Có thể chọn một
+artifact tương thích khác (ví dụ `candidate_013.joblib`) bằng `--driver-model`
+hoặc `--model`. Đây là chế độ bắt buộc cho 6
 practice trip và 10 scored trip vì BTC không có bước enrollment theo tài xế.
 
 Trong `run_inference.py`, `--driver-id` chỉ gắn ID vào DecisionEvent, không load
@@ -65,7 +67,7 @@ AI/
 │   ├── challenge3_fusion/     # công thức safe/risk BTC
 │   └── decision_engine/       # alert policy và lifecycle
 ├── configs/                   # C1, C2, Decision Engine
-├── models/                    # RF v3, YuNet, 468-landmark ONNX và YOLO C1
+├── models/                    # RF joblib, YuNet, 468-landmark ONNX và YOLO C1
 ├── integrations/se_client.py
 ├── scripts/
 │   ├── run_inference.py
@@ -115,10 +117,10 @@ Kiểm tra môi trường và model:
 ```powershell
 python -c "import cv2, onnxruntime, sklearn, ultralytics; print('AI environment OK')"
 
-python -c "from pathlib import Path; p=Path('AI/models'); r=['driver_state_rf_v3_onnx.joblib','face_detection_yunet_2023mar.onnx','face_landmark_468.onnx','yolov8s_finetuned_carla_v2.pt']; assert all((p/x).is_file() for x in r); print('AI models OK')"
+python -c "from pathlib import Path; p=Path('AI/models'); r=['driver_state_rf_v4_dataset_v2.joblib','face_detection_yunet_2023mar.onnx','face_landmark_468.onnx','yolov8s_finetuned_carla_v2.pt']; assert all((p/x).is_file() for x in r); print('AI models OK')"
 ```
 
-## 6. Challenge 2 v3
+## 6. Challenge 2 v4
 
 ```text
 Cabin frame
@@ -126,14 +128,15 @@ Cabin frame
 → ONNX FaceMesh-compatible 468 landmarks
 → EAR, MAR, head pose, continuous eye closure
 → causal rolling features 3/10/30 giây
-→ Random Forest v3 với 59 features
+→ Random Forest v4 với 59 features
 → reliable-microsleep safety fusion
 ```
 
-Artifact khóa đúng feature schema và backend
-`onnx-yunet-facemesh468`; model MediaPipe/49-feature cũ bị từ chối. Report hiện
-tại ghi accuracy `0.7847`, macro-F1 `0.8028` trên 3.600 augmented test frames;
-đây không phải hidden BTC test score.
+Artifact khóa đúng feature schema và backend `onnx-yunet-facemesh468`;
+model MediaPipe/49-feature cũ bị từ chối. Tên model không bị hard-code trong
+luồng chạy: webcam dùng `--model`, còn batch/end-to-end dùng `--driver-model`.
+Mỗi artifact phải chứa `feature_names`, `model_classes`, backend và metadata
+phiên bản tương thích với runtime.
 
 ## 7. Enrollment và webcam Challenge 2
 
@@ -143,7 +146,8 @@ Tạo hoặc đo lại profile:
 python AI\scripts\webcam_driver_demo.py `
   --camera 0 `
   --driver-id driver_001 `
-  --enroll
+  --enroll `
+  --model AI\models\driver_state_rf_v4_dataset_v2.joblib
 ```
 
 UI chỉ nhận bước khi action và landmark sample hợp lệ.
@@ -155,13 +159,13 @@ UI chỉ nhận bước khi action và landmark sample hợp lệ.
 Chạy personalized:
 
 ```powershell
-python AI\scripts\webcam_driver_demo.py --camera 0 --driver-id driver_001
+python AI\scripts\webcam_driver_demo.py --camera 0 --driver-id driver_001 --model AI\models\driver_state_rf_v4_dataset_v2.joblib
 ```
 
 Chạy global model:
 
 ```powershell
-python AI\scripts\webcam_driver_demo.py --camera 0
+python AI\scripts\webcam_driver_demo.py --camera 0 --model AI\models\driver_state_rf_v4_dataset_v2.joblib
 ```
 
 Camera khác dùng `--camera 1`. Log mặc định nằm tại
@@ -199,6 +203,7 @@ python AI\scripts\end_to_end_demo.py `
   --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
   --camera 0 `
   --driver-id driver_001 `
+  --driver-model AI\models\driver_state_rf_v4_dataset_v2.joblib `
   --se-endpoint http://127.0.0.1:8000/api/v1/alerts `
   --output-csv AI\artifacts\predictions\T01-Sample-live.csv `
   --events AI\artifacts\decision_events\T01-Sample-live.events.jsonl
@@ -217,12 +222,14 @@ Chạy từ thư mục `HACKATHON`:
   -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
   -Camera 0 `
   -DriverId driver_001 `
+  -DriverModel AI\models\driver_state_rf_v4_dataset_v2.joblib `
   -OpenDashboard
 
 # Dataset fleet: tự phát hiện mọi trip trực tiếp dưới folder
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
   -DataDir E:\automotive_cc\Practice_Dataset `
+  -DriverModel AI\models\driver_state_rf_v4_dataset_v2.joblib `
   -OpenDashboard
 ```
 
@@ -257,6 +264,7 @@ Một trip:
 ```powershell
 python AI\scripts\run_inference.py `
   --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  --driver-model AI\models\driver_state_rf_v4_dataset_v2.joblib `
   --output-csv AI\artifacts\predictions\T01-Sample.csv
 ```
 
@@ -266,6 +274,7 @@ Sáu practice trip:
 python AI\scripts\run_inference.py `
   --data-dir E:\automotive_cc\Practice_Dataset `
   --samples-only `
+  --driver-model AI\models\driver_state_rf_v4_dataset_v2.joblib `
   --out AI\artifacts\predictions_6_samples
 ```
 
@@ -275,6 +284,7 @@ Mười scored trip:
 python AI\scripts\run_inference.py `
   --data-dir E:\automotive_cc\Competition_Dataset `
   --scored-only `
+  --driver-model AI\models\driver_state_rf_v4_dataset_v2.joblib `
   --out AI\artifacts\predictions_scored
 ```
 
@@ -284,6 +294,7 @@ Thêm Decision Engine:
 python AI\scripts\run_inference.py `
   --data-dir E:\automotive_cc\Practice_Dataset `
   --samples-only `
+  --driver-model AI\models\driver_state_rf_v4_dataset_v2.joblib `
   --out AI\artifacts\predictions_6_samples `
   --decision-events-dir AI\artifacts\decision_events `
   --driver-id btc_practice
@@ -340,8 +351,8 @@ Nút thắt hiện tại là:
 1. Challenge 1: YOLOv8s và stereo SGBM trên road frames.
 2. Challenge 2: YuNet và ONNX 468-landmark trên mỗi webcam frame.
 
-Random Forest khoảng 15 MB nhưng không phải nút thắt chính; feature extraction
-tốn thời gian hơn bước `predict` của RF.
+Dung lượng Random Forest phụ thuộc số cây/depth và có thể lớn hơn 100 MB, nhưng
+feature extraction vẫn thường tốn thời gian hơn bước `predict` của RF.
 
 Tối ưu CPU đã triển khai:
 
@@ -366,6 +377,7 @@ test luồng, giới hạn số frame:
 python AI\scripts\end_to_end_demo.py `
   --trip-dir E:\automotive_cc\Practice_Dataset\T01-Sample `
   --camera 0 `
+  --driver-model AI\models\driver_state_rf_v4_dataset_v2.joblib `
   --max-frames 100
 ```
 

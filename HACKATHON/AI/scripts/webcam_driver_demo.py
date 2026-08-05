@@ -295,8 +295,8 @@ def main():
     parser.add_argument(
         "--model",
         type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf_v3_onnx.joblib",
-        help="Production ONNX-landmark Random Forest v3",
+        default=AI_ROOT / "models" / "driver_state_rf_v4_dataset_v2.joblib",
+        help="Validation-tuned ONNX-landmark Random Forest v4",
     )
     parser.add_argument(
         "--output",
@@ -320,6 +320,8 @@ def main():
     parser.add_argument("--no-display", action="store_true", help="Process without an OpenCV window")
     parser.add_argument("--max-frames", type=int, default=0, help="0 means unlimited")
     args = parser.parse_args()
+    if args.model and (args.model.suffix.lower() != ".joblib" or not args.model.is_file()):
+        parser.error(f"--model must be an existing .joblib file: {args.model}")
     if args.enroll and not args.driver_id:
         parser.error("--enroll requires --driver-id")
     if args.driver_id:
@@ -329,12 +331,18 @@ def main():
             parser.error(str(exc))
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     artifact = joblib.load(args.model) if args.model else None
+    if artifact is not None:
+        model = artifact.get("model")
+        if model is not None and hasattr(model, "n_jobs"):
+            # Per-frame prediction does not benefit from spawning joblib
+            # workers and recent sklearn warns about that parallel path.
+            model.n_jobs = 1
     if artifact is not None and artifact.get("feature_names") != feature_names():
         raise ValueError("Model feature schema does not match this code; retrain it")
     if artifact is not None and artifact.get("landmark_backend") != LANDMARK_BACKEND:
         raise ValueError(
             "Model was not trained with the active ONNX landmark backend; "
-            "use driver_state_rf_v3_onnx.joblib or retrain it"
+            "use driver_state_rf_v4_dataset_v2.joblib or retrain it"
         )
     camera_index = config["camera"]["index"] if args.camera is None else args.camera
     capture = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)

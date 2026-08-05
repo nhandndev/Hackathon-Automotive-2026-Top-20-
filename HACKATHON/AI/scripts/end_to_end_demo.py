@@ -67,7 +67,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--driver-model", type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf_v3_onnx.joblib",
+        default=AI_ROOT / "models" / "driver_state_rf_v4_dataset_v2.joblib",
+        help="Challenge-2 Random Forest .joblib artifact",
     )
     parser.add_argument(
         "--decision-config", type=Path,
@@ -100,6 +101,10 @@ def parse_args() -> argparse.Namespace:
         default=AI_ROOT / "artifacts" / "decision_events" / "live.events.jsonl",
     )
     args = parser.parse_args()
+    if args.driver_model.suffix.lower() != ".joblib" or not args.driver_model.is_file():
+        parser.error(
+            f"--driver-model must be an existing .joblib file: {args.driver_model}"
+        )
     if (
         args.speed <= 0
         or args.max_frames < 0

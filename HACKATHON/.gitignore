@@ -7,6 +7,12 @@
 /*_Dataset_Redacted/
 /*_dataset_redacted/
 
+# Local experiment workspaces and generated experiment outputs
+/experiment/
+/experiments/
+**/experiment/
+**/experiments/
+
 # OS/editor noise
 .DS_Store
 **/.DS_Store

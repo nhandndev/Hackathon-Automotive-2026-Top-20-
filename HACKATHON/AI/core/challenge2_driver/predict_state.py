@@ -88,6 +88,14 @@ class DriverStatePredictor:
             1, int(face_detector_interval_frames)
         )
         self.artifact: dict[str, Any] = joblib.load(self.model_path)
+        # Batch/live inference predicts one feature row at a time.  Parallel
+        # tree prediction adds joblib overhead and, with recent sklearn,
+        # emits a delayed/Parallel configuration warning.  One worker is
+        # deterministic and faster for this per-frame path; training remains
+        # fully parallel.
+        model = self.artifact.get("model")
+        if model is not None and hasattr(model, "n_jobs"):
+            model.n_jobs = 1
         if self.artifact.get("feature_names") != feature_names():
             raise ValueError(
                 "Model feature schema does not match Challenge 2 runtime"

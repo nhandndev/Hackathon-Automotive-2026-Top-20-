@@ -1,0 +1,10 @@
+# Local BTC datasets and experiment workspaces
+/Practice_Dataset/
+/Hackathon_Dataset_Redacted/
+/experiment/
+/experiments/
+/claw_dataset/
+# OS noise at repository root
+.DS_Store
+*.pt
+*.zip

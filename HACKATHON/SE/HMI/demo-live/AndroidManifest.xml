@@ -3,7 +3,6 @@
     <uses-feature android:name="android.hardware.type.automotive" android:required="false" />
     <uses-permission android:name="android.car.permission.CAR_SPEED" />
     <uses-permission android:name="android.car.permission.CAR_INFO" />
-    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:theme="@style/AppTheme"
         android:label="DMS Safety HMI Realtime"

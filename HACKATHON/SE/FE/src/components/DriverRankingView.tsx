@@ -188,9 +188,23 @@ export const buildRankingRows = (vehicles: TripData[]): DriverRankingRow[] => (
       aggregate?.tailgating_pct_time,
       pct(frames.filter((frame) => frame.behavior_flags?.tailgating).length, total),
     );
-    const harshEvents = finite(aggregate?.harsh_brake_count)
-      + finite(aggregate?.harsh_accel_count)
-      + finite(aggregate?.harsh_corner_count);
+    // Calculate debounced harsh brake count to match Event Log table 100%
+    const lastEventTimeByType: Record<string, number> = {};
+    let debouncedHarshBrakeCount = 0;
+    for (const frame of frames) {
+      if (frame.behavior_flags?.harsh_brake) {
+        const currentTs = Number(frame.timestamp ?? 0);
+        const lastTs = lastEventTimeByType['harsh_brake'] ?? -999;
+        if (currentTs - lastTs >= 3.0) {
+          lastEventTimeByType['harsh_brake'] = currentTs;
+          debouncedHarshBrakeCount += 1;
+        }
+      }
+    }
+
+    const harshEvents = debouncedHarshBrakeCount > 0 
+      ? debouncedHarshBrakeCount 
+      : (finite(aggregate?.harsh_brake_count) + finite(aggregate?.harsh_accel_count) + finite(aggregate?.harsh_corner_count));
     const fatigueEvents = finite(
       driverSummary?.microsleep_count,
       frames.filter((frame) => isFatigueState(frame.driver?.state)).length,

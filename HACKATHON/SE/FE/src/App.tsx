@@ -15,20 +15,31 @@ import { AICopilotDrawer } from './components/AICopilotDrawer';
 import { InterventionModal } from './components/InterventionModal';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewMode>('MAP');
+  const urlParams = new URLSearchParams(window.location.search);
+  const standaloneView = urlParams.get('view');
+  const rankingTripId = urlParams.get('trip_id');
+  const copilotReportType = urlParams.get('type');
+  const copilotReportTripIds = urlParams.get('trip_ids');
+
+  const initialView = (standaloneView === 'TRIP_DETAIL' || standaloneView === 'MAP' || standaloneView === 'VEHICLE_LIVE' || standaloneView === 'INSIGHTS' || standaloneView === 'RANKING') 
+    ? (standaloneView as ViewMode) 
+    : 'MAP';
+
+  const [currentView, setCurrentView] = useState<ViewMode>(initialView);
   const [vehicles, setVehicles] = useState<TripData[]>(btcTripData);
-  const [selectedVehicle, setSelectedVehicle] = useState<TripData>(btcTripData[0]);
+  const [selectedVehicle, setSelectedVehicle] = useState<TripData>(() => {
+    if (rankingTripId) {
+      const match = btcTripData.find(v => v.trip_id === rankingTripId);
+      if (match) return match;
+    }
+    return btcTripData[0];
+  });
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isInterventionOpen, setIsInterventionOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [liveAlerts, setLiveAlerts] = useState<DecisionAlert[]>([]);
   const [alertsConnected, setAlertsConnected] = useState(false);
   const followRunningTrip = useRef(true);
-  const urlParams = new URLSearchParams(window.location.search);
-  const standaloneView = urlParams.get('view');
-  const rankingTripId = urlParams.get('trip_id');
-  const copilotReportType = urlParams.get('type');
-  const copilotReportTripIds = urlParams.get('trip_ids');
 
   useEffect(() => {
     const alertsHttp = import.meta.env.VITE_ALERTS_HTTP_URL || 'http://127.0.0.1:8000/api/v1/alerts';

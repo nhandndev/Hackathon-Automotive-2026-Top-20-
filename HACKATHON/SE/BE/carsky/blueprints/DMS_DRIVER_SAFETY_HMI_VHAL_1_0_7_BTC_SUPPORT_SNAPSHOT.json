@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-04T00:00:00.000Z",
+  "noteForBTC": "Support snapshot reconstructed from the current repository after successful KUKSA->HMI Bridge logs. If exact CarSky IDs are required, export the live blueprint from CarSky UI.",
+  "blueprint": {
+    "name": "DMS Driver Safety HMI VHAL 1.0.7 - BTC Support Snapshot",
+    "description": "DMS topology for BTC debugging: Backend/REST actuates KUKSA; Script Node receives KUKSA events and multiplexes into PERF_VEHICLE_SPEED VHAL property for Android HMI. Current issue: HMI Bridge logs show VHAL push, but Android CarPropertyService/APK still receives default speed 0.0.",
+    "nodes": [
+      {
+        "id": "dms-signal-broker",
+        "label": "DMS Signal Broker",
+        "nodeType": "kuksa-databroker",
+        "config": {
+          "kuksa": {
+            "vss": {
+              "artifactName": "dms-driver-safety-vss",
+              "version": "0.0.6-or-current-running",
+              "sourceFileInRepo": "SE/BE/carsky/dms-vss-signals.json",
+              "format": "object/map VSS JSON, not array"
+            }
+          }
+        },
+        "pins": [
+          {
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "INPUT"
+          }
+        ]
+      },
+      {
+        "id": "dms-hmi-bridge",
+        "label": "DMS HMI Bridge",
+        "nodeType": "script-node",
+        "config": {
+          "script": "inline",
+          "scriptContent": "-- DMS KUKSA -> AAOS HMI bridge.\n--\n-- CarSky/BTC reference flow:\n-- Team Solution -> CarSky Platform/SOVD -> MQTT/Vehicle-HPC -> Android HMI.\n--\n-- Runtime finding from our CarSky AAOS deployment:\n-- Android CarService exposes PERF_VEHICLE_SPEED reliably, while custom DMS\n-- properties are not visible to the APK. Therefore this bridge multiplexes DMS\n-- state into PERF_VEHICLE_SPEED values. The APK decodes these values back into\n-- severity, driver state, risk, TTC, AI status and recommended action.\n\nlocal PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED\n\nlocal severity_code = { SAFE = 0, WARNING = 1, CRITICAL = 2, RECOVERY = 3 }\nlocal driver_code = { alert = 0, drowsy = 1, yawning = 2, distracted = 3, microsleep = 4 }\nlocal ai_code = { ONLINE = 0, DEGRADED = 1, OFFLINE = 2 }\nlocal action_code = { NONE = 0, FOCUS_FORWARD = 1, TAKE_BREAK = 2, BRAKE_SAFE = 3, REDUCE_SPEED = 4 }\n\nlocal mapping = {\n    [\"Vehicle.Speed\"] = {\n        encode = function(v)\n            return tonumber(v) or 0\n        end\n    },\n    [\"Vehicle.ADAS.FinalRiskScore\"] = {\n        encode = function(v)\n            return 10000 + math.floor((tonumber(v) or 0) + 0.5)\n        end\n    },\n    [\"Vehicle.ADAS.DisplaySeverity\"] = {\n        encode = function(v)\n            return 11000 + (severity_code[v] or 0)\n        end\n    },\n    [\"Vehicle.Driver.State\"] = {\n        encode = function(v)\n            return 12000 + (driver_code[v] or 0)\n        end\n    },\n    [\"Vehicle.Driver.AlertnessScore\"] = {\n        encode = function(v)\n            return 13000 + math.floor(((tonumber(v) or 0) * 100) + 0.5)\n        end\n    },\n    [\"Vehicle.ADAS.MinTTC\"] = {\n        encode = function(v)\n            return 14000 + math.floor(((tonumber(v) or 0) * 10) + 0.5)\n        end\n    },\n    [\"Vehicle.ADAS.CriticalAlert\"] = {\n        encode = function(v)\n            return 15000 + ((v == true or v == 1 or v == \"true\") and 1 or 0)\n        end\n    },\n    [\"Vehicle.ADAS.AIStatus\"] = {\n        encode = function(v)\n            return 16000 + (ai_code[v] or 2)\n        end\n    },\n    [\"Vehicle.ADAS.RecommendedActionCode\"] = {\n        encode = function(v)\n            return 17000 + (action_code[v] or 0)\n        end\n    },\n}\n\nlocal paths = {}\nfor path, _ in pairs(mapping) do paths[#paths + 1] = path end\n\npins.kuksa:on_change(function(ev)\n    local target = mapping[ev.path]\n    if not target or ev.value == nil then return end\n    local encoded = target.encode(ev.value)\n    pins.vhal:push(PROP_SPEED, 0, encoded)\n    log(string.format(\"DMS_HMI_MUX %s=%s -> %s on 0x%08X\", ev.path, tostring(ev.value), tostring(encoded), PROP_SPEED))\nend)\n\npins.kuksa:subscribe(paths)\nlog(string.format(\"DMS HMI multiplex bridge subscribed to %d paths\", #paths))\n",
+          "expectedLogs": [
+            "DMS HMI multiplex bridge subscribed to 9 paths",
+            "DMS_HMI_MUX Vehicle.ADAS.FinalRiskScore=88 -> 10088 on 0x11600207"
+          ]
+        },
+        "pins": [
+          {
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "OUTPUT"
+          },
+          {
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "INPUT"
+          }
+        ]
+      },
+      {
+        "id": "dms-android-hmi",
+        "label": "DMS Android HMI",
+        "nodeType": "skycraft",
+        "config": {
+          "os": "Android",
+          "artifact": "aaos",
+          "version": "0.0.1",
+          "architecture": "aarch64 (ARM)",
+          "partPrefix": "dms-nodes-only-hmi-or-current-device-prefix",
+          "apkPackage": "vn.fpt.dms.hmi",
+          "apkSourceInRepo": "SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java"
+        },
+        "pins": [
+          {
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "OUTPUT",
+            "properties": [
+              {
+                "propId": 291504647,
+                "hex": "0x11600207",
+                "name": "PERF_VEHICLE_SPEED",
+                "areaIds": [
+                  0
+                ],
+                "purpose": "DMS multiplex transport"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "from": "DMS HMI Bridge.kuksa",
+        "to": "DMS Signal Broker.kuksa"
+      },
+      {
+        "from": "DMS Android HMI.vhal",
+        "to": "DMS HMI Bridge.vhal"
+      }
+    ],
+    "runtimeEvidence": {
+      "confirmedWorking": [
+        "Backend/REST scenario critical updates KUKSA Signal Watch",
+        "DMS HMI Bridge receives KUKSA events",
+        "DMS HMI Bridge logs DMS_HMI_MUX and pushes encoded values to 0x11600207"
+      ],
+      "currentIssueForBTC": "VHAL boundary into Android CarPropertyService/APK: APK reads/defaults PERF_VEHICLE_SPEED as 0.0 or does not receive multiplex updates.",
+      "expectedCriticalEncodedValues": {
+        "Vehicle.ADAS.FinalRiskScore": 10088,
+        "Vehicle.ADAS.DisplaySeverity": 11002,
+        "Vehicle.Driver.State": 12004,
+        "Vehicle.Driver.AlertnessScore": 13015,
+        "Vehicle.ADAS.MinTTC": 14012,
+        "Vehicle.ADAS.CriticalAlert": 15001,
+        "Vehicle.ADAS.AIStatus": 16000,
+        "Vehicle.ADAS.RecommendedActionCode": 17003
+      }
+    }
+  }
+}

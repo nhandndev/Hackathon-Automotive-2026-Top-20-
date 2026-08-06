@@ -1,12 +1,12 @@
 # DMS CarSky Android HMI — realtime only
 
-HMI chính thức chỉ đọc VHAL properties do
+HMI chính thức chỉ đọc VHAL data do
 [`dms_hmi_bridge.lua`](../BE/carsky/dms_hmi_bridge.lua) đẩy từ CarSky/KUKSA.
 Không còn REST polling, sample cycle hoặc mock fallback trong APK được build từ
 source chính thức.
 
 ```text
-AI DecisionEvent → Backend → CarSky/KUKSA → Lua bridge → VHAL → Android HMI
+AI DecisionEvent → Backend → CarSky/KUKSA → Lua bridge → VHAL PERF_VEHICLE_SPEED multiplex → Android HMI
 ```
 
 Nếu Car Service/VHAL không sẵn sàng, ứng dụng phải hiện `AI OFFLINE`; ứng dụng
@@ -83,8 +83,9 @@ SHA-256 APK:
 DE9DB3A454006087D3E692733DB790C5C1119D9CA4EA401705FA2FA1B3429241
 ```
 
-APK này đã được kiểm tra: có Android Car/VHAL reader, không có `demoState`, REST
-URL hoặc CarSky token.
+APK này phải có Android Car/VHAL multiplex reader, không có `demoState`, REST URL
+hoặc CarSky token. Chi tiết fix nằm ở
+[`ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md`](ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md).
 
 ### Cách cài qua Backend helper
 

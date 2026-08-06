@@ -19,8 +19,8 @@ const statusFor = (trip: TripData) => {
   if (trip.runtime_status === 'running') return 'LIVE';
   if (trip.runtime_status === 'pending') return 'PENDING';
   const risk = trip.trip_aggregate?.risk_classification?.toLowerCase();
-  if (risk === 'high') return 'CRITICAL';
-  if (risk === 'medium') return 'WARNING';
+  if (risk === 'high' || risk === 'critical') return 'CRITICAL';
+  if (risk === 'medium' || risk === 'at_risk') return 'WARNING';
   return 'SAFE';
 };
 

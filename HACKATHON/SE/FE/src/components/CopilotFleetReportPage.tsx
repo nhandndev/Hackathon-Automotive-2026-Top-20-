@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { CalendarDays, Download, FileText, Shield, UserRound, Wrench, FileDown, FileCode, Check, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { TripData } from '../types';
 import { buildRankingRows } from './DriverRankingView';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 interface CopilotFleetReportPageProps {
   vehicles: TripData[];
@@ -94,7 +96,7 @@ const eventRowsFor = (trip: TripData) => {
 };
 
 export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ vehicles, reportType, tripIds }) => {
-  const [copilotInsight, setCopilotInsight] = useState('AI Copilot đang tạo insight từ Bedrock...');
+  const [copilotInsight, setCopilotInsight] = useState('📊 **BÁO CÁO TỔNG QUAN HỆ THỐNG GIÁM SÁT AN TOÀN & BẢO TRÌ ĐỘI XE**');
   const [aiDiagnostics, setAiDiagnostics] = useState<any[] | null>(null);
   const [aiActionOrders, setAiActionOrders] = useState<any | null>(null);
   const [aiTripInsights, setAiTripInsights] = useState<Record<string, any>>({});
@@ -116,7 +118,13 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   ), [selectedIds.join(','), vehicles]);
   
   const rows = useMemo(() => {
-    const rawRows = buildRankingRows(selectedTrips.length ? selectedTrips : vehicles.slice(0, 2));
+    // 1. Compute true global fleet ranking across ALL vehicles in system
+    const allFleetRows = buildRankingRows(vehicles);
+    
+    // 2. Filter for selected trips while preserving global rank (#1..#N)
+    const selectedTripSet = new Set(selectedTrips.map(t => t.trip_id));
+    const rawRows = allFleetRows.filter(r => selectedTripSet.has(r.trip_id));
+
     if (reportType === 'maintenance') {
       // Sort by Wear Damage Percentage (descending: highest wear / damage first)
       return [...rawRows].sort((a, b) => {
@@ -138,7 +146,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       });
     }
     return rawRows;
-  }, [selectedTrips, reportType, vehicles]);
+  }, [vehicles, selectedTrips, reportType]);
   
   const reportTitle = reportType === 'maintenance'
     ? 'Vehicle Maintenance Priority Report'
@@ -216,7 +224,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     return () => {
       cancelled = true;
     };
-  }, [reportType, rows, selectedTrips, JSON.stringify(expandedTrips)]);
+  }, [reportType, rows.map(r => r.trip_id).join(','), selectedTrips.map(s => s.trip_id).join(',')]);
 
   // Click outside listener for export menu
   useEffect(() => {
@@ -231,57 +239,135 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
 
   const generateReportHTML = () => {
     const nowStr = new Date().toLocaleString('vi-VN');
-    const rowsHTML = rows.map((row, idx) => `
-      <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #f8fafc;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px;">
-          <div>
-            <span style="font-weight: bold; color: #0284c7; font-size: 12px; text-transform: uppercase;">XE ${String(idx + 1).padStart(2, '0')}</span>
-            <h3 style="margin: 4px 0 0 0; color: #0f172a; font-size: 20px;">Mã Chuyến: ${row.trip_id}</h3>
-            <p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">Tài xế: ${row.trip_id}</p>
+    const rowsHTML = rows.map((row, idx) => {
+      const tripId = row.trip_id;
+      const tripAi = aiTripInsights[tripId];
+      const driverName = row.trip_id;
+      const safeScore = row.score;
+
+      const logEvents = eventRowsFor(row.trip);
+      const brakeLogCount = logEvents.filter(e => e.type.toLowerCase().includes('phanh') || e.type.toLowerCase().includes('brake') || e.severity === 'Sự kiện nguy hiểm').length;
+      const speedingPct = row.speedingPct;
+
+      const hasHighDistraction = row.distractedPct > 25;
+      const hasFatigue = row.fatigueEvents > 0;
+
+      let defaultPros: string[] = [];
+      let defaultCons: string[] = [];
+
+      if (safeScore >= 80 && !hasHighDistraction && !hasFatigue) {
+        defaultPros.push(`Safety Score thuộc nhóm xuất sắc (${safeScore.toFixed(0)}/100), kiểm soát rủi ro cực tốt.`);
+      } else if (safeScore >= 60 && !hasHighDistraction) {
+        defaultPros.push(`Safety Score ở mức trung bình khá (${safeScore.toFixed(0)}/100).`);
+      }
+
+      if (speedingPct === 0) {
+        defaultPros.push(`Tuân thủ giới hạn tốc độ tuyệt đối (0.0%).`);
+      } else {
+        defaultCons.push(`Vi phạm tốc độ ở mức ${speedingPct.toFixed(1)}%, gây nguy hiểm nghiêm trọng.`);
+      }
+
+      if (brakeLogCount === 0) {
+        defaultPros.push(`Lái xe êm ái, không ghi nhận tình huống phanh gấp nguy hiểm.`);
+      } else {
+        defaultCons.push(`Ghi nhận ${brakeLogCount} sự kiện phanh gấp, dấu hiệu thiếu quan sát hoặc không giữ khoảng cách an toàn.`);
+      }
+
+      if (hasHighDistraction) {
+        defaultCons.push(`CẢNH BÁO NGHIÊM TRỌNG: Tỷ lệ xao nhãng mất tập trung lên tới ${row.distractedPct.toFixed(1)}% (cao gấp đôi mức trung bình Fleet), nguy cơ va chạm rất cao.`);
+      } else if (row.distractedPct > 5) {
+        defaultCons.push(`Xao nhãng khi lái xe chiếm ${row.distractedPct.toFixed(1)}% thời gian.`);
+      }
+
+      if (hasFatigue) {
+        defaultCons.push(`CẢNH BÁO VI NGỦ: Phát hiện ${row.fatigueEvents} sự kiện vi ngủ/ngáp nguy hiểm.`);
+      }
+
+      if (row.criticalEvents > 0) {
+        defaultCons.push(`Phát hiện ${row.criticalEvents} sự kiện rủi ro tiềm ẩn (Near Misses/Critical) trong quá trình vận hành.`);
+      }
+
+      if (defaultPros.length === 0) {
+        defaultPros.push(`Duy trì tốc độ theo giới hạn tuyến đường.`);
+      }
+
+      const defaultEval = (hasHighDistraction || hasFatigue || safeScore < 60)
+        ? `🛑 COACHING 24H: Tài xế ${driverName} vi phạm an toàn nghiêm trọng (Xao nhãng: ${row.distractedPct.toFixed(1)}%, Vi ngủ: ${row.fatigueEvents}), yêu cầu đình chỉ chạy và tái đào tạo khẩn cấp.`
+        : (row.distractedPct > 15 || safeScore < 80)
+          ? `⚠️ NHẮC NHỞ: Tài xế ${driverName} cần chú ý giảm thiểu xao nhãng (${row.distractedPct.toFixed(1)}%) và giữ khoảng cách an toàn.`
+          : `🏆 KHEN THƯỞNG: Tài xế ${driverName} là hình mẫu chuẩn an toàn để các tài xế khác học tập.`;
+
+      const prosList = tripAi?.pros ?? defaultPros;
+      const consList = tripAi?.cons ?? defaultCons;
+      const evalText = tripAi?.evaluation ?? defaultEval;
+
+      return `
+        <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #f8fafc;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px;">
+            <div>
+              <span style="font-weight: bold; color: #0284c7; font-size: 12px; text-transform: uppercase;">XE ${String(idx + 1).padStart(2, '0')}</span>
+              <h3 style="margin: 4px 0 0 0; color: #0f172a; font-size: 20px;">Mã Chuyến: ${row.trip_id}</h3>
+              <p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">Tài xế: ${row.trip_id}</p>
+            </div>
+            <span style="background-color: ${row.riskLevel === 'CRITICAL' ? '#fee2e2' : row.riskLevel === 'AT_RISK' ? '#ffedd5' : '#dcfce7'}; color: ${row.riskLevel === 'CRITICAL' ? '#991b1b' : row.riskLevel === 'AT_RISK' ? '#9a3412' : '#166534'}; border: 1px solid ${row.riskLevel === 'CRITICAL' ? '#f87171' : row.riskLevel === 'AT_RISK' ? '#fb923c' : '#4ade80'}; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 12px;">
+              ${row.riskLevel}
+            </span>
           </div>
-          <span style="background-color: ${row.riskLevel === 'CRITICAL' ? '#fee2e2' : row.riskLevel === 'AT_RISK' ? '#ffedd5' : '#dcfce7'}; color: ${row.riskLevel === 'CRITICAL' ? '#991b1b' : row.riskLevel === 'AT_RISK' ? '#9a3412' : '#166534'}; border: 1px solid ${row.riskLevel === 'CRITICAL' ? '#f87171' : row.riskLevel === 'AT_RISK' ? '#fb923c' : '#4ade80'}; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 12px;">
-            ${row.riskLevel}
-          </span>
-        </div>
 
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
-          <tr>
-            <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Điểm an toàn:</strong> ${row.score.toFixed(0)}/100</td>
-            <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Xếp hạng Fleet:</strong> #${row.rank}</td>
-            <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Risk Cao Nhất:</strong> ${row.maxRisk.toFixed(1)}</td>
-            <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Tổng Cảnh Báo:</strong> ${row.criticalEvents}</td>
-          </tr>
-        </table>
-
-        <h4 style="margin: 8px 0 6px 0; color: #334155; font-size: 14px;">Lịch sử Cảnh báo Gần nhất:</h4>
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-          <thead>
-            <tr style="background-color: #e2e8f0; text-align: left;">
-              <th style="padding: 6px; border: 1px solid #cbd5e1;">Thời gian</th>
-              <th style="padding: 6px; border: 1px solid #cbd5e1;">Loại Cảnh Báo</th>
-              <th style="padding: 6px; border: 1px solid #cbd5e1;">Chi Tiết Số Liệu</th>
-              <th style="padding: 6px; border: 1px solid #cbd5e1;">Mức Độ</th>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+            <tr>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Điểm an toàn:</strong> ${row.score.toFixed(0)}/100</td>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Xếp hạng Fleet:</strong> #${row.rank}</td>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Risk Cao Nhất:</strong> ${row.maxRisk.toFixed(1)}</td>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Tổng Cảnh Báo:</strong> ${row.criticalEvents}</td>
             </tr>
-          </thead>
-          <tbody>
-            ${eventRowsFor(row.trip).map(evt => `
-              <tr>
-                <td style="padding: 6px; border: 1px solid #cbd5e1; font-family: monospace;">${evt.time}</td>
-                <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold;">${evt.type}</td>
-                <td style="padding: 6px; border: 1px solid #cbd5e1; color: #475569;">${evt.detail}</td>
-                <td style="padding: 6px; border: 1px solid #cbd5e1; color: ${
-                  evt.severity === 'Sự kiện nguy hiểm'
-                    ? '#dc2626'
-                    : evt.severity === 'Sự kiện cảnh báo'
-                      ? '#d97706'
-                      : '#16a34a'
-                }; font-weight: bold;">${evt.severity}</td>
+          </table>
+
+          <div style="margin-bottom: 12px; background-color: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <h5 style="margin: 0 0 4px 0; color: #166534; font-size: 12px; font-weight: bold;">🟢 Ưu điểm:</h5>
+            <ul style="margin: 0 0 8px 0; padding-left: 18px; font-size: 12px; color: #334155;">
+              ${prosList.map(p => `<li>${p}</li>`).join('')}
+            </ul>
+            <h5 style="margin: 0 0 4px 0; color: #991b1b; font-size: 12px; font-weight: bold;">🔴 Nhược điểm / Cảnh báo:</h5>
+            <ul style="margin: 0 0 8px 0; padding-left: 18px; font-size: 12px; color: #334155;">
+              ${consList.map(c => `<li>${c}</li>`).join('')}
+            </ul>
+            <h5 style="margin: 0 0 4px 0; color: #9a3412; font-size: 12px; font-weight: bold;">💡 Đánh giá & Khuyến nghị:</h5>
+            <p style="margin: 0; font-size: 12px; font-weight: bold; color: #1e293b;">${evalText}</p>
+          </div>
+
+          <h4 style="margin: 8px 0 6px 0; color: #334155; font-size: 14px;">Lịch sử Cảnh báo Gần nhất:</h4>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background-color: #e2e8f0; text-align: left;">
+                <th style="padding: 6px; border: 1px solid #cbd5e1;">Thời gian</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1;">Loại Cảnh Báo</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1;">Chi Tiết Số Liệu</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1;">Mức Độ</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `).join('');
+            </thead>
+            <tbody>
+              ${eventRowsFor(row.trip).map(evt => `
+                <tr>
+                  <td style="padding: 6px; border: 1px solid #cbd5e1; font-family: monospace;">${evt.time}</td>
+                  <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold;">${evt.type}</td>
+                  <td style="padding: 6px; border: 1px solid #cbd5e1; color: #475569;">${evt.detail}</td>
+                  <td style="padding: 6px; border: 1px solid #cbd5e1; color: ${
+                    evt.severity === 'Sự kiện nguy hiểm'
+                      ? '#dc2626'
+                      : evt.severity === 'Sự kiện cảnh báo'
+                        ? '#d97706'
+                        : '#16a34a'
+                  }; font-weight: bold;">${evt.severity}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join('');
+
+    const atRiskTrip = rows.find(r => r.riskLevel === 'CRITICAL' || r.riskLevel === 'AT_RISK');
 
     return `
       <!DOCTYPE html>
@@ -316,14 +402,14 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           <thead>
             <tr>
               <th>Chỉ Số An Toàn</th>
-              <th>Trung Bình Toàn Đội Xe</th>
+              <th>${rows.length === 1 ? 'Chuyến Đi Đang Xét' : 'Trung Bình Toàn Đội Xe'}</th>
               <th>Lái Xe An Toàn Nhất</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Tổng Điểm An Toàn</strong></td>
-              <td>${fleetAverage.toFixed(1)}/100</td>
+              <td>${(rows.length === 1 ? rows[0].score : fleetAverage).toFixed(1)}/100</td>
               <td>${rows[0] ? `${rows[0].score.toFixed(1)}/100` : 'N/A'}</td>
             </tr>
             <tr>
@@ -361,7 +447,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               <th>Mã Xe / Chuyến</th>
               <th>Hao Mòn Má Phanh</th>
               <th>Hao Mòn Lốp</th>
-              <th>Số Odo (km)</th>
+              <th>Thời gian (s)</th>
               <th>Mã Lỗi DTC (OBD-II)</th>
               <th>Tình Trạng Bảo Trì</th>
               <th>Dự Toán Chi Phí & Downtime</th>
@@ -396,10 +482,10 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
 
         <div class="section-title">3. Lệnh Hành Động Bảo Trì Bắt Buộc (Action Orders)</div>
         <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <strong style="color: #991b1b;">🚨 Dừng Lưu Hành Ngay (Do Not Drive):</strong> Yêu cầu thu hồi phương tiện thuộc chuyến <strong>${rows.find(r => r.riskLevel === 'CRITICAL')?.trip_id ?? 'T01'}</strong> kiểm tra ngay lập tức hệ thống phanh và mã lỗi động cơ P0300.
+          <strong style="color: #991b1b;">🚨 Dừng Lưu Hành Ngay (Do Not Drive):</strong> ${atRiskTrip ? `Yêu cầu thu hồi phương tiện thuộc chuyến <strong>${atRiskTrip.trip_id}</strong> kiểm tra ngay lập tức.` : `Không có xe nào thuộc diện dừng lưu hành khẩn cấp.`}
         </div>
         <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <strong style="color: #9a3412;">⚠️ Bảo Trì Ưu Tiên Trong 48H:</strong> Căn chỉnh thước lái, kiểm tra độ chụm bánh xe và cảm biến tốc độ bánh xe (C0035) do phát hiện các cú phanh gấp và va chạm suýt soát.
+          <strong style="color: #9a3412;">⚠️ Bảo Trì Ưu Tiên Trong 48H:</strong> Căn chỉnh thước lái, kiểm tra độ chụm bánh xe và cảm biến tốc độ bánh xe (C0035) cho các xe có sự kiện cảnh báo.
         </div>
 
         <div class="section-title">4. Chi Tiết Đánh Giá Chi Tiết Theo Xe (${rows.length} xe)</div>
@@ -420,48 +506,41 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
 
   const handleExportPDF = async () => {
     setShowExportMenu(false);
-    const htmlContent = generateReportHTML();
-    const fileName = `DMS_Fleet_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const tripLabel = rows.length === 1 ? rows[0].trip_id : 'Fleet';
+    const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
-    // Create temporary container for PDF generation
-    const element = document.createElement('div');
-    element.innerHTML = htmlContent;
-    element.style.position = 'absolute';
-    element.style.left = '-9999px';
-    element.style.top = '-9999px';
-    document.body.appendChild(element);
+    // Expand all trip cards temporarily so entire detailed report is captured in screenshot
+    const previousExpandedState = { ...expandedTrips };
+    const allExpandedState: Record<string, boolean> = {};
+    rows.forEach(r => { allExpandedState[r.trip_id] = true; });
+    setExpandedTrips(allExpandedState);
+
+    // Wait 200ms for React DOM to render all expanded cards
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    const targetElement = document.getElementById('copilot-report-print-target') || document.body;
+
+    const opt = {
+      margin: [5, 5, 5, 5],
+      filename: fileName,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: '#070A12',
+        logging: false 
+      },
+      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+    };
 
     try {
-      const pkgName = 'html2pdf.js';
-      // @vite-ignore
-      const html2pdfModule = await import(/* @vite-ignore */ pkgName);
-      const html2pdf = html2pdfModule.default || html2pdfModule;
-
-      const opt = {
-        margin: 10,
-        filename: fileName,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
-      };
-
-      await html2pdf().set(opt).from(element).save();
-      setDownloadSuccess(`Đã tải xuống thành công file ${fileName}!`);
+      await html2pdf().set(opt).from(targetElement).save();
+      setDownloadSuccess(`Đã chụp toàn bộ màn hình giao diện & tải xuống file ${fileName} thành công!`);
     } catch (err) {
-      console.error('PDF download error:', err);
-      // Fallback method if html2pdf canvas rendering fails
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.open();
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        setTimeout(() => {
-          printWindow.focus();
-          printWindow.print();
-        }, 300);
-      }
+      console.error('PDF screenshot export error:', err);
     } finally {
-      document.body.removeChild(element);
+      // Restore user's previous expand state
+      setExpandedTrips(previousExpandedState);
       setTimeout(() => setDownloadSuccess(null), 4000);
     }
   };
@@ -470,19 +549,19 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     setShowExportMenu(false);
     const htmlContent = generateReportHTML();
 
-    // Convert HTML to valid Word Document Blob (.doc)
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
-      "xmlns:w='urn:schemas-microsoft-com:office:word' "+
-      "xmlns='http://www.w3.org/TR/REC-html40'>"+
-      "<head><meta charset='utf-8'><title>Fleet Safety Report</title></head><body>";
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+      "xmlns:w='urn:schemas-microsoft-com:office:word' " +
+      "xmlns='http://www.w3.org/TR/REC-html40'>" +
+      "<head><meta charset='utf-8'><title>" + reportTitle + "</title></head><body>";
     const footer = "</body></html>";
     const sourceHTML = header + htmlContent + footer;
 
     const blob = new Blob(['\ufeff', sourceHTML], {
-      type: 'application/msword'
+      type: 'application/msword;charset=utf-8'
     });
 
-    const fileName = `DMS_Fleet_Report_${new Date().toISOString().slice(0, 10)}.doc`;
+    const tripLabel = rows.length === 1 ? rows[0].trip_id : 'Fleet';
+    const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.doc`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -490,14 +569,14 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    setDownloadSuccess('Đã tải xuống báo cáo Word (.doc) thành công!');
+    setDownloadSuccess(`Đã tải xuống báo cáo Word (${fileName}) thành công!`);
     setTimeout(() => setDownloadSuccess(null), 4000);
   };
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-[#070A12] px-6 py-7 text-slate-100">
+    <div id="copilot-report-print-target" className="min-h-screen overflow-y-auto bg-[#070A12] px-6 py-7 text-slate-100">
       <div className="mx-auto max-w-7xl space-y-5">
         {downloadSuccess && (
           <div className="flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-950/80 px-4 py-3 text-sm font-bold text-emerald-200 shadow-lg">
@@ -1049,7 +1128,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
               <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Trip Safe Score' : 'Fleet Safe Score'}</span>
-              <span className="text-xl font-black font-mono text-sky-400 mt-1 block">{fleetAverage.toFixed(1)}/100</span>
+              <span className="text-xl font-black font-mono text-sky-400 mt-1 block">{(rows.length === 1 ? rows[0].score : fleetAverage).toFixed(1)}/100</span>
             </div>
             <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
               <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Tài xế chuyến xe' : 'Tài xế xuất sắc nhất'}</span>
@@ -1113,35 +1192,52 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
             ];
           } else {
             // STRICT SAFETY LOGIC RULES
-            if (safeScore >= 80) {
-              defaultPros.push(`Safety Score thuộc nhóm xuất sắc (${safeScore.toFixed(0)}/100), kiểm soát rủi ro cực tốt.`);
-            } else if (safeScore >= 60) {
-              defaultPros.push(`Safety Score ở mức trung bình khá (${safeScore.toFixed(0)}/100).`);
-            }
-            // NO PROS if safeScore < 60!
+            const isCriticalRisk = safeScore < 60 || expandedRow.riskLevel === 'CRITICAL' || expandedRow.distractedPct > 35 || expandedRow.fatigueEvents > 0;
+            const hasHighDistraction = expandedRow.distractedPct > 25;
+            const hasFatigue = expandedRow.fatigueEvents > 0;
 
-            if (speedingPct === 0) {
-              defaultPros.push(`Tuân thủ giới hạn tốc độ tuyệt đối (0.0%).`);
+            if (isCriticalRisk) {
+              // NO POSITIVE PROS FOR CRITICAL RISK DRIVERS!
+              defaultPros = [`Chưa ghi nhận hành vi an toàn tiêu biểu do tài xế vi phạm quy tắc an toàn nghiêm trọng.`];
             } else {
+              if (safeScore >= 80 && !hasHighDistraction && !hasFatigue) {
+                defaultPros.push(`Safety Score thuộc nhóm xuất sắc (${safeScore.toFixed(0)}/100), kiểm soát rủi ro cực tốt.`);
+              } else if (safeScore >= 60 && !hasHighDistraction) {
+                defaultPros.push(`Safety Score ở mức trung bình khá (${safeScore.toFixed(0)}/100).`);
+              }
+
+              if (speedingPct === 0) {
+                defaultPros.push(`Tuân thủ giới hạn tốc độ tuyệt đối (0.0%).`);
+              }
+              if (brakeLogCount === 0) {
+                defaultPros.push(`Lái xe êm ái, không ghi nhận tình huống phanh gấp nguy hiểm.`);
+              }
+            }
+
+            // CONS ALWAYS DETAILED
+            if (safeScore < 60) {
+              defaultCons.push(`Điểm an toàn thuộc nhóm cực kỳ nguy hiểm (${safeScore.toFixed(0)}/100).`);
+            }
+            if (speedingPct > 0) {
               defaultCons.push(`Vi phạm tốc độ ở mức ${speedingPct.toFixed(1)}%, gây nguy hiểm nghiêm trọng.`);
             }
-
-            if (brakeLogCount === 0) {
-              defaultPros.push(`Lái xe êm ái, không ghi nhận tình huống phanh gấp nguy hiểm.`);
-            } else {
+            if (brakeLogCount > 0) {
               defaultCons.push(`Ghi nhận ${brakeLogCount} sự kiện phanh gấp, dấu hiệu thiếu quan sát hoặc không giữ khoảng cách an toàn.`);
             }
-
-            if (expandedRow.distractedPct > 5) {
+            if (hasHighDistraction) {
+              defaultCons.push(`🚨 CẢNH BÁO NGHIÊM TRỌNG: Tỷ lệ xao nhãng mất tập trung lên tới ${expandedRow.distractedPct.toFixed(1)}% (cao gấp đôi mức trung bình Fleet ${fleetAverage.toFixed(1)}%), nguy cơ va chạm rất cao.`);
+            } else if (expandedRow.distractedPct > 5) {
               defaultCons.push(`Xao nhãng khi lái xe chiếm ${expandedRow.distractedPct.toFixed(1)}% thời gian, vi phạm quy tắc tập trung.`);
             }
-            
-            if (expandedRow.criticalEvents > 0) {
-               defaultCons.push(`Phát hiện ${expandedRow.criticalEvents} sự kiện rủi ro tiềm ẩn (Near Misses/Critical) trong quá trình vận hành.`);
+            if (hasFatigue) {
+              defaultCons.push(`🚨 CẢNH BÁO VI NGỦ: Phát hiện ${expandedRow.fatigueEvents} sự kiện vi ngủ/ngáp nguy hiểm.`);
             }
-            
-            if (defaultPros.length === 0) {
-              defaultPros.push(`Không ghi nhận kỹ năng an toàn đáng kể trong chuyến đi này.`);
+            if (expandedRow.criticalEvents > 0) {
+              defaultCons.push(`Phát hiện ${expandedRow.criticalEvents} sự kiện rủi ro tiềm ẩn (Near Misses/Critical) trong quá trình vận hành.`);
+            }
+
+            if (defaultCons.length === 0) {
+              defaultCons.push(`Cần tiếp tục duy trì và nâng cao chỉ số tập trung.`);
             }
           }
 
@@ -1159,8 +1255,8 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                 : `🛑 COACHING 24H: Tài xế ${driverName} vi phạm nghiêm trọng (Score: ${safeScore}/100), yêu cầu đình chỉ chạy và tái đào tạo khẩn cấp.`);
 
           const isAiLoading = isLoadingInsight && !tripAi;
-          const prosList: string[] = isAiLoading ? ['Đang phân tích dữ liệu AI Copilot...'] : (tripAi?.pros ?? defaultPros);
-          const consList: string[] = isAiLoading ? ['Đang phân tích dữ liệu AI Copilot...'] : (tripAi?.cons ?? defaultCons);
+          const prosList: string[] = isAiLoading ? ['⏳ AI Copilot đang tạo insight từ Bedrock...'] : (tripAi?.pros ?? defaultPros);
+          const consList: string[] = isAiLoading ? ['⏳ AI Copilot đang phân tích dữ liệu rủi ro từ Bedrock...'] : (tripAi?.cons ?? defaultCons);
           const evaluationText: string = isAiLoading ? '⏳ AI Copilot đang xử lý nhận xét đánh giá chuyên sâu...' : (tripAi?.evaluation ?? defaultEval);
 
           return (

@@ -346,3 +346,67 @@ async def live_alerts(websocket: WebSocket) -> None:
             await websocket.receive_text()
     except WebSocketDisconnect:
         live_clients.discard(websocket)
+
+
+# ---------------------------------------------------------------------------
+# Fleet Intervention Commands  (React Dashboard → Python AI Desktop)
+# ---------------------------------------------------------------------------
+
+class InterventionCommandPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["alarm", "stop", "call"]
+    trip_id: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+    timestamp_ms: int = Field(ge=0)
+
+
+def _intervention_store(request: Request) -> deque:
+    if not hasattr(request.app.state, "intervention_commands"):
+        request.app.state.intervention_commands = deque(maxlen=50)
+    return request.app.state.intervention_commands
+
+
+@router.post("/interventions", status_code=status.HTTP_202_ACCEPTED)
+async def receive_intervention(
+    payload: InterventionCommandPayload,
+    request: Request,
+) -> dict[str, Any]:
+    """
+    Called by the React Fleet Dashboard when an operator presses one of the
+    three intervention buttons (alarm / stop / call).  The command is stored
+    in memory; the Python AI desktop script polls GET /interventions/pending
+    and renders an OpenCV overlay.
+    """
+    store = _intervention_store(request)
+    cmd = {
+        "type": payload.type,
+        "trip_id": payload.trip_id,
+        "message": payload.message,
+        "timestamp_ms": payload.timestamp_ms,
+        "consumed": False,
+    }
+    store.append(cmd)
+    return {"accepted": True, "type": payload.type, "trip_id": payload.trip_id}
+
+
+@router.get("/interventions/pending")
+async def pending_interventions(
+    request: Request,
+    trip_id: str | None = None,
+) -> dict[str, Any]:
+    """
+    Polled by the Python AI desktop script (trip_visual_demo / end_to_end_demo)
+    to discover unconsumed intervention commands. Marks them consumed on read.
+    """
+    store = _intervention_store(request)
+    result: list[dict[str, Any]] = []
+    for cmd in store:
+        if cmd["consumed"]:
+            continue
+        if trip_id is not None and cmd["trip_id"] != trip_id:
+            continue
+        cmd["consumed"] = True
+        result.append({k: v for k, v in cmd.items() if k != "consumed"})
+    return {"count": len(result), "items": result}
+

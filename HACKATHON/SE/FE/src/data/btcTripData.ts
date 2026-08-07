@@ -1,9 +1,9 @@
-import sampleData from './T01-Sample.json';
 import { TripData } from '../types';
 
-const baseTrip = sampleData as unknown as TripData;
-
-// Organizer-provided BTC trip data with only the original sample trip.
-export const btcTripData: TripData[] = [
-  baseTrip,
-];
+/**
+ * btcTripData holds completed trip records saved in `src/data/saved_trips/`.
+ * When an AI pipeline trip session status transitions to 'completed',
+ * the frontend auto-persists the full TripData to `src/data/saved_trips/{trip_id}.json`.
+ * Both the Dashboard and AI Copilot read from `src/data/saved_trips/` to trace completed trips.
+ */
+export const btcTripData: TripData[] = [];

@@ -1,27 +1,56 @@
 import React, { useState } from 'react';
-import { X, Volume2, ShieldAlert, CheckCircle2, PhoneCall, Radio } from 'lucide-react';
-import { TripData } from '../types';
+import { X, Volume2, ShieldAlert, CheckCircle2, PhoneCall, Radio, AlertTriangle } from 'lucide-react';
+import { InterventionNotif, TripData } from '../types';
 
 interface InterventionModalProps {
   vehicle: TripData | null;
   isOpen: boolean;
   onClose: () => void;
+  onSendNotif?: (notif: InterventionNotif) => void;
 }
 
-export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, isOpen, onClose }) => {
+export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, isOpen, onClose, onSendNotif }) => {
   const [sentAlert, setSentAlert] = useState<string | null>(null);
 
   if (!isOpen || !vehicle) return null;
 
   const lastFrame = vehicle.frames?.[vehicle.frames.length - 1];
+  const isRunning = vehicle.runtime_status === 'running';
 
-  const handleSendAction = (actionTitle: string) => {
+  const handleSendAction = (
+    actionTitle: string,
+    notifType: InterventionNotif['type'],
+    overlayMessage: string,
+  ) => {
+    const notif: InterventionNotif = {
+      type: notifType,
+      tripId: vehicle.trip_id,
+      message: overlayMessage,
+      timestamp: Date.now(),
+    };
+
+    // 1. Fire React state → overlay on VehicleLiveView (same browser window)
+    onSendNotif?.(notif);
+
+    // 2. POST to Python AI desktop app via Node.js proxy → FastAPI
+    fetch('/api/intervention', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: notif.type,
+        tripId: notif.tripId,
+        message: notif.message,
+        timestamp: notif.timestamp,
+      }),
+    }).catch((err) => console.warn('[intervention] POST failed (BE offline):', err));
+
     setSentAlert(actionTitle);
     setTimeout(() => {
       setSentAlert(null);
       onClose();
     }, 2000);
   };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -51,6 +80,16 @@ export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, i
           </div>
         </div>
 
+        {/* Trip status warning — shown when trip is not running */}
+        {!isRunning && (
+          <div className="flex items-center gap-2.5 bg-amber-950/70 border border-amber-500/50 rounded-xl px-3 py-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <p className="text-[11px] text-amber-200 leading-snug">
+              <span className="font-bold text-amber-300">Trip đã kết thúc</span> — Lệnh can thiệp sẽ được ghi nhận nhưng không tới tài xế theo thời gian thực.
+            </p>
+          </div>
+        )}
+
         {sentAlert ? (
           <div className="bg-emerald-950/80 border border-emerald-500/50 rounded-xl p-4 flex flex-col items-center justify-center text-center space-y-2 py-8">
             <CheckCircle2 className="w-10 h-10 text-emerald-400 animate-bounce" />
@@ -63,8 +102,15 @@ export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, i
               Chọn phương án can thiệp thích hợp cho phương tiện <span className="font-bold text-white">{vehicle.trip_id}</span> đang di chuyển ở vận tốc <span className="font-bold text-red-400">{lastFrame?.ego?.speed_kmh || 0} km/h</span>:
             </p>
 
+            {/* Button 1 — Alarm */}
             <button
-              onClick={() => handleSendAction('Cảnh báo âm thanh cabin: "Phát hiện buồn ngủ! Hãy dừng xe nghỉ ngay!"')}
+              onClick={() =>
+                handleSendAction(
+                  'Cảnh báo âm thanh cabin: "Phát hiện buồn ngủ! Hãy dừng xe nghỉ ngay!"',
+                  'alarm',
+                  '🔔 CẢNH BÁO KHẨN CẤP — Phát hiện buồn ngủ! Tài xế cần dừng xe nghỉ ngơi ngay lập tức!',
+                )
+              }
               className="w-full p-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl flex items-center justify-between transition-colors shadow-lg shadow-red-900/30"
             >
               <div className="flex items-center gap-2.5">
@@ -74,8 +120,15 @@ export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, i
               <Radio className="w-4 h-4 text-amber-300 animate-pulse" />
             </button>
 
+            {/* Button 2 — Stop */}
             <button
-              onClick={() => handleSendAction('Yêu cầu dừng nghỉ 30 phút tại Trạm dừng tiếp theo')}
+              onClick={() =>
+                handleSendAction(
+                  'Yêu cầu dừng nghỉ 30 phút tại Trạm dừng tiếp theo',
+                  'stop',
+                  '🛑 LỆNH DỪNG XE — Vui lòng dừng xe tại trạm kế tiếp và nghỉ ngơi bắt buộc 30 phút!',
+                )
+              }
               className="w-full p-3 bg-[#111827] hover:bg-[#1F2937] border border-[#1F2937] text-slate-200 font-bold text-xs rounded-xl flex items-center justify-between transition-colors"
             >
               <div className="flex items-center gap-2.5">
@@ -85,8 +138,15 @@ export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, i
               <span className="text-[10px] text-sky-400 uppercase font-mono">Đề xuất</span>
             </button>
 
+            {/* Button 3 — Call */}
             <button
-              onClick={() => handleSendAction('Cuộc gọi kết nối trực tiếp với Trung tâm Điều hành')}
+              onClick={() =>
+                handleSendAction(
+                  'Cuộc gọi kết nối trực tiếp với Trung tâm Điều hành',
+                  'call',
+                  '📞 ĐANG KẾT NỐI CUỘC GỌI — Trung tâm điều hành đang liên hệ trực tiếp với bạn. Vui lòng giữ máy!',
+                )
+              }
               className="w-full p-3 bg-[#111827] hover:bg-[#1F2937] border border-[#1F2937] text-slate-200 font-bold text-xs rounded-xl flex items-center justify-between transition-colors"
             >
               <div className="flex items-center gap-2.5">

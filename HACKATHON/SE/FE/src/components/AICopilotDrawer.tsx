@@ -49,12 +49,15 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
     window.open(`${window.location.origin}${window.location.pathname}?${params.toString()}`, '_blank', 'noopener,noreferrer');
   };
 
-  const copilotTripContext = vehicles.map((vehicle) => ({
-    trip_id: vehicle.trip_id,
-    metadata: vehicle.metadata,
-    driver_summary: vehicle.driver_summary,
-    trip_aggregate: vehicle.trip_aggregate,
-  }));
+  const copilotTripContext = vehicles
+    .filter((vehicle) => vehicle.runtime_status === 'completed')
+    .map((vehicle) => ({
+      trip_id: vehicle.trip_id,
+      runtime_status: vehicle.runtime_status,
+      metadata: vehicle.metadata,
+      driver_summary: vehicle.driver_summary,
+      trip_aggregate: vehicle.trip_aggregate,
+    }));
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || inputText;

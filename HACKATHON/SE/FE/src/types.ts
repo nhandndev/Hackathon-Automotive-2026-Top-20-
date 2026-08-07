@@ -201,3 +201,12 @@ export interface LiveTripSession {
   latest_snapshot: LiveSnapshot | null;
   snapshot_history: LiveSnapshot[];
 }
+
+export type InterventionNotifType = 'alarm' | 'stop' | 'call';
+
+export interface InterventionNotif {
+  type: InterventionNotifType;
+  tripId: string;
+  message: string;
+  timestamp: number;
+}

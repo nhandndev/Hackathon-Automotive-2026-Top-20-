@@ -11,6 +11,10 @@ import csv
 import math
 import sys
 import time
+import threading
+import urllib.request
+import urllib.error
+import json
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +42,117 @@ CSV_FIELDS = [
     "predicted_driver_state",
     "predicted_risk_score",
 ]
+
+# ─── Fleet Intervention Overlay ────────────────────────────────────────────
+INTERVENTION_ENDPOINT = "http://127.0.0.1:8000/api/v1/alerts/interventions/pending"
+INTERVENTION_DISPLAY_SEC = 8.0
+
+_INTERVENTION_ICONS = {
+    "alarm": "!! CANH BAO KHAN CAP !!",
+    "stop": ">> LENH DUNG XE <<",
+    "call": ">> KET NOI CUOC GOI <<",
+}
+_INTERVENTION_COLORS = {
+    "alarm": (30, 30, 210),    # BGR red
+    "stop":  (30, 130, 230),   # BGR orange
+    "call":  (80, 200, 80),    # BGR green
+}
+
+class InterventionOverlayState:
+    """Thread-safe container for the active intervention command."""
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._cmd: dict | None = None
+        self._expires: float = 0.0
+
+    def set(self, cmd: dict) -> None:
+        with self._lock:
+            self._cmd = cmd
+            self._expires = time.perf_counter() + INTERVENTION_DISPLAY_SEC
+
+    def get_active(self) -> dict | None:
+        with self._lock:
+            if self._cmd is None:
+                return None
+            if time.perf_counter() > self._expires:
+                self._cmd = None
+                return None
+            return self._cmd
+
+    def remaining(self) -> float:
+        with self._lock:
+            if self._cmd is None:
+                return 0.0
+            return max(0.0, self._expires - time.perf_counter())
+
+
+def _poll_interventions(
+    overlay: InterventionOverlayState,
+    trip_id: str,
+    stop_event: threading.Event,
+) -> None:
+    """Background thread: poll FastAPI for pending intervention commands."""
+    url = f"{INTERVENTION_ENDPOINT}?trip_id={trip_id}"
+    while not stop_event.is_set():
+        try:
+            with urllib.request.urlopen(url, timeout=2) as resp:  # noqa: S310
+                data = json.loads(resp.read().decode())
+            for item in data.get("items", []):
+                overlay.set(item)
+        except (urllib.error.URLError, Exception):
+            pass  # FastAPI BE not running — silently skip
+        stop_event.wait(2.0)
+
+
+def draw_intervention_overlay(canvas: np.ndarray, cmd: dict, remaining: float) -> np.ndarray:
+    """Draw a full-canvas red alert overlay for a fleet intervention command."""
+    h, w = canvas.shape[:2]
+    overlay_layer = canvas.copy()
+    notif_type = cmd.get("type", "alarm")
+    border_color = _INTERVENTION_COLORS.get(notif_type, (30, 30, 210))
+    # Red semi-transparent fill
+    cv2.rectangle(overlay_layer, (0, 0), (w, h), (20, 20, 180), -1)
+    canvas = cv2.addWeighted(overlay_layer, 0.45, canvas, 0.55, 0)
+    # Bold pulsing border (thickness based on remaining time)
+    thick = 6 if int(remaining * 2) % 2 == 0 else 3
+    cv2.rectangle(canvas, (0, 0), (w - 1, h - 1), border_color, thick)
+    # Header bar
+    cv2.rectangle(canvas, (0, 0), (w, 56), border_color, -1)
+    icon_text = _INTERVENTION_ICONS.get(notif_type, "!! LENH CAN THIEP !!")
+    cv2.putText(canvas, icon_text, (16, 38),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2, cv2.LINE_AA)
+    badge = "FLEET COMMAND"
+    badge_w = cv2.getTextSize(badge, cv2.FONT_HERSHEY_SIMPLEX, 0.55, 1)[0][0]
+    cv2.putText(canvas, badge, (w - badge_w - 14, 38),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 200), 1, cv2.LINE_AA)
+    # Message (word-wrap at ~60 chars)
+    message = cmd.get("message", "")
+    words = message.split()
+    lines: list[str] = []
+    cur = ""
+    for w_tok in words:
+        if len(cur) + len(w_tok) + 1 > 58:
+            if cur:
+                lines.append(cur)
+            cur = w_tok
+        else:
+            cur = (cur + " " + w_tok).strip()
+    if cur:
+        lines.append(cur)
+    y_text = 90
+    for line in lines[:4]:
+        cv2.putText(canvas, line, (20, y_text),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2, cv2.LINE_AA)
+        y_text += 34
+    # Countdown bar
+    bar_y = h - 20
+    bar_x0, bar_x1 = 20, w - 20
+    cv2.rectangle(canvas, (bar_x0, bar_y - 6), (bar_x1, bar_y + 6), (60, 60, 60), -1)
+    fill_x = int(bar_x0 + (bar_x1 - bar_x0) * (remaining / INTERVENTION_DISPLAY_SEC))
+    cv2.rectangle(canvas, (bar_x0, bar_y - 6), (fill_x, bar_y + 6), border_color, -1)
+    cv2.putText(canvas, f"{remaining:.0f}s", (bar_x1 + 6, bar_y + 5),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.48, (220, 220, 220), 1, cv2.LINE_AA)
+    return canvas
 
 
 def install_starterkit(starterkit_root: Path | None) -> None:
@@ -443,6 +558,16 @@ def main() -> int:
     processed = 0
     started = time.perf_counter()
 
+    # ── Intervention overlay polling (background thread) ───────────────────
+    intervention_overlay = InterventionOverlayState()
+    _stop_poll = threading.Event()
+    _poll_thread = threading.Thread(
+        target=_poll_interventions,
+        args=(intervention_overlay, dataset.trip_id, _stop_poll),
+        daemon=True,
+    )
+    _poll_thread.start()
+
     try:
         for frame in dataset.iter_frames():
             if frame.frame_id < args.start_frame:
@@ -501,6 +626,12 @@ def main() -> int:
                 ),
             ])
             canvas = np.vstack([top, bottom])
+            # ── Intervention overlay (drawn on full canvas before display) ─────
+            active_cmd = intervention_overlay.get_active()
+            if active_cmd is not None:
+                canvas = draw_intervention_overlay(
+                    canvas, active_cmd, intervention_overlay.remaining()
+                )
             rows.append({
                 "frame_id": frame.frame_id,
                 "timestamp": f"{frame.timestamp:.3f}",
@@ -554,10 +685,12 @@ def main() -> int:
     except KeyboardInterrupt:
         pass
     finally:
+        _stop_poll.set()
         driver.close()
         if writer is not None:
             writer.release()
         cv2.destroyAllWindows()
+
 
     if args.output_csv:
         args.output_csv.parent.mkdir(parents=True, exist_ok=True)

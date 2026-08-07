@@ -215,18 +215,25 @@ export const buildRankingRows = (vehicles: TripData[]): DriverRankingRow[] => (
     );
     const criticalEvents = frames.filter((frame) => finite(frame.risk?.final_risk_score) >= 80 || lowTtc(frame)).length;
 
+    const distractionPenalty = distractedPct * 0.45;
     const penalty = (avgRisk * 0.25)
       + (maxRisk * 0.15)
       + (criticalEvents * 3)
-      + (distractedPct * 0.15)
+      + distractionPenalty
       + (fatigueEvents * 5)
       + (speedingPct * 0.2)
       + (tailgatingPct * 0.25)
       + (harshEvents * 2)
       + (nearMissCount * 4);
 
-    const fallbackScore = clamp(100 - penalty);
-    const score = clamp(finite(aggregate?.safe_driving_score, fallbackScore));
+    let calculatedScore = clamp(100 - penalty);
+    if (distractedPct > 50) {
+      calculatedScore = Math.min(calculatedScore, 58);
+    } else if (distractedPct > 30) {
+      calculatedScore = Math.min(calculatedScore, 68);
+    }
+
+    const score = clamp(finite(aggregate?.safe_driving_score, calculatedScore));
     const riskLevel = scoreLabel(score);
 
     return {

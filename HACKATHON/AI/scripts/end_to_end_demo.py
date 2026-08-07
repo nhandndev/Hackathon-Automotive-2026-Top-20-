@@ -31,6 +31,7 @@ from core.challenge2_driver.predict_state import DriverStatePredictor  # noqa: E
 from core.challenge3_fusion.risk_engine import FleetSafeDrivingScorer  # noqa: E402
 from core.decision_engine import DecisionEngine, DecisionPolicy, DecisionSnapshot  # noqa: E402
 from integrations.se_client import SEApiClient  # noqa: E402
+import threading
 from scripts.trip_visual_demo import (  # noqa: E402
     CSV_FIELDS,
     WINDOW_NAME,
@@ -39,6 +40,9 @@ from scripts.trip_visual_demo import (  # noqa: E402
     draw_right,
     draw_road,
     project_kitti_labels,
+    InterventionOverlayState,
+    _poll_interventions,
+    draw_intervention_overlay,
 )
 
 
@@ -225,6 +229,17 @@ def main() -> int:
     media_future: concurrent.futures.Future[dict[str, object]] | None = None
     next_dashboard_publish_ms = 0.0
     trip_finished = False
+
+    # ── Intervention overlay polling (background thread) ───────────────────
+    intervention_overlay = InterventionOverlayState()
+    _stop_poll = threading.Event()
+    _poll_thread = threading.Thread(
+        target=_poll_interventions,
+        args=(intervention_overlay, dataset.trip_id, _stop_poll),
+        daemon=True,
+    )
+    _poll_thread.start()
+
     try:
         with args.events.open("w", encoding="utf-8") as event_stream:
             records = list(dataset.iter_frames())
@@ -360,6 +375,12 @@ def main() -> int:
                                        fleet_out.risk_score, args.speed, paused),
                     ]),
                 ])
+                # ── Intervention overlay (drawn on full canvas before display) ─────
+                active_cmd = intervention_overlay.get_active()
+                if active_cmd is not None:
+                    canvas = draw_intervention_overlay(
+                        canvas, active_cmd, intervention_overlay.remaining()
+                    )
                 processed += 1
                 realtime_pacing = not args.no_display or client is not None
                 if realtime_pacing:
@@ -408,6 +429,7 @@ def main() -> int:
                         client.send(event)
                 trip_finished = True
     finally:
+        _stop_poll.set()
         road_executor.shutdown(wait=True, cancel_futures=True)
         media_executor.shutdown(wait=True, cancel_futures=False)
         if media_future is not None:

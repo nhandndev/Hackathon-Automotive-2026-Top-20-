@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { DecisionAlert, LiveTripSession, ViewMode, TripData } from './types';
+import { DecisionAlert, InterventionNotif, LiveTripSession, ViewMode, TripData } from './types';
 import { btcTripData } from './data/btcTripData';
 import { sessionToTrip } from './data/liveTripData';
 import { Header } from './components/Header';
@@ -14,6 +14,17 @@ import { CopilotFleetReportPage } from './components/CopilotFleetReportPage';
 import { AICopilotDrawer } from './components/AICopilotDrawer';
 import { InterventionModal } from './components/InterventionModal';
 
+/** Shown when no backend / saved trips are available yet. */
+const WaitingForData = () => (
+  <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-[#070A12] text-slate-400 p-8">
+    <div className="w-10 h-10 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+    <p className="text-sm font-mono text-slate-500">Đang chờ dữ liệu từ backend…</p>
+    <p className="text-xs text-slate-600 max-w-xs text-center">
+      Khởi động AI pipeline và kết nối backend để dữ liệu chuyến đi xuất hiện ở đây.
+    </p>
+  </div>
+);
+
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const standaloneView = urlParams.get('view');
@@ -21,29 +32,35 @@ export default function App() {
   const copilotReportType = urlParams.get('type');
   const copilotReportTripIds = urlParams.get('trip_ids');
 
-  const initialView = (standaloneView === 'TRIP_DETAIL' || standaloneView === 'MAP' || standaloneView === 'VEHICLE_LIVE' || standaloneView === 'INSIGHTS' || standaloneView === 'RANKING') 
-    ? (standaloneView as ViewMode) 
-    : 'MAP';
+  const initialView = (
+    standaloneView === 'TRIP_DETAIL' ||
+    standaloneView === 'MAP' ||
+    standaloneView === 'VEHICLE_LIVE' ||
+    standaloneView === 'INSIGHTS' ||
+    standaloneView === 'RANKING'
+  ) ? (standaloneView as ViewMode) : 'MAP';
 
   const [currentView, setCurrentView] = useState<ViewMode>(initialView);
   const [vehicles, setVehicles] = useState<TripData[]>(btcTripData);
-  const [selectedVehicle, setSelectedVehicle] = useState<TripData>(() => {
-    if (rankingTripId) {
-      const match = btcTripData.find(v => v.trip_id === rankingTripId);
-      if (match) return match;
-    }
-    return btcTripData[0];
-  });
+  // selectedVehicle is null until the first backend/saved-trip data arrives.
+  const [selectedVehicle, setSelectedVehicle] = useState<TripData | null>(null);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isInterventionOpen, setIsInterventionOpen] = useState(false);
+  const [interventionNotif, setInterventionNotif] = useState<InterventionNotif | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [liveAlerts, setLiveAlerts] = useState<DecisionAlert[]>([]);
   const [alertsConnected, setAlertsConnected] = useState(false);
   const followRunningTrip = useRef(true);
+  // Ref: IDs of trips that were 'running' in the last poll tick — used to
+  // detect the running→completed transition and trigger an auto-save.
+  const runningTripIdsRef = useRef<Set<string>>(new Set());
+  // Ref: historical trips loaded from server disk (data/saved_trips/).
+  const savedTripsCacheRef = useRef<TripData[]>([]);
 
   useEffect(() => {
     const alertsHttp = import.meta.env.VITE_ALERTS_HTTP_URL || 'http://127.0.0.1:8000/api/v1/alerts';
     const endpoint = import.meta.env.VITE_ALERTS_WS_URL || 'ws://127.0.0.1:8000/api/v1/alerts/live';
+
     const upsert = (incoming: DecisionAlert[]) => {
       setLiveAlerts((current) => {
         const merged = [...incoming, ...current];
@@ -54,6 +71,7 @@ export default function App() {
         ).slice(0, 1000);
       });
     };
+
     const loadRecent = async () => {
       try {
         const response = await fetch(`${alertsHttp}/recent?limit=1000`);
@@ -64,26 +82,100 @@ export default function App() {
         // WebSocket reconnect/reload can recover later.
       }
     };
+
+    // ── Trip persistence helpers ────────────────────────────────────────────
+
+    /** Persist a completed TripData to disk via the Express server. */
+    const saveTripToServer = async (tripData: TripData) => {
+      try {
+        const resp = await fetch('/api/trips/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tripData),
+        });
+        if (resp.ok) {
+          console.info(`[trip-persist] Saved ${tripData.trip_id} to disk.`);
+          savedTripsCacheRef.current = [
+            ...savedTripsCacheRef.current.filter(t => t.trip_id !== tripData.trip_id),
+            tripData,
+          ];
+        }
+      } catch (err) {
+        console.warn('[trip-persist] Auto-save failed:', err);
+      }
+    };
+
+    /** Load all previously persisted trips from disk on startup. */
+    const loadSavedTrips = async () => {
+      try {
+        const listResp = await fetch('/api/trips/saved');
+        if (!listResp.ok) return;
+        const { trips } = await listResp.json() as { trips: string[] };
+        const loaded: TripData[] = [];
+        await Promise.all(trips.map(async (tripId) => {
+          try {
+            const r = await fetch(`/api/trips/saved/${encodeURIComponent(tripId)}`);
+            if (r.ok) loaded.push(await r.json() as TripData);
+          } catch { /* skip corrupt file */ }
+        }));
+        savedTripsCacheRef.current = loaded;
+        if (loaded.length > 0) {
+          setVehicles((prev) => {
+            const existingIds = new Set(prev.map(v => v.trip_id));
+            const newOnes = loaded.filter(t => !existingIds.has(t.trip_id));
+            return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
+          });
+          // Select the first saved trip if nothing is selected yet
+          setSelectedVehicle((prev) => prev ?? loaded[0]);
+        }
+      } catch (err) {
+        console.warn('[trip-persist] Could not load saved trips:', err);
+      }
+    };
+
     const loadTrips = async () => {
       try {
         const response = await fetch(`${alertsHttp}/trips`);
         if (!response.ok) return;
         const payload = await response.json() as { items?: LiveTripSession[] };
-        const dynamicTrips = (payload.items ?? []).map(sessionToTrip);
+        const liveSessions = payload.items ?? [];
+        const dynamicTrips = liveSessions.map(sessionToTrip);
         if (!dynamicTrips.length) return;
-        setVehicles(dynamicTrips);
+
+        // ── Detect running → completed transition and auto-save ─────────────
+        for (const session of liveSessions) {
+          if (
+            session.status === 'completed'
+            && runningTripIdsRef.current.has(session.trip_id)
+          ) {
+            const completedTrip = dynamicTrips.find(t => t.trip_id === session.trip_id);
+            if (completedTrip) void saveTripToServer(completedTrip);
+          }
+        }
+        runningTripIdsRef.current = new Set(
+          liveSessions.filter(s => s.status === 'running').map(s => s.trip_id),
+        );
+
+        // ── Merge: live trips take priority; saved trips fill the rest ───────
+        const liveTripIds = new Set(dynamicTrips.map(t => t.trip_id));
+        const savedOnlyTrips = savedTripsCacheRef.current.filter(t => !liveTripIds.has(t.trip_id));
+        const mergedTrips = [...dynamicTrips, ...savedOnlyTrips];
+
+        setVehicles(mergedTrips);
         setSelectedVehicle((current) => (
           (followRunningTrip.current
-            ? dynamicTrips.find((trip) => trip.runtime_status === 'running')
+            ? mergedTrips.find((trip) => trip.runtime_status === 'running')
             : undefined)
-          ?? dynamicTrips.find((trip) => trip.trip_id === current?.trip_id)
-          ?? dynamicTrips[0]
+          ?? mergedTrips.find((trip) => trip.trip_id === current?.trip_id)
+          ?? mergedTrips[0]
         ));
       } catch {
         // Keep the last valid dashboard state while Backend is unavailable.
       }
     };
+
     void loadRecent();
+    void loadSavedTrips(); // load persisted trips before first live poll
     void loadTrips();
     const tripTimer = window.setInterval(loadTrips, 1000);
     const socket = new WebSocket(endpoint);
@@ -181,30 +273,37 @@ export default function App() {
           )}
 
           {currentView === 'VEHICLE_LIVE' && (
-            <VehicleLiveView
-              vehicle={selectedVehicle}
-              liveAlerts={liveAlerts}
-              alertsConnected={alertsConnected}
-              onIntervene={() => handleOpenIntervention(selectedVehicle)}
-            />
+            selectedVehicle
+              ? <VehicleLiveView
+                  vehicle={selectedVehicle}
+                  liveAlerts={liveAlerts}
+                  alertsConnected={alertsConnected}
+                  onIntervene={() => handleOpenIntervention(selectedVehicle)}
+                  interventionNotif={interventionNotif}
+                />
+              : <WaitingForData />
           )}
 
           {currentView === 'TRIP_DETAIL' && (
-            <TripDetailView
-              vehicle={selectedVehicle}
-              liveAlerts={liveAlerts}
-              alertsConnected={alertsConnected}
-              onViewLiveFeed={() => handleViewLiveFeed(selectedVehicle)}
-              onOpenCopilot={() => setIsCopilotOpen(true)}
-            />
+            selectedVehicle
+              ? <TripDetailView
+                  vehicle={selectedVehicle}
+                  liveAlerts={liveAlerts}
+                  alertsConnected={alertsConnected}
+                  onViewLiveFeed={() => handleViewLiveFeed(selectedVehicle)}
+                  onOpenCopilot={() => setIsCopilotOpen(true)}
+                />
+              : <WaitingForData />
           )}
 
           {currentView === 'INSIGHTS' && (
-            <PerformanceInsightsView
-              vehicle={selectedVehicle}
-              liveAlerts={liveAlerts}
-              onOpenCopilot={() => setIsCopilotOpen(true)}
-            />
+            selectedVehicle
+              ? <PerformanceInsightsView
+                  vehicle={selectedVehicle}
+                  liveAlerts={liveAlerts}
+                  onOpenCopilot={() => setIsCopilotOpen(true)}
+                />
+              : <WaitingForData />
           )}
 
           {currentView === 'RANKING' && (
@@ -246,16 +345,23 @@ export default function App() {
           setCurrentView('TRIP_DETAIL');
         }}
         onSendBreakSchedule={() => {
-          handleOpenIntervention(selectedVehicle);
+          if (selectedVehicle) handleOpenIntervention(selectedVehicle);
         }}
       />
 
       {/* Emergency Intervention Dialog Modal */}
-      <InterventionModal
-        vehicle={selectedVehicle}
-        isOpen={isInterventionOpen}
-        onClose={() => setIsInterventionOpen(false)}
-      />
+      {selectedVehicle && (
+        <InterventionModal
+          vehicle={selectedVehicle}
+          isOpen={isInterventionOpen}
+          onClose={() => setIsInterventionOpen(false)}
+          onSendNotif={(notif) => {
+            setInterventionNotif(notif);
+            // Auto-clear overlay after 5 minutes (allowing sound loop to run)
+            setTimeout(() => setInterventionNotif(null), 300_000);
+          }}
+        />
+      )}
     </div>
   );
 }

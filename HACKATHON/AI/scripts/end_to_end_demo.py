@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 import cv2
+import winsound
 import numpy as np
 import yaml
 
@@ -229,6 +230,10 @@ def main() -> int:
     media_future: concurrent.futures.Future[dict[str, object]] | None = None
     next_dashboard_publish_ms = 0.0
     trip_finished = False
+    
+    # State for AI decision engine centered popup
+    ai_alert_event = None
+    ai_alert_expires = 0.0
 
     # ── Intervention overlay polling (background thread) ───────────────────
     intervention_overlay = InterventionOverlayState()
@@ -307,6 +312,11 @@ def main() -> int:
                     driver_out, fleet_out, road_confirmed=road_confirmed
                 ).model_copy(update={"driver_id": args.driver_id})
                 for event in decision.update(last_snapshot):
+                    # trigger popup on desktop app and play sound
+                    ai_alert_event = event
+                    ai_alert_expires = time.perf_counter() + 3.0
+                    threading.Thread(target=winsound.Beep, args=(1000, 500), daemon=True).start()
+
                     payload = event.transport_dict()
                     event_stream.write(json.dumps(payload, ensure_ascii=False) + "\n")
                     event_stream.flush()
@@ -375,6 +385,30 @@ def main() -> int:
                                        fleet_out.risk_score, args.speed, paused),
                     ]),
                 ])
+                # ── AI Decision Centered Popup ─────────────────────────────────────
+                if ai_alert_event and time.perf_counter() < ai_alert_expires:
+                    # Draw a large red/orange box in the center
+                    cw, ch = canvas.shape[1], canvas.shape[0]
+                    box_w, box_h = 600, 160
+                    x1, y1 = (cw - box_w) // 2, (ch - box_h) // 2 - 40
+                    x2, y2 = x1 + box_w, y1 + box_h
+                    
+                    color = (40, 40, 255) if ai_alert_event.severity == "critical" else (0, 140, 255)
+                    # Semi-transparent overlay
+                    overlay = canvas.copy()
+                    cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+                    cv2.rectangle(overlay, (x1, y1), (x2, y2), (200, 200, 200), 3)
+                    cv2.addWeighted(overlay, 0.85, canvas, 0.15, 0, canvas)
+                    
+                    alert_title = f"AI DECISION: {ai_alert_event.alert_type.replace('_', ' ').upper()}"
+                    text_size = cv2.getTextSize(alert_title, cv2.FONT_HERSHEY_SIMPLEX, 0.9, 3)[0]
+                    cv2.putText(canvas, alert_title, (x1 + (box_w - text_size[0]) // 2, y1 + 55),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 3, cv2.LINE_AA)
+                    
+                    action_text = ai_alert_event.recommended_action or ""
+                    text_size2 = cv2.getTextSize(action_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+                    cv2.putText(canvas, action_text, (x1 + (box_w - text_size2[0]) // 2, y1 + 105),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (230, 230, 230), 2, cv2.LINE_AA)
                 # ── Intervention overlay (drawn on full canvas before display) ─────
                 active_cmd = intervention_overlay.get_active()
                 if active_cmd is not None:

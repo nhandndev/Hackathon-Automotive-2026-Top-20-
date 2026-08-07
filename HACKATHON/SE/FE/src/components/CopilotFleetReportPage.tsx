@@ -432,8 +432,11 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     document.body.appendChild(element);
 
     try {
-      // Dynamic import of html2pdf.js
-      const html2pdf = (await import('html2pdf.js')).default;
+      const pkgName = 'html2pdf.js';
+      // @vite-ignore
+      const html2pdfModule = await import(/* @vite-ignore */ pkgName);
+      const html2pdf = html2pdfModule.default || html2pdfModule;
+
       const opt = {
         margin: 10,
         filename: fileName,

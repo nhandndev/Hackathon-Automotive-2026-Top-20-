@@ -521,7 +521,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     const targetElement = document.getElementById('copilot-report-print-target') || document.body;
 
     const opt = {
-      margin: [5, 5, 5, 5],
+      margin: 5,
       filename: fileName,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { 

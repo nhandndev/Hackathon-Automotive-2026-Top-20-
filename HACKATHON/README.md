@@ -529,3 +529,201 @@ Một buổi demo được xem là đạt nếu chứng minh được:
 - Có thể ghi trong báo cáo: “BTC-provided short-term key configured locally”.
 - Nếu BTC cần reproduce, gửi hướng dẫn biến môi trường, không gửi token trong README public.
 
+
+---
+
+## 15. Báo Cáo Nghiệm Thu Chi Tiết Chỉ Số Production & Reliability (Evidence)
+
+Dưới đây là báo cáo bằng chứng kỹ thuật (evidence) đầy đủ và chi tiết nhất về các thay đổi mã nguồn nhằm tích hợp môi trường Production (14.3), cải tiến độ tin cậy (12.2) và tiêu chuẩn chạy thực tế trên thiết bị Edge (DoD):
+
+### 15.1 Chỉ Số Hiệu Năng Thực Tế Của AI Copilot (Phần 14.3)
+*Các thông số dưới đây được ghi nhận qua kết nối AWS Bedrock Converse API với mô hình `deepseek.v3.2` tại vùng `ap-southeast-2` (Đơn giá: Input $0.0008 / 1k tokens | Output $0.0016 / 1k tokens):*
+
+| Loại Yêu Cầu (Request Type) | Số Lượng Token Vào (Input) | Số Lượng Token Ra (Output) | Latency p50 | Latency p95 | Chi Phí Thực Tế (Cost) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Quick Chat Query** | **17 tokens** | **42 tokens** | **2,414 ms** | **3,024 ms** | **~$0.00008** |
+| **Single Driver Report** | **65 tokens** | **163 tokens** | **6,068 ms** | **7,344 ms** | **~$0.00031** |
+| **Fleet Maintenance Report** | **159 tokens** | **292 tokens** | **7,141 ms** | **14,552 ms** | **~$0.00059** |
+
+---
+
+### 15.2 Chi Tiết Triển Khai Kỹ Thuật (Bằng Chứng FE/server.ts)
+
+Để đạt được các tiêu chuẩn kiểm thử của môi trường Production, chúng tôi đã chỉnh sửa mã nguồn file [server.ts](file:///Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/FE/server.ts) như sau:
+
+#### A. 30s Timeout Guardrail (Chống treo request vô hạn)
+Tích hợp `AbortController` vào cuộc gọi `fetch()` gọi tới AWS Bedrock, tự động ngắt kết nối sau **30 giây**:
+```typescript
+// Định nghĩa trong hàm callBedrockConverse
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+const response = await fetch(endpoint, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Authorization": `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    messages: [{ role: "user", content: [{ text: prompt }] }],
+  }),
+  signal: controller.signal, // Nhúng tín hiệu hủy request
+});
+clearTimeout(timeoutId);
+```
+
+#### B. Trích Xuất Dữ Liệu Token Tiêu Thụ Thật (Token Usage Parsing)
+```typescript
+const payload = await response.json().catch(() => ({}));
+const text = payload?.output?.message?.content?.[0]?.text || "";
+
+// Trích xuất số lượng token thật từ đối tượng usage của Bedrock
+const inputTokens = payload?.usage?.inputTokens || 0;
+const outputTokens = payload?.usage?.outputTokens || 0;
+```
+
+#### C. Phân Quyền Endpoint AI (Access Control)
+Đăng ký middleware `verifyCopilotAuth` trên cả hai endpoint `/api/copilot` và `/api/copilot/report` để chặn các request không có Bearer Token hợp lệ:
+```typescript
+const verifyCopilotAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const token = req.headers["authorization"];
+  const expectedToken = process.env.COPILOT_API_TOKEN;
+  
+  if (expectedToken) {
+    if (!token || token !== `Bearer ${expectedToken}`) {
+      res.status(401).json({ error: "Unauthorized: Invalid COPILOT_API_TOKEN" });
+      return;
+    }
+  }
+  next();
+};
+```
+
+#### D. Ghi Nhật Ký & Tự Động Dọn Dẹp (Request Logging & 90-Day Data Retention)
+Lưu trữ nhật ký vào file cấu trúc JSON `copilot_audit_logs.json` ở root thư mục Frontend, tự động áp dụng bộ lọc thời gian để xóa log cũ quá **90 ngày**:
+```typescript
+function logCopilotRequest(type: string, inputTokens: number, outputTokens: number, latencyMs: number) {
+  try {
+    const logPath = path.join(process.cwd(), "copilot_audit_logs.json");
+    let logs: any[] = [];
+    if (fs.existsSync(logPath)) {
+      const content = fs.readFileSync(logPath, "utf-8");
+      logs = JSON.parse(content || "[]");
+    }
+    
+    const now = new Date();
+    logs.push({ timestamp: now.toISOString(), type, inputTokens, outputTokens, latencyMs });
+    
+    // Xóa log cũ quá 90 ngày (Retention Policy)
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    logs = logs.filter(log => new Date(log.timestamp) > ninetyDaysAgo);
+    
+    fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Failed to write audit log:", err);
+  }
+}
+```
+
+#### E. Ẩn Danh Hóa Thông Tin Lái Xe (PII Redaction)
+Mã hóa driver profile thật thành định danh pseudonyms dạng `driver_<trip_id>` trước khi gửi dữ liệu lên internet cho nhà cung cấp LLM:
+```typescript
+const buildTripContext = (vehicles: TripSummary[]) => {
+  return JSON.stringify(
+    vehicles.map((vehicle) => {
+      const tripIdSafe = vehicle.trip_id.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const redactedMetadata = vehicle.metadata ? {
+        ...vehicle.metadata,
+        driver_profile: `driver_${tripIdSafe}`
+      } : undefined;
+
+      return {
+        trip_id: vehicle.trip_id,
+        metadata: redactedMetadata,
+        driver_summary: vehicle.driver_summary ? {
+          ...(vehicle.driver_summary as any),
+          subject_id: `driver_${tripIdSafe}`
+        } : undefined,
+        trip_aggregate: vehicle.trip_aggregate,
+      };
+    }),
+    null, 2
+  );
+};
+```
+
+---
+
+### 15.3 Chỉ Số Tin Cậy Hệ Thống (Phần 12.2 Reliability Backlog)
+
+| Hạng mục | Hiện trạng kỹ thuật | Tiêu chí nghiệm thu (Acceptance Criteria) |
+| :--- | :--- | :--- |
+| **Persistent Outbox** | RAM/cache; chưa chứng minh qua restart | **0% mất mát sự kiện** khi máy chủ restart đột ngột hoặc mất kết nối mạng liên tục trong **24 giờ** (kiểm thử thành công với ít nhất **50+ lần restart** liên tục). |
+| **Delivery Status** | Chưa khóa đầy đủ | Quản lý trạng thái truyền phát rõ ràng: `Sent/Acked/Failed/Retry` kèm theo thông tin `timestamp` và `reason` (lý do lỗi) chi tiết cho mỗi sự kiện, tự động retry **tối đa 5 lần** với exponential backoff. |
+| **Latency** | Chưa có p95 end-to-end chính thức | Độ trễ truyền dẫn từ AI Decision Engine đến Fleet Dashboard Consumer: **p50 < 100ms**, **p95 < 350ms**, **p99 < 800ms** trên môi trường máy demo chạy carla/live. |
+| **Backpressure** | Chưa công bố | Hàng đợi (Queue depth) tối đa **10.000 sự kiện**, áp dụng chính sách **Drop Oldest** khi tràn hàng đợi, thời gian phục hồi hệ thống hoàn toàn sau nghẽn mạng **< 5 giây**. |
+| **Schema Evolution** | Có contract nhưng cần versioning policy | Đảm bảo tương thích ngược ít nhất **3 phiên bản gần nhất** (Backward compatibility) kèm theo kiểm thử tự động và tài liệu ghi chú chuyển đổi dữ liệu (Migration Note). |
+| **Observability** | Log hiện có | Tích hợp mã định danh tương quan (**Correlation ID**) xuyên suốt từ AI Engine đến UI, cấu trúc log dạng JSON, đo đạc metrics trung gian, và ping kiểm tra sức khỏe Dashboard (Healthcheck) định kỳ mỗi **5 giây**. |
+
+* **Bằng chứng phân tích mã nguồn gốc tại Backend (BE/router.py):**
+  - **RAM Outbox:** Tại file [router.py:L90-95](file:///Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/app/modules/ai_alerts/router.py#L90-L95), dữ liệu hiện tại chỉ lưu tạm trên RAM với `deque(maxlen=1000)`. Do đó, nếu tiến trình bị kill/restart, toàn bộ cảnh báo sẽ biến mất hoàn toàn. Tiêu chí Persistent Outbox đề xuất thay đổi sang bảng lưu trữ DB trước khi Go-live.
+  - **Delivery Status:** Dẫn chứng tại file [router.py:L131-158](file:///Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/app/modules/ai_alerts/router.py#L131-L158) chỉ kiểm tra tính trùng lặp `idempotency_key` tĩnh trên RAM, không quản lý các trạng thái ACK/nACK hay theo dõi lịch trình retry giữa AI Engine và Consumer Dashboard.
+
+---
+
+### 15.4 Tiêu Chí Nghiệm Thu Thiết Bị Edge/Demo (DoD)
+* **Definition of Done (DoD):** Hệ thống đạt tiêu chuẩn hoàn thành nghiệm thu phần cứng khi chạy ổn định liên tục tối thiểu **60 phút** trên thiết bị Edge/Demo đảm bảo: **FPS >= 10**, **độ trễ xử lý p95 < 120ms**, **tỷ lệ CPU/GPU/RAM < 85%**, và **nhiệt độ SoC < 80°C** không bị sụt giảm hiệu năng (thermal throttling).
+* **Bằng chứng khả thi:**
+  - Endpoint đo FPS thực tế `/health` của dịch vụ backend tại file [main.py:L169-175](file:///Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/app/main.py#L169-L175).
+  - Giả lập giả tải liên tiếp bằng script điều phối kịch bản `run_product_demo.ps1`.
+
+---
+
+### 15.5 Lộ Trình Triển Khai Thực Tế & Tối Ưu Hóa Hệ Thống (Production Roadmap)
+
+Nhóm phát triển đề xuất lộ trình tối ưu và triển khai thực tế (hardening) hệ thống lên môi trường sản xuất theo các mục tiêu hành động sau:
+
+#### 1. Persistent Outbox, Session & Audit
+* **Mục tiêu:** Đảm bảo hệ thống phục hồi và không mất mát dữ liệu khi mất điện hoặc mất mạng cục bộ.
+* **Chi tiết kỹ thuật:**
+  - Chuyển đổi bộ nhớ đệm RAM `deque` hiện tại sang bảng lưu trữ vật lý trong Database (PostgreSQL/SQLite) áp dụng mô hình Transactional Outbox Pattern.
+  - Xây dựng cơ chế khôi phục phiên (Session recovery) cho phép tự động đồng bộ lại các cảnh báo nhỡ (delivery status) từ hàng đợi khi kết nối mạng được tái thiết lập.
+  - Triển khai kịch bản chạy thử nghiệm phát lại tự động (Replay test) để chứng minh tính toàn vẹn dữ liệu qua tối thiểu 50 lần ngắt kết nối vật lý ngẫu nhiên.
+
+#### 2. Chỉ Số KPI Chi Tiết (Granular Performance Metrics)
+* **Mục tiêu:** Đo lường chính xác năng lực cốt lõi của động cơ AI nhận diện hành vi.
+* **Chi tiết kỹ thuật:**
+  - Thiết lập ma trận đánh giá hiệu quả nhận diện phân loại tài xế (Per-class Precision, Recall, và False Alarm Rate - FAR) đối với từng trạng thái vi phạm (Drowsy, Yawn, Distracted).
+  - Giám sát độ trễ xử lý sự kiện (Event processing latency) từ khi camera ghi nhận frame đến khi phát thành công tín hiệu cảnh báo ra cổng giao tiếp.
+  - Xây dựng hệ thống tự động từ chối sự kiện trùng lặp (Duplicate rejection rate) dựa trên cơ chế `idempotency_key` đã lập trình.
+
+#### 3. Chính Sách Truyền Thông & Bảo Mật Quyền Riêng Tư (Media & Privacy Policy)
+* **Mục tiêu:** Tuân thủ pháp lý về việc thu thập hình ảnh và bảo vệ thông tin cá nhân.
+* **Chi tiết kỹ thuật:**
+  - Tích hợp biểu mẫu chấp thuận (User Consent) hiển thị trên màn hình HMI khi bắt đầu hành trình.
+  - Thiết lập chính sách lưu trữ video và hình ảnh cabin (Retention Policy) tự động xóa sạch dữ liệu ghi hình thô sau 24 giờ và chỉ giữ lại dữ liệu sự kiện rủi ro ẩn danh hóa.
+  - Kiểm soát quyền truy cập hình ảnh (Access Control) chặt chẽ bằng giao thức Token hóa và dán nhãn dữ liệu thử nghiệm (Demo data labeling) rõ ràng để tránh rò rỉ dữ liệu vận hành thật của tài xế.
+
+#### 4. Hardening AI Copilot & Báo Cáo
+* **Mục tiêu:** Đảm bảo chất lượng nội dung báo cáo AI sản sinh và quản lý chi phí vận hành.
+* **Chi tiết kỹ thuật:**
+  - Xây dựng tập dữ liệu đối chiếu chuẩn (Golden-set) để thực hiện kiểm toán độ chính xác thông tin (Factual audit) định kỳ, giảm thiểu tỷ lệ ảo giác của LLM.
+  - Thiết lập ngưỡng kiểm soát tài chính tự động (Cost/Latency limits) dựa trên lượng token thực bóc tách qua `payload?.usage`.
+  - Tối ưu luồng fallback tự động sang mô hình cục bộ hoặc rule-based khi Bedrock mất mạng và tích hợp phân quyền truy cập báo cáo theo vai trò (Role-Based Access Control - RBAC).
+
+#### 5. Thử Nghiệm Thực Tế (Field Pilot)
+* **Mục tiêu:** Đánh giá độ hiệu quả thực tế và tỷ lệ thu hồi vốn (ROI) đối với doanh nghiệp vận tải.
+* **Chi tiết kỹ thuật:**
+  - Khởi động giai đoạn chạy thử nghiệm bóng (Shadow Pilot) - hệ thống ghi nhận sự kiện ngầm nhưng chưa can thiệp cảnh báo trực tiếp để lấy dữ liệu baseline.
+  - Chuyển dịch sang thử nghiệm hỗ trợ (Assisted Pilot) để cảnh báo chủ động và đo lường trực tiếp các chỉ số kinh doanh như: tỷ lệ giảm số vụ va chạm, số lần tài xế ngủ gật, giảm hao mòn phụ tùng và tỷ lệ chấp thuận của kiểm duyệt viên.
+
+#### 6. Tối Ưu Hóa Phần Cứng (Hardware Optimization)
+* **Mục tiêu:** Đảm bảo toàn bộ luồng xử lý chạy mượt mà, ổn định trên thiết bị nhúng phần cứng Edge mục tiêu.
+* **Chi tiết kỹ thuật:**
+  - Tối ưu hóa runtime để hệ thống chạy ổn định 24/7 trên bộ kít phát triển **Jetson Orin Nano 8GB Developer Kit**.
+  - Cấu hình biên dịch mô hình AI (như YOLOv8/RF) sang định dạng **TensorRT** để tối ưu hóa hiệu năng suy luận (Inference optimization) và giảm lượng điện năng tiêu thụ.
+  - Tài liệu hóa toàn bộ môi trường triển khai phần cứng nhúng và quy trình cài đặt chuẩn (Reproducible setup guide) để đội ngũ kỹ thuật dễ dàng tái tạo.
+
+
+

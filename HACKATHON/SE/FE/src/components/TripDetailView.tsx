@@ -3,6 +3,7 @@ import { AlertTriangle, Brain, Play, Sparkles, Wifi, WifiOff } from 'lucide-reac
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { DecisionAlert, LiveSnapshot, TripData } from '../types';
 import { LiveCameraFrame } from './LiveCameraFrame';
+import { buildRankingRows } from './DriverRankingView';
 
 interface TripDetailViewProps {
   vehicle: TripData;
@@ -21,6 +22,55 @@ interface LivePoint {
 
 const formatNumber = (value: number | null | undefined, digits = 1) =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : 'N/A';
+
+const finiteTtc = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
+
+const pct = (count: number, total: number) => (total > 0 ? (count / total) * 100 : 0);
+
+const snapshotFromLastFrame = (vehicle: TripData): LiveSnapshot | null => {
+  const frames = vehicle.frames ?? [];
+  const frame = frames.at(-1);
+  if (!frame) return null;
+  const total = frames.length;
+  const countFlag = (key: 'harsh_brake' | 'harsh_accel' | 'harsh_corner' | 'speeding' | 'tailgating') =>
+    frames.filter((item) => Boolean(item.behavior_flags?.[key])).length;
+  const nearMissCount = frames.filter((item) => finiteTtc(item.min_ttc) && item.min_ttc <= 2.5).length;
+  const validHeadways = frames
+    .map((item) => item.headway_sec)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
+  const avgHeadway = validHeadways.length
+    ? validHeadways.reduce((sum, value) => sum + value, 0) / validHeadways.length
+    : undefined;
+
+  return {
+    schema_version: '1.0',
+    trip_id: vehicle.trip_id,
+    frame_id: frame.frame_id,
+    trip_timestamp_ms: Math.round(Number(frame.timestamp ?? 0) * 1000),
+    speed_kmh: frame.ego?.speed_kmh ?? 0,
+    predicted_ttc_sec: Number.isFinite(frame.min_ttc) ? frame.min_ttc : null,
+    risk_score: frame.risk?.final_risk_score ?? vehicle.trip_aggregate?.max_risk_score ?? 0,
+    driver_state: frame.driver?.state ?? 'unknown',
+    driver_confidence: 1,
+    alertness_score: frame.driver?.alertness_score ?? 0,
+    longitudinal_accel: frame.ego?.longitudinal_accel,
+    lateral_accel: frame.ego?.lateral_accel,
+    speed_limit_kmh: vehicle.metadata?.speed_limit_kmh,
+    harsh_brake: frame.behavior_flags?.harsh_brake,
+    harsh_accel: frame.behavior_flags?.harsh_accel,
+    harsh_corner: frame.behavior_flags?.harsh_corner,
+    speeding: frame.behavior_flags?.speeding,
+    tailgating: frame.behavior_flags?.tailgating,
+    harsh_brake_count: countFlag('harsh_brake'),
+    harsh_accel_count: countFlag('harsh_accel'),
+    harsh_corner_count: countFlag('harsh_corner'),
+    near_miss_count: nearMissCount,
+    speeding_pct_time: pct(countFlag('speeding'), total),
+    tailgating_pct_time: pct(countFlag('tailgating'), total),
+    avg_headway_sec: avgHeadway ?? vehicle.trip_aggregate?.avg_headway_sec,
+  };
+};
 
 export const TripDetailView: React.FC<TripDetailViewProps> = ({
   vehicle,
@@ -85,6 +135,9 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
     [liveAlerts, vehicle.trip_id],
   );
   const latestAlert = tripAlerts[0];
+  const fallbackSnapshot = useMemo(() => snapshotFromLastFrame(vehicle), [vehicle]);
+  const displaySnapshot = snapshot ?? fallbackSnapshot;
+  const rankingRow = useMemo(() => buildRankingRows([vehicle])[0], [vehicle]);
   const eventCounts = useMemo(() => {
     const unique = new Map<string, DecisionAlert>();
     for (const alert of tripAlerts) if (!unique.has(alert.event_id)) unique.set(alert.event_id, alert);
@@ -93,7 +146,7 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
     return [...counts.entries()];
   }, [tripAlerts]);
 
-  const safetyScore = snapshot ? Math.max(0, Math.min(100, 100 - snapshot.risk_score)) : null;
+  const safetyScore = rankingRow?.score ?? null;
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-hidden bg-[#070A12] p-4 text-white md:p-6">
@@ -110,7 +163,7 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
           <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-3">
             <div className="mb-2 flex shrink-0 items-center justify-between">
               <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-300">Synchronized AI camera frames</span>
-              <span className={`flex items-center gap-1 text-[9px] font-bold ${snapshotConnected ? 'text-emerald-400' : 'text-slate-500'}`}>{snapshotConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}{snapshotConnected ? `LIVE · FRAME ${snapshot?.frame_id}` : 'OFFLINE'}</span>
+              <span className={`flex items-center gap-1 text-[9px] font-bold ${snapshotConnected ? 'text-emerald-400' : 'text-sky-400'}`}>{snapshotConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}{snapshotConnected ? `LIVE · FRAME ${snapshot?.frame_id}` : `SAVED · FRAME ${displaySnapshot?.frame_id ?? '--'}`}</span>
             </div>
             <div className="grid min-h-0 flex-1 grid-cols-2 gap-3">
               <div className="relative h-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950"><LiveCameraFrame tripId={vehicle.trip_id} camera="cabin" className="absolute inset-0 h-full w-full object-cover" /></div>
@@ -131,13 +184,13 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
         <div className="flex min-h-0 flex-col gap-4 lg:col-span-4">
           <div className="shrink-0 rounded-xl border border-[#1E293B] bg-[#0B0F19] p-4">
             <div className="flex justify-between"><span className="text-[10px] font-bold uppercase text-slate-300">Challenge 3 scores</span><AlertTriangle className="h-3.5 w-3.5 text-amber-400" /></div>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center"><Metric label="SAFE" value={formatNumber(safetyScore)} /><Metric label="RISK" value={formatNumber(snapshot?.risk_score)} /><Metric label="TTC" value={snapshot?.predicted_ttc_sec === null ? '∞' : formatNumber(snapshot?.predicted_ttc_sec, 2)} /></div>
-            <p className="mt-3 text-[9px] text-slate-500">Safe Score = 100 − C3 Risk Score. TTC originates from Challenge 1 and is consumed by Challenge 3.</p>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center"><Metric label="RANK" value={formatNumber(safetyScore)} /><Metric label="RISK" value={formatNumber(displaySnapshot?.risk_score)} /><Metric label="TTC" value={displaySnapshot?.predicted_ttc_sec === null ? '∞' : formatNumber(displaySnapshot?.predicted_ttc_sec, 2)} /></div>
+            <p className="mt-3 text-[9px] text-slate-500">Ranking Score dùng JSON/local AI risk và behavior fields. Live risk/TTC dùng snapshot nếu có, nếu không dùng saved frame cuối.</p>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-sky-900/50 bg-[#0B0F19] p-4">
             <div className="mb-2 flex shrink-0 items-center justify-between text-[10px] font-bold uppercase text-sky-400"><span className="flex items-center gap-1.5"><Brain className="h-3.5 w-3.5" />Realtime evidence</span><span className={alertsConnected ? 'text-emerald-400' : 'text-slate-500'}>{alertsConnected ? 'EVENTS LIVE' : 'EVENTS OFFLINE'}</span></div>
-            {!snapshot ? <div className="grid flex-1 place-items-center text-xs text-slate-500">No live snapshot received.</div> : <div className="space-y-2 overflow-y-auto rounded-lg border border-sky-900/30 bg-[#0F172A] p-3 text-[10px] text-slate-200"><p className="font-mono text-sky-300">frame={snapshot.frame_id} · t={(snapshot.trip_timestamp_ms / 1000).toFixed(2)}s</p><p>Speed: <b>{snapshot.speed_kmh.toFixed(1)} km/h</b> · TTC: <b>{snapshot.predicted_ttc_sec === null ? '∞' : `${snapshot.predicted_ttc_sec.toFixed(2)}s`}</b></p><p>Driver: <b>{snapshot.driver_state}</b> · confidence <b>{Math.round(snapshot.driver_confidence * 100)}%</b> · alertness <b>{Math.round(snapshot.alertness_score * 100)}%</b></p><p>C3 Risk: <b className="text-amber-400">{snapshot.risk_score.toFixed(1)}/100</b></p>{latestAlert && <div className="border-t border-slate-700 pt-2"><b className="uppercase text-amber-300">{latestAlert.status} · {latestAlert.alert_type.replaceAll('_', ' ')}</b><p className="mt-1 text-slate-400">{latestAlert.recommended_action}</p></div>}</div>}
+            {!displaySnapshot ? <div className="grid flex-1 place-items-center text-xs text-slate-500">No live or saved frame data received.</div> : <div className="space-y-2 overflow-y-auto rounded-lg border border-sky-900/30 bg-[#0F172A] p-3 text-[10px] text-slate-200"><p className="font-mono text-sky-300">frame={displaySnapshot.frame_id} · t={(displaySnapshot.trip_timestamp_ms / 1000).toFixed(2)}s · {snapshotConnected ? 'live' : 'saved'}</p><p>Speed: <b>{displaySnapshot.speed_kmh.toFixed(1)} km/h</b> · TTC: <b>{displaySnapshot.predicted_ttc_sec === null ? '∞' : `${displaySnapshot.predicted_ttc_sec.toFixed(2)}s`}</b></p><p>Driver: <b>{displaySnapshot.driver_state}</b> · confidence <b>{Math.round(displaySnapshot.driver_confidence * 100)}%</b> · alertness <b>{Math.round(displaySnapshot.alertness_score * 100)}%</b></p><p>C3 Risk: <b className="text-amber-400">{displaySnapshot.risk_score.toFixed(1)}/100</b></p>{latestAlert && <div className="border-t border-slate-700 pt-2"><b className="uppercase text-amber-300">{latestAlert.status} · {latestAlert.alert_type.replaceAll('_', ' ')}</b><p className="mt-1 text-slate-400">{latestAlert.recommended_action}</p></div>}</div>}
           </div>
 
           <div className="shrink-0 rounded-xl border border-[#1E293B] bg-[#0B0F19] p-4"><span className="mb-2 block text-[10px] font-bold uppercase text-slate-300">Decision events · current session</span>{eventCounts.length === 0 ? <p className="text-[10px] text-slate-500">No DecisionEvent received.</p> : <div className="flex max-h-24 flex-col gap-1.5 overflow-y-auto text-[10px]">{eventCounts.map(([type, count]) => <div key={type} className="flex justify-between rounded border border-slate-700 bg-slate-900 p-1.5"><span>{type.replaceAll('_', ' ')}</span><b className="font-mono">×{count}</b></div>)}</div>}</div>

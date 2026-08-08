@@ -18,6 +18,31 @@ const formatTtc = (value: number | null | undefined) => {
 
 const formatEventTime = (timestampMs: number) => `${(timestampMs / 1000).toFixed(1)}s`;
 
+const snapshotFromLastFrame = (vehicle: TripData): LiveSnapshot | null => {
+  const frame = vehicle.frames?.at(-1);
+  if (!frame) return null;
+  return {
+    schema_version: '1.0',
+    trip_id: vehicle.trip_id,
+    frame_id: frame.frame_id,
+    trip_timestamp_ms: Math.round(Number(frame.timestamp ?? 0) * 1000),
+    speed_kmh: frame.ego?.speed_kmh ?? 0,
+    predicted_ttc_sec: Number.isFinite(frame.min_ttc) ? frame.min_ttc : null,
+    risk_score: frame.risk?.final_risk_score ?? vehicle.trip_aggregate?.max_risk_score ?? 0,
+    driver_state: frame.driver?.state ?? 'unknown',
+    driver_confidence: 1,
+    alertness_score: frame.driver?.alertness_score ?? 0,
+    longitudinal_accel: frame.ego?.longitudinal_accel,
+    lateral_accel: frame.ego?.lateral_accel,
+    speed_limit_kmh: vehicle.metadata?.speed_limit_kmh,
+    harsh_brake: frame.behavior_flags?.harsh_brake,
+    harsh_accel: frame.behavior_flags?.harsh_accel,
+    harsh_corner: frame.behavior_flags?.harsh_corner,
+    speeding: frame.behavior_flags?.speeding,
+    tailgating: frame.behavior_flags?.tailgating,
+  };
+};
+
 export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
   vehicle,
   liveAlerts,
@@ -79,7 +104,9 @@ export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
     return undefined;
   }, [tripAlerts]);
 
-  const riskScore = snapshot?.risk_score;
+  const fallbackSnapshot = useMemo(() => snapshotFromLastFrame(vehicle), [vehicle]);
+  const displaySnapshot = snapshot ?? fallbackSnapshot;
+  const riskScore = displaySnapshot?.risk_score;
   const riskPercent = Math.max(0, Math.min(100, riskScore ?? 0));
   const severityClass = activeAlert?.severity === 'critical'
     ? 'from-red-700 to-red-600 border-red-400/30'
@@ -107,28 +134,28 @@ export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
               {activeAlert ? <AlertTriangle className="h-5 w-5 text-amber-200" /> : <ShieldAlert className="h-5 w-5 text-emerald-200" />}
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wide leading-none">
-                  {activeAlert ? `${activeAlert.severity}: ${activeAlert.alert_type.replaceAll('_', ' ')}` : snapshotConnected ? 'NO ACTIVE SAFETY ALERT' : 'WAITING FOR LIVE AI DATA'}
+                  {activeAlert ? `${activeAlert.severity}: ${activeAlert.alert_type.replaceAll('_', ' ')}` : snapshotConnected ? 'NO ACTIVE SAFETY ALERT' : displaySnapshot ? 'SAVED TELEMETRY SNAPSHOT' : 'WAITING FOR LIVE AI DATA'}
                 </h3>
                 <p className="mt-1 text-[10px] text-slate-100">
-                  {activeAlert?.recommended_action || (snapshotConnected ? `Driver state: ${snapshot?.driver_state}` : 'Start the AI end-to-end pipeline')}
+                  {activeAlert?.recommended_action || (displaySnapshot ? `Driver state: ${displaySnapshot.driver_state}` : 'Start the AI end-to-end pipeline')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs font-bold">
               {snapshotConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-              {snapshotConnected ? 'LIVE' : 'OFFLINE'}
+              {snapshotConnected ? 'LIVE' : displaySnapshot ? 'SAVED' : 'OFFLINE'}
             </div>
           </div>
           <div className="mt-2 flex items-center justify-end gap-2 pr-2">
             <Gauge className="h-4 w-4 text-slate-400" />
-            <span className="text-xl font-black">{snapshot ? snapshot.speed_kmh.toFixed(1) : '--'} <span className="text-xs font-normal text-slate-400">km/h</span></span>
+            <span className="text-xl font-black">{displaySnapshot ? displaySnapshot.speed_kmh.toFixed(1) : '--'} <span className="text-xs font-normal text-slate-400">km/h</span></span>
           </div>
         </div>
 
         <div className="flex flex-col items-center justify-between rounded-xl border border-red-900/50 bg-[#0B0F19] p-3 text-center lg:col-span-2">
           <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">TTC</span>
           <div className="my-1 flex items-baseline gap-1 text-3xl font-extrabold text-red-500">
-            {formatTtc(snapshot?.predicted_ttc_sec)}<span className="text-sm text-red-400">s</span>
+            {formatTtc(displaySnapshot?.predicted_ttc_sec)}<span className="text-sm text-red-400">s</span>
           </div>
           {onIntervene && activeAlert && (
             <button onClick={onIntervene} className="w-full rounded bg-red-600 py-1 text-[10px] font-bold uppercase tracking-wider">Can thiệp</button>
@@ -143,7 +170,7 @@ export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
           <div className="flex flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-2">
             <div className="mb-1 flex shrink-0 items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Video className="h-3 w-3 text-sky-400" /> ROAD CAM</span>
-              <span className="font-mono text-[9px] text-slate-500">FRAME {snapshot?.frame_id ?? '--'}</span>
+              <span className="font-mono text-[9px] text-slate-500">FRAME {displaySnapshot?.frame_id ?? '--'}</span>
             </div>
             <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
               <LiveCameraFrame tripId={vehicle.trip_id} camera="road" className="h-full w-full object-cover" />
@@ -155,7 +182,7 @@ export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
             <div className="mb-1 flex shrink-0 items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Video className="h-3 w-3 text-indigo-400" /> CABIN CAM</span>
               <div className="flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-950/80 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
-                <ShieldAlert className="h-3 w-3" /> {snapshot ? `${Math.round(snapshot.alertness_score * 100)}%` : '--'}
+                <ShieldAlert className="h-3 w-3" /> {displaySnapshot ? `${Math.round(displaySnapshot.alertness_score * 100)}%` : '--'}
               </div>
             </div>
             <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">

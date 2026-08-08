@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  Route,
   ShieldAlert,
   Target,
 } from 'lucide-react';
@@ -14,6 +13,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -23,7 +23,6 @@ import {
 } from 'recharts';
 import { TripData } from '../types';
 import {
-  AI_RANKING_EXPLAIN_PROMPT,
   DriverRankingRow,
   buildLocalAnalysis,
   buildRankingRows,
@@ -50,7 +49,14 @@ const metricColor = (value: number) => {
   return '#EF4444';
 };
 
-const buildMockHistory = (row: DriverRankingRow) => {
+const penaltyColor = (value: number) => {
+  if (value >= 20) return '#EF4444';
+  if (value >= 8) return '#F97316';
+  if (value >= 3) return '#EAB308';
+  return '#38BDF8';
+};
+
+const buildAuditTrail = (row: DriverRankingRow) => {
   const frames = row.trip.frames ?? [];
   const totalFrames = Math.max(frames.length, 1);
   const firstBy = (predicate: (frame: typeof frames[number]) => boolean) => frames.find(predicate);
@@ -70,7 +76,7 @@ const buildMockHistory = (row: DriverRankingRow) => {
   const tailgatingFrame = firstBy((frame) => Boolean(frame.behavior_flags?.tailgating));
   const harshFrame = firstBy((frame) => Boolean(frame.behavior_flags?.harsh_brake || frame.behavior_flags?.harsh_accel || frame.behavior_flags?.harsh_corner));
 
-  // mock: until Backend stores full intervention/coaching logs, derive audit milestones from AI frame history.
+  // Deterministic audit milestones derived from local AI frame history.
   return [
     {
       id: `${row.trip_id}-baseline`,
@@ -82,49 +88,49 @@ const buildMockHistory = (row: DriverRankingRow) => {
     distractedFrame && {
       id: `${row.trip_id}-distracted`,
       timestamp: `${Number(distractedFrame.timestamp ?? 0).toFixed(1)}s`,
-      event: `Attention penalty: -${(row.distractedPct * 0.15).toFixed(1)} pts`,
+      event: `Attention penalty: -${(row.distractedPct * 0.10).toFixed(1)} pts`,
       evidence: `${countBy((frame) => frame.driver?.state === 'distracted')}/${totalFrames} frames distracted (${row.distractedPct.toFixed(1)}%). ${frameEvidence(distractedFrame)}. Mốc này làm giảm điểm vì tài xế mất tập trung, kể cả khi min_ttc=Infinity nghĩa là chưa có nguy cơ va chạm tức thời.`,
       severity: row.distractedPct >= 25 ? 'high' : 'medium',
     },
     fatigueFrame && {
       id: `${row.trip_id}-fatigue`,
       timestamp: `${Number(fatigueFrame.timestamp ?? 0).toFixed(1)}s`,
-      event: `Fatigue penalty: -${(row.fatigueEvents * 5).toFixed(1)} pts`,
+      event: `Fatigue penalty: -${(((row.fatigueEvents / totalFrames) * 100) * 0.05).toFixed(1)} pts`,
       evidence: `${row.fatigueEvents} fatigue/microsleep events. ${frameEvidence(fatigueFrame)}. Mốc này làm giảm điểm vì drowsy/yawning/microsleep là rủi ro trực tiếp với tài xế và cần coaching/nghỉ bắt buộc.`,
       severity: fatigueFrame.driver?.state === 'microsleep' ? 'critical' : 'high',
     },
     highRiskFrame && {
       id: `${row.trip_id}-risk`,
       timestamp: `${Number(highRiskFrame.timestamp ?? 0).toFixed(1)}s`,
-      event: `Risk score penalty: -${((row.avgRisk * 0.25) + (row.maxRisk * 0.15)).toFixed(1)} pts`,
+      event: `Risk score penalty: -${((row.avgRisk * 0.45) + (row.maxRisk * 0.20)).toFixed(1)} pts`,
       evidence: `${frameEvidence(highRiskFrame)}. Mốc này làm giảm điểm vì risk.final_risk_score tăng, cho thấy AI đã tổng hợp driver factor và traffic factor thành nguy cơ vận hành cao.`,
       severity: Number(highRiskFrame.risk?.final_risk_score ?? 0) >= 80 ? 'critical' : 'high',
     },
     ttcFrame && {
       id: `${row.trip_id}-ttc`,
       timestamp: `${Number(ttcFrame.timestamp ?? 0).toFixed(1)}s`,
-      event: `TTC/Near-miss penalty: -${(row.nearMissCount * 4).toFixed(1)} pts`,
+      event: `TTC/Near-miss penalty: -${(((row.nearMissCount / totalFrames) * 100) * 0.05).toFixed(1)} pts`,
       evidence: `${row.nearMissCount} near misses. ${frameEvidence(ttcFrame)}. Mốc này làm giảm điểm vì min_ttc thấp nghĩa là thời gian còn lại trước nguy cơ va chạm phía trước bị thu hẹp.`,
       severity: 'critical',
     },
     tailgatingFrame && {
       id: `${row.trip_id}-tailgating`,
       timestamp: `${Number(tailgatingFrame.timestamp ?? 0).toFixed(1)}s`,
-      event: `Tailgating penalty: -${(row.tailgatingPct * 0.25).toFixed(1)} pts`,
+      event: `Tailgating penalty: -${(row.tailgatingPct * 0.04).toFixed(1)} pts`,
       evidence: `${row.tailgatingPct.toFixed(1)}% frames tailgating. ${frameEvidence(tailgatingFrame)}. Mốc này làm giảm điểm vì khoảng cách theo xe thấp làm tăng nguy cơ phanh gấp và va chạm.`,
       severity: row.tailgatingPct >= 20 ? 'high' : 'medium',
     },
     speedingFrame && {
       id: `${row.trip_id}-speeding`,
       timestamp: `${Number(speedingFrame.timestamp ?? 0).toFixed(1)}s`,
-      event: `Speeding penalty: -${(row.speedingPct * 0.2).toFixed(1)} pts`,
+      event: `Speeding penalty: -${(row.speedingPct * 0.03).toFixed(1)} pts`,
       evidence: `${row.speedingPct.toFixed(1)}% frames speeding. ${frameEvidence(speedingFrame)}. Mốc này làm giảm điểm vì vượt tốc làm tăng quãng đường phanh và rủi ro bảo hiểm.`,
       severity: 'medium',
     },
     harshFrame && {
       id: `${row.trip_id}-harsh`,
       timestamp: `${Number(harshFrame.timestamp ?? 0).toFixed(1)}s`,
-      event: `Harsh behavior penalty: -${(row.harshEvents * 2).toFixed(1)} pts`,
+      event: `Harsh behavior penalty: -${(((row.harshEvents / totalFrames) * 100) * 0.03).toFixed(1)} pts`,
       evidence: `${row.harshEvents} harsh events. ${frameEvidence(harshFrame)}. Mốc này làm giảm điểm vì hành vi lái gắt ảnh hưởng an toàn, hao mòn xe và chi phí vận hành.`,
       severity: row.harshEvents >= 3 ? 'high' : 'medium',
     },
@@ -145,18 +151,34 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
     ? rows.reduce((sum, item) => sum + item.score, 0) / rows.length
     : 0;
   const analysis = row ? buildLocalAnalysis(row, fleetAverage) : null;
-  const history = row ? buildMockHistory(row) : [];
-  const confidence = row ? Math.round(row.score) : 0;
+  const history = row ? buildAuditTrail(row) : [];
+  const previousRow = row ? rows[row.rank - 2] : undefined;
+  const nextRow = row ? rows[row.rank] : undefined;
+  const totalFrames = Math.max(row?.trip.frames?.length ?? 0, 1);
+  const harshEventPct = row ? (row.harshEvents / totalFrames) * 100 : 0;
+  const fatigueEventPct = row ? (row.fatigueEvents / totalFrames) * 100 : 0;
+  const nearMissPct = row ? (row.nearMissCount / totalFrames) * 100 : 0;
+  const estimatedPenalties = row ? [
+    { label: 'Average risk', value: row.avgRisk * 0.45, detail: `${row.avgRisk.toFixed(1)} × 0.45` },
+    { label: 'Max risk', value: row.maxRisk * 0.20, detail: `${row.maxRisk.toFixed(1)} × 0.20` },
+    { label: 'Critical frames', value: row.criticalEventPct * 0.15, detail: `${row.criticalEventPct.toFixed(1)}% × 0.15` },
+    { label: 'Distracted', value: row.distractedPct * 0.10, detail: `${row.distractedPct.toFixed(1)}% × 0.10` },
+    { label: 'Fatigue', value: fatigueEventPct * 0.05, detail: `${fatigueEventPct.toFixed(1)}% × 0.05` },
+    { label: 'Speeding', value: row.speedingPct * 0.03, detail: `${row.speedingPct.toFixed(1)}% × 0.03` },
+    { label: 'Tailgating', value: row.tailgatingPct * 0.04, detail: `${row.tailgatingPct.toFixed(1)}% × 0.04` },
+    { label: 'Harsh events', value: harshEventPct * 0.03, detail: `${harshEventPct.toFixed(1)}% × 0.03` },
+    { label: 'Near misses', value: nearMissPct * 0.05, detail: `${nearMissPct.toFixed(1)}% × 0.05` },
+  ].filter((item) => item.value > 0.01) : [];
+  const estimatedTotalPenalty = estimatedPenalties.reduce((sum, item) => sum + item.value, 0);
+  const rawRankingScore = Math.max(0, 100 - estimatedTotalPenalty);
   const pieData = row ? [
-    { name: 'Safety Score', value: row.score, color: metricColor(row.score) },
+    { name: 'Ranking Score', value: row.score, color: metricColor(row.score) },
     { name: 'Risk Gap', value: 100 - row.score, color: '#334155' },
   ] : [];
-  const categoryScores = row ? [
-    { category: 'Speed Control', score: Math.max(0, 100 - row.speedingPct) },
-    { category: 'Attention', score: Math.max(0, 100 - row.distractedPct) },
-    { category: 'Fatigue', score: Math.max(0, 100 - row.fatigueEvents * 15) },
-    { category: 'Following Gap', score: Math.max(0, 100 - row.tailgatingPct - row.nearMissCount * 8) },
-  ] : [];
+  const penaltyBreakdown = estimatedPenalties.map((item) => ({
+    category: item.label,
+    penalty: item.value,
+  }));
 
   if (!row || !analysis) {
     return (
@@ -185,44 +207,97 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
 
         <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <Stat icon={Target} label="Fleet Rank" value={`#${row.rank}`} />
-          <Stat icon={Brain} label="AI Confidence" value={`${confidence}%`} />
-          <Stat icon={AlertTriangle} label="Critical Events" value={String(row.criticalEvents)} />
-          <Stat icon={CheckCircle2} label="Fleet Avg Score" value={fleetAverage.toFixed(1)} />
+          <Stat icon={Brain} label="Ranking Score" value={row.score.toFixed(1)} />
+          <Stat icon={AlertTriangle} label="High-Risk Frames" value={String(row.criticalEvents)} />
+          <Stat icon={CheckCircle2} label="Fleet Avg Ranking Score" value={fleetAverage.toFixed(1)} />
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[320px_1fr]">
           <div className={`${cardBase} p-5`}>
-            <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Overall Safety Score</h2>
+            <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Overall Ranking Score</h2>
             <div className="h-60">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={pieData} dataKey="value" innerRadius={62} outerRadius={88} startAngle={90} endAngle={450}>
                     {pieData.map((item) => <Cell key={item.name} fill={item.color} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8 }} />
+                  <Tooltip
+                    contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8, color: '#F8FAFC' }}
+                    itemStyle={{ color: '#F8FAFC' }}
+                    labelStyle={{ color: '#F8FAFC', fontWeight: 800 }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="-mt-36 grid h-24 place-items-center text-center">
               <span className="font-mono text-4xl font-black" style={{ color: metricColor(row.score) }}>{row.score.toFixed(0)}</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Safety Score</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ranking Score</span>
             </div>
           </div>
 
           <div className={`${cardBase} p-5`}>
-            <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Per-Category Driver Score</h2>
+            <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Ranking Penalty Breakdown</h2>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryScores} layout="vertical" margin={{ left: 18, right: 24 }}>
+                <BarChart data={penaltyBreakdown} layout="vertical" margin={{ left: 18, right: 34 }}>
                   <CartesianGrid stroke="#1E293B" horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fill: '#94A3B8', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <XAxis type="number" tick={{ fill: '#94A3B8', fontSize: 10 }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="category" tick={{ fill: '#CBD5E1', fontSize: 11 }} axisLine={false} tickLine={false} width={112} />
-                  <Tooltip contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8 }} cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }} />
-                  <Bar dataKey="score" radius={[0, 6, 6, 0]}>
-                    {categoryScores.map((item) => <Cell key={item.category} fill={metricColor(item.score)} />)}
+                  <Tooltip
+                    contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8, color: '#F8FAFC' }}
+                    itemStyle={{ color: '#F8FAFC' }}
+                    labelStyle={{ color: '#F8FAFC', fontWeight: 800 }}
+                    cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }}
+                  />
+                  <Bar dataKey="penalty" name="Penalty" radius={[0, 6, 6, 0]}>
+                    <LabelList dataKey="penalty" position="right" formatter={(value: number) => `-${value.toFixed(1)}`} fill="#F8FAFC" fontSize={12} fontWeight={800} />
+                    {penaltyBreakdown.map((item) => <Cell key={item.category} fill={penaltyColor(item.penalty)} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+        </section>
+
+        <section className={`${cardBase} overflow-hidden`}>
+          <div className="border-b border-[#1E293B] px-5 py-4">
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Ranking Method And Rank Reason</h2>
+          </div>
+          <div className="grid gap-0 text-sm lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="border-b border-[#1E293B] p-5 lg:border-b-0 lg:border-r">
+              <p className="text-slate-300">
+                Fleet ranking được sắp xếp giảm dần theo <b className="text-slate-100">Ranking Score riêng của bảng Ranking</b>.
+                Điểm này tính từ JSON/local AI risk và behavior fields, không dùng BTC safe score cũ.
+              </p>
+              <div className="mt-4 grid gap-2">
+                <InfoLine label="Base score" value="100.0" />
+                <InfoLine label="Estimated penalty" value={`-${estimatedTotalPenalty.toFixed(1)}`} />
+                <InfoLine label="Raw ranking score" value={rawRankingScore.toFixed(1)} />
+                <InfoLine label="Final ranking score" value={row.score.toFixed(1)} />
+                <InfoLine label="Final rank" value={`#${row.rank} / ${rows.length}`} />
+              </div>
+            </div>
+            <div className="p-5">
+              <p className="text-slate-300">
+                {previousRow
+                  ? `${row.trip_id} đứng sau ${previousRow.trip_id} vì Ranking Score thấp hơn ${Math.abs(previousRow.score - row.score).toFixed(1)} điểm.`
+                  : `${row.trip_id} đang đứng đầu fleet vì có Ranking Score cao nhất trong danh sách hiện tại.`}
+                {' '}
+                {nextRow
+                  ? `Xe ngay phía sau là ${nextRow.trip_id}, thấp hơn ${Math.abs(row.score - nextRow.score).toFixed(1)} điểm.`
+                  : 'Đây là trip cuối bảng theo Ranking Score hiện tại.'}
+              </p>
+              <div className="mt-4 space-y-2">
+                {estimatedPenalties.length === 0 ? (
+                  <div className="rounded border border-[#1E293B] bg-slate-950/50 px-3 py-2 text-slate-400">Không có penalty đáng kể trong dữ liệu hiện tại.</div>
+                ) : estimatedPenalties.map((item) => (
+                  <div key={item.label} className="grid grid-cols-[1fr_90px_120px] gap-2 rounded border border-[#1E293B] bg-slate-950/50 px-3 py-2 text-xs">
+                    <span className="font-bold text-slate-200">{item.label}</span>
+                    <span className="font-mono font-black text-red-300">-{item.value.toFixed(1)}</span>
+                    <span className="font-mono text-slate-500">{item.detail}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -250,7 +325,7 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
         <section className={`${cardBase} overflow-hidden`}>
           <div className="flex items-center justify-between border-b border-[#1E293B] px-5 py-4">
             <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Score Audit Trail And Event Log</h2>
-            <span className="text-[10px] font-bold uppercase text-slate-500">// mock derived from frame history</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">// derived from local AI frame history</span>
           </div>
           <div className="grid grid-cols-[90px_220px_1fr_110px] text-sm">
             {history.length === 0 ? (
@@ -291,16 +366,6 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
             Success metric: {analysis.coaching_plan.success_metric}
           </ReportPanel>
         </section>
-
-        <section className={`${cardBase} p-5`}>
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
-            <Route className="h-4 w-4 text-sky-400" />
-            Prompt Contract For Future Real AI
-          </div>
-          <pre className="mt-4 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-[#070A12] p-4 text-xs leading-relaxed text-slate-400">
-            {AI_RANKING_EXPLAIN_PROMPT}
-          </pre>
-        </section>
       </div>
     </div>
   );
@@ -311,6 +376,13 @@ const Stat = ({ icon: Icon, label, value }: { icon: React.ElementType; label: st
     <Icon className="mb-3 h-5 w-5 text-sky-400" />
     <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</span>
     <span className="mt-1 block font-mono text-3xl font-black text-slate-100">{value}</span>
+  </div>
+);
+
+const InfoLine = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-center justify-between rounded border border-[#1E293B] bg-slate-950/50 px-3 py-2">
+    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>
+    <span className="font-mono text-sm font-black text-slate-100">{value}</span>
   </div>
 );
 

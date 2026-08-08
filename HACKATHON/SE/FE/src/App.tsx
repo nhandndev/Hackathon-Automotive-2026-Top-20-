@@ -49,6 +49,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [liveAlerts, setLiveAlerts] = useState<DecisionAlert[]>([]);
   const [alertsConnected, setAlertsConnected] = useState(false);
+  const [savedTripsLoaded, setSavedTripsLoaded] = useState(false);
   const followRunningTrip = useRef(true);
   // Ref: IDs of trips that were 'running' in the last poll tick — used to
   // detect the running→completed transition and trigger an auto-save.
@@ -129,6 +130,8 @@ export default function App() {
         }
       } catch (err) {
         console.warn('[trip-persist] Could not load saved trips:', err);
+      } finally {
+        setSavedTripsLoaded(true);
       }
     };
 
@@ -253,6 +256,7 @@ export default function App() {
         vehicles={vehicles}
         reportType={copilotReportType}
         tripIds={copilotReportTripIds}
+        dataReady={savedTripsLoaded}
       />
     );
   }

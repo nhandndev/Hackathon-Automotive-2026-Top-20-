@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { CalendarDays, Download, FileText, Shield, UserRound, Wrench, FileDown, FileCode, Check, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { TripData } from '../types';
 import { buildRankingRows } from './DriverRankingView';
+import { buildCopilotInput, buildVehicleReportModels, inferReportMode, resolveDriverName, VehicleReportModel } from '../reportModel';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
@@ -9,6 +10,7 @@ interface CopilotFleetReportPageProps {
   vehicles: TripData[];
   reportType: string | null;
   tripIds: string | null;
+  dataReady?: boolean;
 }
 
 const panel = 'rounded-lg border border-[#1E293B] bg-[#111827] shadow-lg shadow-black/20';
@@ -95,10 +97,210 @@ const eventRowsFor = (trip: TripData) => {
   return events;
 };
 
-export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ vehicles, reportType, tripIds }) => {
-  const [copilotInsight, setCopilotInsight] = useState('📊 **BÁO CÁO TỔNG QUAN HỆ THỐNG GIÁM SÁT AN TOÀN & BẢO TRÌ ĐỘI XE**');
-  const [aiDiagnostics, setAiDiagnostics] = useState<any[] | null>(null);
-  const [aiActionOrders, setAiActionOrders] = useState<any | null>(null);
+const reportForRow = (models: VehicleReportModel[], tripId: string) => models.find((model) => model.tripId === tripId);
+
+const COPILOT_REPORT_CACHE_PREFIX = 'copilot-report-ai:';
+
+const readCachedCopilotInsight = (signature: string) => {
+  try {
+    const cached = window.sessionStorage.getItem(`${COPILOT_REPORT_CACHE_PREFIX}${signature}`);
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedCopilotInsight = (signature: string, payload: unknown) => {
+  try {
+    window.sessionStorage.setItem(`${COPILOT_REPORT_CACHE_PREFIX}${signature}`, JSON.stringify(payload));
+  } catch {
+    // Cache is an optimization only; report data still renders from JSON/local AI.
+  }
+};
+
+const textFromInsightPayload = (value: any): string => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(textFromInsightPayload).join('\n');
+  if (value && typeof value === 'object') return Object.values(value).map(textFromInsightPayload).join('\n');
+  return '';
+};
+
+const hasPositiveAiMention = (text: string, pattern: RegExp, negativePattern?: RegExp) =>
+  pattern.test(text) && !(negativePattern && negativePattern.test(text));
+
+const isValidBedrockPayloadForRows = (payload: any, rows: ReturnType<typeof buildRankingRows>, reportType: string | null) => {
+  const allText = textFromInsightPayload(payload).toLowerCase();
+  if (reportType === 'safety' && /(bảo trì|bao tri|lốp|lop|tire|dtc|chi phí|chi phi|downtime|phụ tùng|phu tung|work order|brake stress|tire stress|inspect)/i.test(allText)) {
+    return false;
+  }
+  for (const row of rows) {
+    const tripText = textFromInsightPayload(payload?.trip_insights?.[row.trip_id]).toLowerCase();
+    if (!tripText) continue;
+    const checks: Array<[boolean, RegExp, RegExp | undefined]> = [
+      [row.harshEvents === 0, /(phanh|brake|harsh brake)/i, /(không|khong|no)[^.]{0,40}(phanh|brake|harsh brake)/i],
+      [row.nearMissCount === 0, /(near miss|ttc thấp|ttc thap|suýt va|suyt va)/i, /(không|khong|no)[^.]{0,40}(near miss|ttc|suýt va|suyt va)/i],
+      [row.fatigueEvents === 0, /(mệt mỏi|met moi|vi ngủ|vi ngu|microsleep|fatigue|drowsy|yawning)/i, /(không|khong|no)[^.]{0,40}(mệt|met|vi ngủ|vi ngu|microsleep|fatigue|drowsy|yawning)/i],
+      [row.distractedPct === 0, /(xao nhãng|xao nhang|phân tâm|phan tam|distract)/i, /(không|khong|no)[^.]{0,40}(xao nhãng|xao nhang|phân tâm|phan tam|distract)/i],
+      [row.speedingPct === 0, /(quá tốc|qua toc|vượt tốc|vuot toc|speeding)/i, /(không|khong|no)[^.]{0,40}(quá tốc|qua toc|vượt tốc|vuot toc|speeding)/i],
+      [row.tailgatingPct === 0, /(bám đuôi|bam duoi|tailgating)/i, /(không|khong|no)[^.]{0,40}(bám đuôi|bam duoi|tailgating)/i],
+    ];
+    if (checks.some(([enabled, pattern, negativePattern]) => enabled && hasPositiveAiMention(tripText, pattern, negativePattern))) return false;
+  }
+  return true;
+};
+
+const aiLoadingCopy = {
+  pros: 'AI Copilot đang tạo insight từ Bedrock...',
+  cons: 'AI Copilot đang phân tích dữ liệu rủi ro...',
+  evaluation: 'AI Copilot đang xử lý nhận xét đánh giá chuyên sâu...',
+  dtc: 'AI đang quét mã lỗi...',
+  maintenanceStatus: 'AI đang chẩn đoán...',
+  parts: 'Đang check kho...',
+  workOrder: 'Chờ duyệt',
+  doNotDrive: 'AI Copilot đang tổng hợp lệnh khẩn cấp...',
+  priority48h: 'AI Copilot đang xếp loại ưu tiên...',
+  coaching: 'AI Copilot đang xếp lịch Coaching an toàn...',
+  reward: 'AI Copilot đang đánh giá mức độ xuất sắc...',
+  fleet: 'AI Copilot đang tổng hợp dữ liệu số liệu toàn bộ đội xe...',
+};
+
+type AiInsightStatus = 'loading' | 'pending' | 'validated' | 'unavailable';
+
+const aiStatusLabel = (status: AiInsightStatus) => (
+  status === 'validated'
+    ? 'Bedrock insight đã xác thực'
+    : status === 'loading' || status === 'pending'
+      ? 'Đánh giá JSON/local AI - Bedrock chạy nền'
+      : 'Đánh giá JSON/local AI - chờ Bedrock hợp lệ'
+);
+
+const aiStatusClass = (status: AiInsightStatus) => (
+  status === 'validated'
+    ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30'
+    : status === 'loading' || status === 'pending'
+      ? 'bg-sky-950/60 text-sky-300 border-sky-500/30'
+      : 'bg-slate-900 text-slate-300 border-slate-700'
+);
+
+const buildLocalReportNarrative = (models: VehicleReportModel[], mode: string) => {
+  if (models.length === 0) return 'Chưa có dữ liệu canonical để lập báo cáo.';
+  const sortedByScore = [...models].sort((a, b) => b.score - a.score);
+  const sortedByAvgRisk = [...models].sort((a, b) => b.avgRisk - a.avgRisk);
+  const sortedByHighRiskFrames = [...models].sort((a, b) => b.rawCriticalRiskFrames - a.rawCriticalRiskFrames);
+  const avgScore = models.reduce((sum, model) => sum + model.score, 0) / models.length;
+  const avgRisk = models.reduce((sum, model) => sum + model.avgRisk, 0) / models.length;
+  const maxRisk = Math.max(...models.map((model) => model.maxRisk));
+  const totalHighRiskFrames = models.reduce((sum, model) => sum + model.rawCriticalRiskFrames, 0);
+  const totalNearMiss = models.reduce((sum, model) => sum + model.nearMissCount, 0);
+  const totalHarshBrake = models.reduce((sum, model) => sum + model.harshBrakeCount, 0);
+  const totalDistractedTrips = models.filter((model) => model.distractedPct > 0).length;
+  const totalEvents = models.reduce((sum, model) => sum + model.eventSummary.total, 0);
+  const dangerEvents = models.reduce((sum, model) => sum + model.eventSummary.danger, 0);
+  const warningEvents = models.reduce((sum, model) => sum + model.eventSummary.warning, 0);
+  const coaching = models.filter((model) => model.safetyAction === 'COACHING_24H').map((model) => model.tripId);
+  const inspect = models.filter((model) => model.maintenance.priority === 'INSPECT').map((model) => model.tripId);
+  const watch = models.filter((model) => model.maintenance.priority === 'WATCH').map((model) => model.tripId);
+  const normal = models.filter((model) => model.maintenance.priority === 'NORMAL').map((model) => model.tripId);
+
+  if (mode.startsWith('maintenance')) {
+    return [
+      mode === 'maintenance_detail' ? `### 1. Sửa chữa detail - ${models[0].tripId}` : `### 1. Sửa chữa overview - ${models.length} trip`,
+      'Báo cáo dùng rule-based maintenance model. AI chỉ được diễn giải, không tạo DTC, không tạo wear %, không tạo work order.',
+      '### 2. Triage bảo trì',
+      `INSPECT: ${inspect.join(', ') || 'Không có'}. WATCH: ${watch.join(', ') || 'Không có'}. NORMAL: ${normal.join(', ') || 'Không có'}.`,
+      '### 3. Chỉ số kỹ thuật',
+      models.map((model) => `${model.tripId}: Brake Stress ${model.maintenance.brakeStress}/100, Tire Stress ${model.maintenance.tireStress}/100, DTC ${model.maintenance.dtcCode}, priority ${model.maintenance.priority}.`).join('\n'),
+      '### 4. Khuyến nghị',
+      'Các hạng mục là Recommended - not created. Chưa có ERP/workshop integration nên báo cáo không khẳng định đã tạo phiếu sửa chữa hoặc đặt phụ tùng.',
+    ].join('\n\n');
+  }
+
+  if (mode === 'safety_detail') {
+    const model = models[0];
+    const mainReasons = [
+      model.avgRisk >= 70 ? `avg risk rất cao (${model.avgRisk.toFixed(1)}/100)` : null,
+      model.rawCriticalRiskFrames > 0 ? `${model.rawCriticalRiskFrames} khung rủi ro cao` : null,
+      model.harshBrakeCount > 0 ? `${model.harshBrakeCount} phanh gấp thật` : null,
+      model.distractedPct > 0 ? `${model.distractedPct.toFixed(1)}% distracted` : null,
+      model.nearMissCount > 0 ? `${model.nearMissCount} near miss/TTC thấp` : null,
+    ].filter(Boolean).join(', ');
+
+    return [
+      `### 1. Đánh giá an toàn chi tiết - ${model.tripId}`,
+      `Trip đạt Ranking Score ${model.score.toFixed(1)}/100, mức ${model.riskLevel}. Kết luận này được tính từ JSON/local AI sau khi Bedrock chưa có phản hồi hợp lệ.`,
+      '### 2. Kết luận chính',
+      mainReasons
+        ? `Rủi ro chính đến từ ${mainReasons}. Max risk đạt ${model.maxRisk.toFixed(1)}/100 nên trip cần được xem là nguy hiểm dù một số event hành vi như near miss hoặc phanh gấp có thể bằng 0.`
+        : `Không ghi nhận event hành vi lớn; tiếp tục theo dõi vì điểm ranking vẫn phụ thuộc avg/max risk.`,
+      '### 3. Quyết định vận hành',
+      model.safetyAction === 'COACHING_24H'
+        ? 'Yêu cầu coaching 24h trước khi dùng trip này làm chuẩn vận hành.'
+        : model.safetyAction === 'WARNING'
+          ? 'Cần nhắc nhở và theo dõi trong chuyến kế tiếp.'
+          : 'Có thể dùng làm benchmark tương đối trong fleet hiện tại.',
+    ].join('\n\n');
+  }
+
+  const allNeedCoaching = coaching.length === models.length;
+  const best = sortedByScore[0];
+  const worst = sortedByScore.at(-1);
+  const highestRisk = sortedByAvgRisk[0];
+  const mostHighRiskFrames = sortedByHighRiskFrames[0];
+
+  return [
+    `### 1. Đánh giá tổng quan an toàn fleet - ${models.length} trip`,
+    `Fleet Ranking Score trung bình là ${avgScore.toFixed(1)}/100, avg risk trung bình ${avgRisk.toFixed(1)}/100 và max risk cao nhất ${maxRisk.toFixed(1)}/100. Kết luận: ${allNeedCoaching ? 'toàn bộ fleet đang ở ngưỡng cần coaching, không có trip đủ điều kiện gọi là an toàn.' : 'fleet có phân hóa rủi ro, cần ưu tiên theo ranking score.'}`,
+    '### 2. Đánh giá thống kê',
+    `Tổng cộng có ${totalHighRiskFrames} khung rủi ro cao, ${totalHarshBrake} phanh gấp thật, ${totalNearMiss} near miss/TTC thấp. Event canonical sau debounce là ${totalEvents} log (${dangerEvents} danger, ${warningEvents} warning), dùng để audit diễn biến chứ không thay thế các tổng frame-level.`,
+    '### 3. Nhận định xếp hạng',
+    `${best.tripId} đứng cao nhất với ${best.score.toFixed(1)}/100, nghĩa là ít rủi ro tương đối nhất trong fleet chứ không phải an toàn tuyệt đối. ${worst ? `${worst.tripId} đứng cuối với ${worst.score.toFixed(1)}/100.` : ''} Trip có avg risk cao nhất là ${highestRisk.tripId} (${highestRisk.avgRisk.toFixed(1)}/100); trip có nhiều khung rủi ro cao nhất là ${mostHighRiskFrames.tripId} (${mostHighRiskFrames.rawCriticalRiskFrames} frames).`,
+    '### 4. Nguyên nhân chính',
+    `Yếu tố kéo điểm fleet xuống là risk.final_risk_score duy trì cao trên nhiều frame. ${totalDistractedTrips > 0 ? `${totalDistractedTrips}/${models.length} trip có distracted.` : 'Không có distracted đáng kể trong fleet này.'} ${totalHarshBrake > 0 ? `Có ${totalHarshBrake} phanh gấp thật cần coaching kỹ thuật giữ khoảng cách/phản ứng.` : 'Không ghi nhận phanh gấp thật ở một số trip rủi ro, nên nguyên nhân chính của các trip đó là risk model/frame-level chứ không phải brake event.'}`,
+    '### 5. Khuyến nghị vận hành',
+    allNeedCoaching
+      ? `Không chọn SAFE benchmark trong batch này. Ưu tiên coaching theo thứ tự rủi ro: ${sortedByScore.slice().reverse().map((model) => model.tripId).join(' -> ')}.`
+      : `Coaching 24h: ${coaching.join(', ') || 'Không có'}. Nhóm còn lại theo dõi theo ranking score và max risk.`,
+  ].join('\n\n');
+};
+
+const buildPendingReportNarrative = (models: VehicleReportModel[], mode: string) => {
+  if (models.length === 0) return 'Đang chờ dữ liệu JSON/local AI trước khi tạo đánh giá.';
+  if (mode === 'safety_detail') {
+    const model = models[0];
+    return [
+      `### AI Copilot đang đánh giá an toàn trip ${model.tripId}`,
+      `Đã tải số liệu JSON/local AI: Ranking Score ${model.score.toFixed(1)}/100, max risk ${model.maxRisk.toFixed(1)}/100, ${model.rawCriticalRiskFrames} khung rủi ro cao.`,
+      'Bedrock đang chạy nền để tạo nhận xét chi tiết. Trong lúc chờ, hệ thống chỉ hiển thị KPI thật từ JSON/local AI và không tự bịa ưu/nhược điểm.',
+    ].join('\n\n');
+  }
+  if (mode === 'safety_overview') {
+    const avgScore = models.reduce((sum, model) => sum + model.score, 0) / models.length;
+    const totalHighRiskFrames = models.reduce((sum, model) => sum + model.rawCriticalRiskFrames, 0);
+    return [
+      `### AI Copilot đang đánh giá an toàn toàn fleet`,
+      `Đã tải ${models.length} trip từ JSON/local AI: Fleet Ranking Score ${avgScore.toFixed(1)}/100, tổng ${totalHighRiskFrames} khung rủi ro cao.`,
+      'Bedrock đang chạy nền để tạo đánh giá thống kê đầy đủ. Trong lúc chờ, hệ thống chỉ hiển thị KPI thật và không hiển thị insight thay thế.',
+    ].join('\n\n');
+  }
+  if (mode === 'maintenance_detail') {
+    const model = models[0];
+    return [
+      `### AI Copilot đang đánh giá bảo trì trip ${model.tripId}`,
+      `Đã tải số liệu JSON/local AI: Brake Stress ${model.maintenance.brakeStress}/100, Tire Stress ${model.maintenance.tireStress}/100, DTC ${model.maintenance.dtcCode}.`,
+      'Bedrock đang chạy nền để bổ sung chẩn đoán bảo trì. Trong lúc chờ, hệ thống không tạo mã lỗi, phụ tùng, work order hoặc chi phí giả.',
+    ].join('\n\n');
+  }
+  const inspectCount = models.filter((model) => model.maintenance.priority === 'INSPECT').length;
+  return [
+    `### AI Copilot đang đánh giá bảo trì toàn fleet`,
+    `Đã tải ${models.length} trip từ JSON/local AI: ${inspectCount} trip ở mức INSPECT, các chỉ số stress/DTC giữ nguyên từ dữ liệu thật.`,
+    'Bedrock đang chạy nền để bổ sung nhận xét bảo trì. Trong lúc chờ, hệ thống không tạo insight hoặc action order thay thế.',
+  ].join('\n\n');
+};
+
+export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ vehicles, reportType, tripIds, dataReady = true }) => {
+  const [copilotInsight, setCopilotInsight] = useState('Đang chờ phản hồi AI Copilot từ Bedrock...');
+  const [aiInsightStatus, setAiInsightStatus] = useState<AiInsightStatus>('loading');
   const [aiTripInsights, setAiTripInsights] = useState<Record<string, any>>({});
   const [isLoadingInsight, setIsLoadingInsight] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -114,8 +316,14 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   const selectedTrips = useMemo(() => (
     selectedIds.length
       ? vehicles.filter((vehicle) => selectedIds.includes(vehicle.trip_id))
-      : vehicles.slice(0, 2)
-  ), [selectedIds.join(','), vehicles]);
+      : reportType === 'compare'
+        ? vehicles.slice(0, 2)
+        : vehicles.filter((vehicle) => vehicle.runtime_status === 'completed')
+  ), [selectedIds.join(','), vehicles, reportType]);
+  const missingSelectedIds = useMemo(
+    () => selectedIds.filter((tripId) => !selectedTrips.some((trip) => trip.trip_id === tripId)),
+    [selectedIds.join(','), selectedTrips],
+  );
   
   const rows = useMemo(() => {
     // 1. Compute true global fleet ranking across ALL vehicles in system
@@ -147,6 +355,28 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     }
     return rawRows;
   }, [vehicles, selectedTrips, reportType]);
+
+  const reportModels = useMemo(() => {
+    const models = buildVehicleReportModels(vehicles, selectedTrips);
+    return reportType === 'maintenance'
+      ? [...models].sort((a, b) => {
+        const priorityRank = { INSPECT: 3, WATCH: 2, NORMAL: 1 };
+        return (priorityRank[b.maintenance.priority] - priorityRank[a.maintenance.priority])
+          || (b.maintenance.brakeStress + b.maintenance.tireStress) - (a.maintenance.brakeStress + a.maintenance.tireStress);
+      })
+      : models;
+  }, [vehicles, selectedTrips, reportType]);
+
+  const reportMode = useMemo(() => inferReportMode(reportType, reportModels.length), [reportType, reportModels.length]);
+  const canRequestBedrockInsight = dataReady && reportModels.length > 0 && missingSelectedIds.length === 0;
+  const localReportNarrative = useMemo(
+    () => buildLocalReportNarrative(reportModels, reportMode),
+    [reportModels, reportMode],
+  );
+  const pendingReportNarrative = useMemo(
+    () => buildPendingReportNarrative(reportModels, reportMode),
+    [reportModels, reportMode],
+  );
   
   const reportTitle = reportType === 'maintenance'
     ? 'Vehicle Maintenance Priority Report'
@@ -155,64 +385,108 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       : 'Vehicle Safety Comparison Report';
       
   const subtitle = reportType === 'maintenance'
-    ? 'AI Copilot đánh giá xe cần ưu tiên bảo trì dựa trên harsh events, risk score và behavior flags.'
+    ? 'Ưu tiên bảo trì rule-based từ JSON/local AI telemetry; Bedrock chỉ diễn giải insight.'
     : reportType === 'safety'
-      ? 'Tổng hợp an toàn fleet, driver risk, TTC/headway và coaching priority.'
+      ? 'Tổng hợp an toàn từ JSON/local AI telemetry, driver risk, TTC/headway và coaching priority.'
       : `So sánh và đánh giá mức độ an toàn của ${rows.length} xe`;
 
   const allFleetRows = useMemo(() => buildRankingRows(vehicles), [vehicles]);
   const fleetAverage = allFleetRows.length ? allFleetRows.reduce((sum, row) => sum + row.score, 0) / allFleetRows.length : 0;
+  const aiIsLoading = isLoadingInsight || aiInsightStatus === 'loading' || aiInsightStatus === 'pending';
 
   useEffect(() => {
     let cancelled = false;
-    const activeExpandedIds = Object.keys(expandedTrips).filter(id => expandedTrips[id]);
-
     const loadInsight = async () => {
-      setIsLoadingInsight(true);
-      try {
-        const response = await fetch('/api/copilot/report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            reportType,
-            tripIds: rows.map((row) => row.trip_id),
-            expandedTripIds: activeExpandedIds,
-            rows: rows.map((row) => ({
-              trip_id: row.trip_id,
-              rank: row.rank,
-              score: row.score,
-              riskLevel: row.riskLevel,
-              coachingPriority: row.coachingPriority,
-              avgRisk: row.avgRisk,
-              maxRisk: row.maxRisk,
-              distractedPct: row.distractedPct,
-              fatigueEvents: row.fatigueEvents,
-              nearMissCount: row.nearMissCount,
-              tailgatingPct: row.tailgatingPct,
-              speedingPct: row.speedingPct,
-              harshEvents: row.harshEvents,
-              criticalEvents: row.criticalEvents,
-            })),
-            vehicles: selectedTrips.map((trip) => ({
-              trip_id: trip.trip_id,
-              metadata: trip.metadata,
-              driver_summary: trip.driver_summary,
-              trip_aggregate: trip.trip_aggregate,
-            })),
-          }),
-        });
+      if (!dataReady) {
+        setIsLoadingInsight(true);
+        setAiInsightStatus('loading');
+        setAiTripInsights({});
+        setCopilotInsight('Đang tải saved trips từ backend trước khi gọi Bedrock...');
+        return;
+      }
 
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error || `Copilot report HTTP ${response.status}`);
-        if (!cancelled) {
-          setCopilotInsight(payload.fleet_insight || payload.insight || 'AI Copilot chưa trả insight.');
-          if (payload.trip_insights) setAiTripInsights(payload.trip_insights);
-          if (payload.vehicle_diagnostics) setAiDiagnostics(payload.vehicle_diagnostics);
-          if (payload.action_orders) setAiActionOrders(payload.action_orders);
+      if (!canRequestBedrockInsight) {
+        setIsLoadingInsight(false);
+        setAiInsightStatus('unavailable');
+        setAiTripInsights({});
+        setCopilotInsight(
+          missingSelectedIds.length > 0
+            ? `Chưa tìm thấy dữ liệu JSON/local AI cho trip: ${missingSelectedIds.join(', ')}. Không gọi Bedrock khi thiếu canonical input.`
+            : localReportNarrative,
+        );
+        return;
+      }
+
+      setIsLoadingInsight(true);
+      setAiInsightStatus('loading');
+      setCopilotInsight(localReportNarrative);
+      try {
+        const canonicalInput = buildCopilotInput(reportModels, reportMode);
+        const inputSignature = JSON.stringify({
+          validator: 'bedrock-contract-v3-detailed',
+          reportType,
+          reportMode,
+          tripIds: rows.map((row) => row.trip_id),
+          trips: canonicalInput.trips,
+        });
+        const cachedPayload = readCachedCopilotInsight(inputSignature);
+        if (cachedPayload) {
+          if (!cancelled && isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) {
+            setAiInsightStatus('validated');
+            setCopilotInsight(cachedPayload.fleet_insight || cachedPayload.insight || 'AI Copilot chưa trả insight.');
+            setAiTripInsights(cachedPayload.trip_insights ?? {});
+            setIsLoadingInsight(false);
+          }
+          if (isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) return;
+        }
+
+        let lastPayload: any = null;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const response = await fetch('/api/copilot/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reportType,
+              reportMode,
+              canonicalInput: {
+                ...canonicalInput,
+                input_signature: inputSignature,
+              },
+              tripIds: rows.map((row) => row.trip_id),
+            }),
+          });
+
+          const payload = await response.json();
+          lastPayload = payload;
+          if (!response.ok) throw new Error(payload.error || `Copilot report HTTP ${response.status}`);
+          if (cancelled) return;
+
+          if (payload.ai_status === 'validated' && !payload.vehicle_diagnostics && !payload.action_orders && isValidBedrockPayloadForRows(payload, rows, reportType)) {
+            setAiInsightStatus('validated');
+            setCopilotInsight(payload.fleet_insight || payload.insight || 'AI Copilot chưa trả insight.');
+            setAiTripInsights(payload.trip_insights ?? {});
+            writeCachedCopilotInsight(inputSignature, payload);
+            return;
+          }
+
+          setAiInsightStatus(payload.ai_status === 'pending' ? 'pending' : 'unavailable');
+          setCopilotInsight(localReportNarrative);
+          setAiTripInsights({});
+          if (attempt < 3 && payload.ai_status === 'pending') {
+            await new Promise(resolve => setTimeout(resolve, 2200));
+          } else {
+            break;
+          }
+        }
+
+        if (!cancelled && lastPayload?.ai_status !== 'validated') {
+          setAiInsightStatus('unavailable');
+          setCopilotInsight(localReportNarrative);
         }
       } catch (err) {
         if (!cancelled) {
-          setCopilotInsight(`AI Copilot Insight chưa khả dụng: ${err instanceof Error ? err.message : 'unknown error'}`);
+          setAiInsightStatus('unavailable');
+          setCopilotInsight(localReportNarrative);
         }
       } finally {
         if (!cancelled) {
@@ -224,7 +498,17 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     return () => {
       cancelled = true;
     };
-  }, [reportType, rows.map(r => r.trip_id).join(','), selectedTrips.map(s => s.trip_id).join(',')]);
+  }, [
+    dataReady,
+    canRequestBedrockInsight,
+    reportType,
+    reportMode,
+    localReportNarrative,
+    pendingReportNarrative,
+    rows.map(r => r.trip_id).join(','),
+    reportModels.map(m => `${m.tripId}:${m.score}:${m.maxRisk}:${m.eventSummary.total}:${m.maintenance.priority}`).join('|'),
+    missingSelectedIds.join(','),
+  ]);
 
   // Click outside listener for export menu
   useEffect(() => {
@@ -242,11 +526,12 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     const rowsHTML = rows.map((row, idx) => {
       const tripId = row.trip_id;
       const tripAi = aiTripInsights[tripId];
-      const driverName = row.trip_id;
+      const model = reportForRow(reportModels, row.trip_id);
+      const driverName = model?.driverName ?? resolveDriverName(row.trip);
       const safeScore = row.score;
 
       const logEvents = eventRowsFor(row.trip);
-      const brakeLogCount = logEvents.filter(e => e.type.toLowerCase().includes('phanh') || e.type.toLowerCase().includes('brake') || e.severity === 'Sự kiện nguy hiểm').length;
+      const brakeLogCount = row.harshEvents;
       const speedingPct = row.speedingPct;
 
       const hasHighDistraction = row.distractedPct > 25;
@@ -256,9 +541,9 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       let defaultCons: string[] = [];
 
       if (safeScore >= 80 && !hasHighDistraction && !hasFatigue) {
-        defaultPros.push(`Safety Score thuộc nhóm xuất sắc (${safeScore.toFixed(0)}/100), kiểm soát rủi ro cực tốt.`);
+        defaultPros.push(`Ranking Score thuộc nhóm xuất sắc (${safeScore.toFixed(0)}/100), kiểm soát rủi ro cực tốt.`);
       } else if (safeScore >= 60 && !hasHighDistraction) {
-        defaultPros.push(`Safety Score ở mức trung bình khá (${safeScore.toFixed(0)}/100).`);
+        defaultPros.push(`Ranking Score ở mức trung bình khá (${safeScore.toFixed(0)}/100).`);
       }
 
       if (speedingPct === 0) {
@@ -284,7 +569,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       }
 
       if (row.criticalEvents > 0) {
-        defaultCons.push(`Phát hiện ${row.criticalEvents} sự kiện rủi ro tiềm ẩn (Near Misses/Critical) trong quá trình vận hành.`);
+        defaultCons.push(`Phát hiện ${row.criticalEvents} khung hình rủi ro cao theo risk.final_risk_score; đây không đồng nghĩa với ${row.criticalEvents} sự kiện phanh gấp hoặc near-miss.`);
       }
 
       if (defaultPros.length === 0) {
@@ -297,9 +582,15 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           ? `⚠️ NHẮC NHỞ: Tài xế ${driverName} cần chú ý giảm thiểu xao nhãng (${row.distractedPct.toFixed(1)}%) và giữ khoảng cách an toàn.`
           : `🏆 KHEN THƯỞNG: Tài xế ${driverName} là hình mẫu chuẩn an toàn để các tài xế khác học tập.`;
 
-      const prosList = tripAi?.pros ?? defaultPros;
-      const consList = tripAi?.cons ?? defaultCons;
-      const evalText = tripAi?.evaluation ?? defaultEval;
+      const prosList = aiInsightStatus === 'validated'
+        ? (tripAi?.pros ?? defaultPros)
+        : [aiLoadingCopy.pros, ...defaultPros];
+      const consList = aiInsightStatus === 'validated'
+        ? (tripAi?.cons ?? defaultCons)
+        : [aiLoadingCopy.cons, ...defaultCons];
+      const evalText = aiInsightStatus === 'validated'
+        ? (tripAi?.evaluation ?? defaultEval)
+        : `${aiLoadingCopy.evaluation}\n${defaultEval}`;
 
       return `
         <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #f8fafc;">
@@ -319,7 +610,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Điểm an toàn:</strong> ${row.score.toFixed(0)}/100</td>
               <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Xếp hạng Fleet:</strong> #${row.rank}</td>
               <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Risk Cao Nhất:</strong> ${row.maxRisk.toFixed(1)}</td>
-              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Tổng Cảnh Báo:</strong> ${row.criticalEvents}</td>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Khung rủi ro cao:</strong> ${row.criticalEvents}</td>
             </tr>
           </table>
 
@@ -455,21 +746,18 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           </thead>
           <tbody>
             ${rows.map((row, idx) => {
-              const harshCount = row.harshEvents;
-              const criticalCount = row.criticalEvents;
-              const speedingPct = row.speedingPct;
-
-              const brakeWear = Math.min(98, Math.max(15, Math.round(20 + harshCount * 5.5 + criticalCount * 3)));
-              const tireWear = Math.min(95, Math.max(10, Math.round(15 + speedingPct * 0.8 + harshCount * 3)));
-              const dtcCode = harshCount >= 10 ? 'C0035 (Brake Wear/Speed Sensor)' : row.maxRisk >= 80 ? 'P0300 (Engine Warning)' : 'P0000 (No Error)';
-              const serviceOverdue = brakeWear > 70 ? `Bảo trì phanh (${brakeWear}%)` : tireWear > 70 ? `Đảo lốp (${tireWear}%)` : 'Bình thường';
-              const estCost = `${(harshCount * 450000 + criticalCount * 850000).toLocaleString('vi-VN')} VNĐ`;
-              const downtime = brakeWear > 70 ? '1 ngày' : '0.5 ngày';
+              const model = reportForRow(reportModels, row.trip_id);
+              const brakeWear = model?.maintenance.brakeStress ?? 0;
+              const tireWear = model?.maintenance.tireStress ?? 0;
+              const dtcCode = model?.maintenance.dtcCode ?? 'N/A';
+              const serviceOverdue = model?.maintenance.priority ?? 'NORMAL';
+              const estCost = `${(model?.maintenance.estimatedCostVnd ?? 0).toLocaleString('vi-VN')} VNĐ (dự tính)`;
+              const downtime = model?.maintenance.estimatedDowntime ?? 'N/A';
               return `
                 <tr>
                   <td><strong>XE ${String(idx + 1).padStart(2, '0')} (${row.trip_id})</strong></td>
-                  <td style="color: #d97706; font-weight: bold;">${brakeWear}%</td>
-                  <td style="color: #0284c7; font-weight: bold;">${tireWear}%</td>
+                  <td style="color: #d97706; font-weight: bold;">${brakeWear}/100</td>
+                  <td style="color: #0284c7; font-weight: bold;">${tireWear}/100</td>
                   <td>${row.trip.metadata?.duration_sec ?? 0}s</td>
                   <td style="font-family: monospace; color: ${row.riskLevel === 'CRITICAL' ? '#dc2626' : '#16a34a'}; font-weight: bold;">${dtcCode}</td>
                   <td>${serviceOverdue}</td>
@@ -485,7 +773,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           <strong style="color: #991b1b;">🚨 Dừng Lưu Hành Ngay (Do Not Drive):</strong> ${atRiskTrip ? `Yêu cầu thu hồi phương tiện thuộc chuyến <strong>${atRiskTrip.trip_id}</strong> kiểm tra ngay lập tức.` : `Không có xe nào thuộc diện dừng lưu hành khẩn cấp.`}
         </div>
         <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <strong style="color: #9a3412;">⚠️ Bảo Trì Ưu Tiên Trong 48H:</strong> Căn chỉnh thước lái, kiểm tra độ chụm bánh xe và cảm biến tốc độ bánh xe (C0035) cho các xe có sự kiện cảnh báo.
+          <strong style="color: #9a3412;">⚠️ Bảo Trì Ưu Tiên Trong 48H:</strong> Kiểm tra xe WATCH/INSPECT theo Brake/Tire Stress Index. DTC chỉ hiển thị khi có dữ liệu OBD thật.
         </div>
 
         <div class="section-title">4. Chi Tiết Đánh Giá Chi Tiết Theo Xe (${rows.length} xe)</div>
@@ -660,17 +948,17 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                 <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
                   {reportType === 'maintenance' ? (
                     <>
-                      <MiniMetric label="Mã lỗi DTC" value={row.harshEvents >= 10 ? 'C0035' : row.score < 60 ? 'P0300' : 'P0000'} />
-                      <MiniMetric label="Hao mòn phanh" value={`${Math.min(98, Math.max(15, Math.round(20 + row.harshEvents * 5.5 + row.criticalEvents * 3)))}%`} />
-                      <MiniMetric label="Hao mòn lốp" value={`${Math.min(95, Math.max(10, Math.round(15 + row.speedingPct * 0.8 + row.harshEvents * 3)))}%`} />
-                      <MiniMetric label="Ưu tiên bảo trì" value={row.coachingPriority} />
+                      <MiniMetric label="Mã lỗi DTC" value={reportForRow(reportModels, row.trip_id)?.maintenance.dtcCode ?? 'N/A'} />
+                      <MiniMetric label="Brake Stress" value={`${reportForRow(reportModels, row.trip_id)?.maintenance.brakeStress ?? 0}/100`} />
+                      <MiniMetric label="Tire Stress" value={`${reportForRow(reportModels, row.trip_id)?.maintenance.tireStress ?? 0}/100`} />
+                      <MiniMetric label="Ưu tiên bảo trì" value={reportForRow(reportModels, row.trip_id)?.maintenance.priority ?? 'NORMAL'} />
                     </>
                   ) : (
                     <>
-                      <MiniMetric label="Safe Score" value={`${row.score.toFixed(0)}/100`} />
+                      <MiniMetric label="Ranking Score" value={`${row.score.toFixed(0)}/100`} />
                       <MiniMetric label="Ranking" value={`#${row.rank}`} />
                       <MiniMetric label="Max Risk" value={row.maxRisk.toFixed(1)} />
-                      <MiniMetric label="Sự kiện" value={String(row.criticalEvents)} />
+                      <MiniMetric label="Khung rủi ro cao" value={String(row.criticalEvents)} />
                     </>
                   )}
                 </div>
@@ -728,54 +1016,34 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                     Tình Trạng Sức Khỏe Kỹ Thuật & Hạn Bảo Trì (Vehicle Health & Diagnostics)
                   </div>
                   <span className="rounded bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-300 border border-amber-500/20">
-                    Bedrock Telemetry AI Engine
+                    Rule-based Maintenance Model
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {rows.filter(r => rows.length === 1 || expandedTrips[r.trip_id]).map((row, idx) => {
-                    const aiDiag = aiDiagnostics?.find((d: any) => d.trip_id === row.trip_id);
+                    const model = reportForRow(reportModels, row.trip_id);
                     const harshCount = row.harshEvents;
                     const criticalCount = row.criticalEvents;
                     const speedingPct = row.speedingPct;
-
-                    // EXACT MATHEMATICAL CONSISTENCY WITH LOG TABLE (Base Wear + Sum of Log Badges)
                     const logEvents = eventRowsFor(row.trip);
-                    const brakeLogCount = logEvents.filter(e => e.type.toLowerCase().includes('phanh') || e.type.toLowerCase().includes('brake') || e.severity === 'Sự kiện nguy hiểm').length;
+                    const brakeLogCount = harshCount;
                     const tireLogCount = logEvents.filter(e => e.type.toLowerCase().includes('tốc độ') || e.type.toLowerCase().includes('speed') || e.type.toLowerCase().includes('làn')).length;
 
-                    // Base 15% + (Brake Log * 3.5%) + (Critical * 5%)
-                    const brakeWear = Math.min(98, Math.max(12, Math.round(15 + brakeLogCount * 3.5 + criticalCount * 5)));
-                    // Base 10% + (Speeding % * 0.4%) + (Tire Log * 2.0%)
-                    const tireWear = Math.min(95, Math.max(10, Math.round(10 + speedingPct * 0.4 + tireLogCount * 2.0)));
-                    
-                    const isAiLoading = isLoadingInsight && !aiDiag;
-                    
-                    // Dynamic DTC assignment from real events
-                    const dtcCode = isAiLoading ? '⏳ AI đang quét mã lỗi...' : (aiDiag?.dtc_code ?? (
-                      brakeLogCount >= 5 ? 'C0035 (Wheel Speed Sensor Circuit)' :
-                      speedingPct >= 35 ? 'P0299 (Turbocharger Underboost / Speeding Warning)' : 'P0000 (No Error)'
-                    ));
-                    
-                    const isRoutine = typeof dtcCode === 'string' && dtcCode.includes('P0000') && brakeWear < 60;
-                    
-                    const serviceOverdue = isAiLoading ? '⏳ AI đang chẩn đoán...' : (aiDiag?.maintenance_status ?? (
-                      isRoutine ? 'Bảo dưỡng định kỳ chuẩn' :
-                      brakeWear > 70 ? `Cần bảo trì phanh (MSI ${brakeWear}/100)` : `Cần kiểm tra kỹ thuật (MSI ${brakeWear}/100)`
-                    ));
-
-                    // Accurate Rule-Based Cost Matrix ($1.5M - $3.5M VNĐ for DTC C0035 sensor repair)
-                    const estCostVal = isAiLoading ? 'Đang tính toán...' : (aiDiag?.estimated_cost_vnd ?? (
-                      isRoutine 
-                        ? (1500000 + harshCount * 150000) 
-                        : (2500000 + harshCount * 200000 + criticalCount * 300000)
-                    ));
-                    const estCost = typeof estCostVal === 'number' 
-                      ? `${estCostVal.toLocaleString('vi-VN')} VNĐ (dự tính)` 
-                      : `${estCostVal}`;
-                    const downtime = isAiLoading ? '⏳' : (isRoutine ? '0.5 ngày' : (brakeWear > 75 ? '1.0 ngày' : '0.5 ngày'));
-                    const parts = isAiLoading ? '⏳ Đang check kho...' : (aiDiag?.parts_availability ?? (isRoutine ? 'Sẵn có trong kho' : 'Cần kiểm tra kho'));
-                    const workOrderStatus = isAiLoading ? '⏳ Chờ duyệt' : (isRoutine ? 'Routine Approved' : (row.score < 60 ? 'Pending Approval' : 'Work Order Created'));
+                    const brakeWear = model?.maintenance.brakeStress ?? Math.min(100, Math.max(12, Math.round(15 + brakeLogCount * 3.5 + Math.max(0, row.maxRisk - 60) * 0.2)));
+                    const tireWear = model?.maintenance.tireStress ?? Math.min(100, Math.max(10, Math.round(10 + speedingPct * 0.4 + tireLogCount * 2.0)));
+                    const dtcCode = model?.maintenance.dtcCode ?? 'N/A';
+                    const priority = model?.maintenance.priority ?? 'NORMAL';
+                    const isRoutine = priority === 'NORMAL';
+                    const serviceOverdue = priority === 'INSPECT' ? `INSPECT - kiểm tra kỹ thuật (MSI ${brakeWear}/100)` : priority === 'WATCH' ? `WATCH - theo dõi trong 48h (MSI ${brakeWear}/100)` : 'NORMAL - bảo dưỡng định kỳ';
+                    const estCost = `${(model?.maintenance.estimatedCostVnd ?? 0).toLocaleString('vi-VN')} VNĐ (rule-based estimate)`;
+                    const downtime = model?.maintenance.estimatedDowntime ?? 'N/A';
+                    const parts = 'N/A - chưa tích hợp kho phụ tùng';
+                    const workOrderStatus = model?.maintenance.workOrderStatus ?? 'Recommended - not created';
+                    const dtcDisplay = aiIsLoading ? `${aiLoadingCopy.dtc} (${dtcCode})` : dtcCode;
+                    const serviceDisplay = aiIsLoading ? `${aiLoadingCopy.maintenanceStatus} (${serviceOverdue})` : serviceOverdue;
+                    const partsDisplay = aiIsLoading ? `${aiLoadingCopy.parts} (${parts})` : parts;
+                    const workOrderDisplay = aiIsLoading ? `${aiLoadingCopy.workOrder} (${workOrderStatus})` : workOrderStatus;
 
                     return (
                       <div key={row.trip_id} className="rounded-lg border border-amber-500/40 bg-[#0A0F1D] p-4 space-y-3 shadow-xl">
@@ -785,7 +1053,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                             <span className="text-[10px] text-slate-400">({row.trip_id})</span>
                           </div>
                           <span className={`text-xs font-black px-2 py-0.5 rounded ${isRoutine ? 'bg-sky-500/20 text-sky-300' : 'bg-red-500/20 text-red-300 border border-red-500/40'}`}>
-                            {serviceOverdue}
+                            {serviceDisplay}
                           </span>
                         </div>
 
@@ -799,7 +1067,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                               <div className={`h-full rounded-full ${brakeWear > 70 ? 'bg-red-500' : brakeWear > 40 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${brakeWear}%` }} />
                             </div>
                             <span className="text-[9px] text-slate-400 block">
-                              Chi tiết: Cơ sở 15% + {brakeLogCount} lần phanh gấp (+{(brakeLogCount * 3.5).toFixed(1)}%) + {criticalCount} sự kiện rủi ro (+{(criticalCount * 5).toFixed(1)}%)
+                              Chi tiết: Cơ sở 15% + {brakeLogCount} phanh gấp thật (+{(brakeLogCount * 3.5).toFixed(1)}%) + max risk {row.maxRisk.toFixed(1)}. Khung rủi ro cao ({criticalCount}) chỉ dùng cho an toàn, không tính như sự kiện phanh gấp.
                             </span>
                           </div>
                           <div className="space-y-1">
@@ -817,12 +1085,12 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                         </div>
 
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs border-t border-slate-800/80 pt-2">
-                          <div><span className="text-slate-400">Odometer hiện tại:</span> <b className="font-mono text-slate-200">{aiDiag?.odometer_km ?? 38900} km</b></div>
-                          <div><span className="text-slate-400">Engine Hours:</span> <b className="font-mono text-slate-200">{aiDiag?.engine_hours ?? 950} giờ</b></div>
-                          <div><span className="text-slate-400">Hạn bảo dưỡng:</span> <b className="font-mono text-amber-300">{aiDiag?.km_to_next_service ?? (isRoutine ? 'Còn 5.100 km' : 'Cần kiểm tra')}</b></div>
-                          <div><span className="text-slate-400">Mã lỗi OBD-II (DTC):</span> <b className={`font-mono ${dtcCode.includes('P0000') ? 'text-emerald-400' : 'text-red-400 font-bold'}`}>{dtcCode}</b></div>
-                          <div><span className="text-slate-400">Trạng thái Phụ tùng:</span> <b className="text-slate-200">{parts}</b></div>
-                          <div><span className="text-slate-400">Trạng thái Work Order:</span> <b className="font-mono text-sky-300">{workOrderStatus}</b></div>
+                          <div><span className="text-slate-400">Odometer hiện tại:</span> <b className="font-mono text-slate-200">N/A</b></div>
+                          <div><span className="text-slate-400">Engine Hours:</span> <b className="font-mono text-slate-200">N/A</b></div>
+                          <div><span className="text-slate-400">Hạn bảo dưỡng:</span> <b className="font-mono text-amber-300">{isRoutine ? 'Theo lịch định kỳ' : 'Cần kiểm tra'}</b></div>
+                          <div><span className="text-slate-400">Mã lỗi OBD-II (DTC):</span> <b className={`font-mono ${dtcCode === 'N/A' ? 'text-emerald-400' : 'text-red-400 font-bold'}`}>{dtcDisplay}</b></div>
+                          <div><span className="text-slate-400">Trạng thái Phụ tùng:</span> <b className="text-slate-200">{partsDisplay}</b></div>
+                          <div><span className="text-slate-400">Trạng thái Work Order:</span> <b className="font-mono text-sky-300">{workOrderDisplay}</b></div>
                         </div>
 
                         <div className="flex items-center justify-between bg-slate-900/90 rounded p-2 text-xs border border-slate-800">
@@ -856,7 +1124,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                           <span className="text-[10px] text-slate-400">({row.trip_id})</span>
                         </div>
                         <span className={`text-xs font-black px-2 py-0.5 rounded ${row.score >= 80 ? 'bg-emerald-500/20 text-emerald-300' : row.score >= 60 ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300'}`}>
-                          Safety Score: {row.score.toFixed(0)}/100
+                          Ranking Score: {row.score.toFixed(0)}/100
                         </span>
                       </div>
 
@@ -884,7 +1152,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs border-t border-slate-800/80 pt-2">
                         <div><span className="text-slate-400">Phanh gấp (Harsh brake):</span> <b className="font-mono text-slate-200">{row.harshEvents} lần</b></div>
                         <div><span className="text-slate-400">Near miss / TTC risk:</span> <b className="font-mono text-slate-200">{row.nearMissCount} sự kiện</b></div>
-                        <div><span className="text-slate-400">Sự kiện cảnh báo:</span> <b className="font-mono text-amber-300">{row.criticalEvents} lượt</b></div>
+                        <div><span className="text-slate-400">Khung rủi ro cao:</span> <b className="font-mono text-amber-300">{row.criticalEvents} frames</b></div>
                         <div><span className="text-slate-400">Mức rủi ro cực đại:</span> <b className="font-mono text-red-400 font-bold">{row.maxRisk.toFixed(1)}/100</b></div>
                       </div>
                     </div>
@@ -906,36 +1174,23 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                 {(() => {
-                  const currentReportIds = rows.map(r => r.trip_id);
-                  const criticalVehicles = rows.filter(r => r.riskLevel === 'CRITICAL' || r.harshEvents >= 10);
-                  const warningVehicles = rows.filter(r => r.riskLevel === 'AT_RISK' || (r.harshEvents > 0 && r.harshEvents < 10));
-                  const normalVehicles = rows.filter(r => r.riskLevel !== 'CRITICAL' && r.riskLevel !== 'AT_RISK');
-
-                  // Ensure AI response does not leak external trip IDs
-                  const cleanAiText = (rawText?: string) => {
-                    if (!rawText) return null;
-                    const hasLeak = !currentReportIds.some(id => rawText.includes(id));
-                    return hasLeak ? null : rawText;
-                  };
-
-                  const isAiLoading = isLoadingInsight && !aiActionOrders;
-                  const doNotDriveText = isAiLoading ? '⏳ AI Copilot đang tổng hợp lệnh khẩn cấp...' : (cleanAiText(aiActionOrders?.do_not_drive) ?? (
-                    criticalVehicles.length > 0
-                      ? `Áp dụng cho xe [${criticalVehicles.map(v => v.trip_id).join(', ')}] do có chỉ số rủi ro / áp lực phanh gắt cao (MSI > 75). Thu hồi khẩn về xưởng rà đĩa phanh.`
-                      : 'Không có xe nào trong báo cáo này vi phạm ngưỡng dừng lưu hành khẩn cấp.'
-                  ));
-
-                  const priority48hText = isAiLoading ? '⏳ AI Copilot đang xếp loại ưu tiên...' : (cleanAiText(aiActionOrders?.priority_48h) ?? (
-                    warningVehicles.length > 0
-                      ? `Áp dụng cho xe [${warningVehicles.map(v => v.trip_id).join(', ')}]. Thực hiện kiểm tra cảm biến tốc độ bánh xe (C0035) & cân chỉnh độ mòn lốp trong 48h.`
-                      : 'Không có xe nào trong báo cáo này cần kiểm tra xưởng trong 48h.'
-                  ));
-
-                  const routineText = isAiLoading ? '⏳ AI Copilot đang xếp lịch bảo dưỡng...' : (cleanAiText(aiActionOrders?.routine_maintenance) ?? (
-                    normalVehicles.length > 0
-                      ? `Áp dụng cho xe [${normalVehicles.map(v => v.trip_id).join(', ')}]. Duy trì thay dầu động cơ, lọc gió và kiểm tra áp suất lốp tiêu chuẩn.`
-                      : 'Tất cả các xe trong báo cáo này đều cần kiểm tra kỹ thuật.'
-                  ));
+                  const activeModels = rows.map(r => reportForRow(reportModels, r.trip_id)).filter(Boolean) as VehicleReportModel[];
+                  const criticalVehicles = activeModels.filter(m => m.maintenance.priority === 'INSPECT');
+                  const warningVehicles = activeModels.filter(m => m.maintenance.priority === 'WATCH');
+                  const normalVehicles = activeModels.filter(m => m.maintenance.priority === 'NORMAL');
+                  const doNotDriveText = aiIsLoading
+                    ? aiLoadingCopy.doNotDrive
+                    : criticalVehicles.length > 0
+                    ? `Recommended - not created: kiểm tra xưởng cho xe [${criticalVehicles.map(v => v.tripId).join(', ')}] do Brake/Tire Stress hoặc DTC thật vượt ngưỡng INSPECT.`
+                    : 'Không có xe nào trong báo cáo này vi phạm ngưỡng INSPECT.';
+                  const priority48hText = aiIsLoading
+                    ? aiLoadingCopy.priority48h
+                    : warningVehicles.length > 0
+                    ? `Recommended - not created: kiểm tra trong 48h cho xe [${warningVehicles.map(v => v.tripId).join(', ')}] do mức WATCH. DTC chỉ dùng nếu có dữ liệu OBD thật.`
+                    : 'Không có xe nào trong báo cáo này cần kiểm tra xưởng trong 48h.';
+                  const routineText = normalVehicles.length > 0
+                    ? `Recommended - not created: xe [${normalVehicles.map(v => v.tripId).join(', ')}] duy trì bảo dưỡng định kỳ.`
+                    : 'Tất cả các xe trong báo cáo này đều cần theo dõi hoặc kiểm tra kỹ thuật.';
 
                   return (
                     <>
@@ -965,23 +1220,36 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                 {(() => {
-                  const highRiskDrivers = rows.filter(r => r.score < 60 || r.distractedPct > 30);
+                  const highRiskDrivers = rows.filter(r => r.score < 60 || r.distractedPct > 30 || r.maxRisk >= 80 || r.criticalEvents > 0);
                   const midRiskDrivers = rows.filter(r => r.score >= 60 && r.score < 80);
                   const safeDrivers = rows.filter(r => r.score >= 80);
+                  const safetyReasonFor = (r: typeof rows[number]) => {
+                    const reasons = [];
+                    if (r.maxRisk >= 80) reasons.push(`max risk ${r.maxRisk.toFixed(1)}/100`);
+                    if (r.criticalEvents > 0) reasons.push(`${r.criticalEvents} khung rủi ro cao`);
+                    if (r.distractedPct > 0) reasons.push(`${r.distractedPct.toFixed(1)}% xao nhãng`);
+                    if (r.harshEvents > 0) reasons.push(`${r.harshEvents} phanh/lái gắt`);
+                    if (r.nearMissCount > 0) reasons.push(`${r.nearMissCount} near miss/TTC thấp`);
+                    return reasons.join(', ') || 'điểm ranking thấp';
+                  };
 
-                  const isAiLoading = isLoadingInsight && !aiActionOrders;
+                  const coachingUrgent = aiIsLoading
+                    ? aiLoadingCopy.coaching
+                    : highRiskDrivers.length > 0
+                    ? `Bắt buộc review/coaching an toàn trong 24h cho [${highRiskDrivers.map(v => `${v.trip_id}: ${safetyReasonFor(v)}`).join('; ')}].`
+                    : 'Tất cả tài xế đạt ngưỡng điểm an toàn chấp nhận được.';
 
-                  const coachingUrgent = isAiLoading ? '⏳ AI Copilot đang xếp lịch Coaching an toàn...' : (highRiskDrivers.length > 0
-                    ? `Bắt buộc tham gia khóa Coaching an toàn trực tiếp trong 24h đối với tài xế [${highRiskDrivers.map(v => v.trip_id).join(', ')}] do vi phạm xao nhãng & phanh gấp cao.`
-                    : 'Tất cả tài xế đạt ngưỡng điểm an toàn chấp nhận được.');
-
-                  const warningCoaching = isAiLoading ? '⏳ AI Copilot đang tổng hợp danh sách cảnh báo...' : (midRiskDrivers.length > 0
+                  const warningCoaching = aiIsLoading
+                    ? aiLoadingCopy.priority48h
+                    : midRiskDrivers.length > 0
                     ? `Gửi thông báo nhắc nhở tự kiểm soát khoảng cách & xao nhãng khi lái xe cho tài xế [${midRiskDrivers.map(v => v.trip_id).join(', ')}].`
-                    : 'Không có tài xế nào ở ngưỡng cảnh báo trung bình.');
+                    : 'Không có tài xế nào ở ngưỡng cảnh báo trung bình.';
 
-                  const rewardText = isAiLoading ? '⏳ AI Copilot đang đánh giá mức độ xuất sắc...' : (safeDrivers.length > 0
+                  const rewardText = aiIsLoading
+                    ? aiLoadingCopy.reward
+                    : safeDrivers.length > 0
                     ? `Đề xuất tuyên dương và khen thưởng tiêu chí Safe Driver tháng cho tài xế [${safeDrivers.map(v => v.trip_id).join(', ')}].`
-                    : 'Cần nỗ lực cải thiện chỉ số an toàn toàn fleet.');
+                    : 'Cần nỗ lực cải thiện chỉ số an toàn toàn fleet.';
 
                   return (
                     <>
@@ -1034,7 +1302,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                   <span className="text-center text-sky-400">{column2Header}</span>
                 </div>
                 {[
-                  ['Tổng điểm an toàn', `${fleetAverage.toFixed(1)}/100`, targetRow ? `${targetRow.score.toFixed(1)}/100` : (rows[0] ? `${rows[0].score.toFixed(1)}/100` : 'N/A')],
+                  ['Điểm an toàn ranking', `${fleetAverage.toFixed(1)}/100`, targetRow ? `${targetRow.score.toFixed(1)}/100` : (rows[0] ? `${rows[0].score.toFixed(1)}/100` : 'N/A')],
                   ['TTC / near miss risk', `${fleetNearMissAvg.toFixed(1)} near misses`, targetRow ? `${targetRow.nearMissCount} near misses` : (rows[0] ? `${rows[0].nearMissCount} near misses` : 'N/A')],
                   ['An toàn của bác tài', `${fleetDistractionAvg.toFixed(1)}% distracted`, targetRow ? `${targetRow.distractedPct.toFixed(1)}% distracted` : (rows[0] ? `${rows[0].distractedPct.toFixed(1)}% distracted` : 'N/A')],
                   ['Sự kiện an toàn (Bình thường)', `${fleetSafeCountAvg.toFixed(1)} sự kiện`, `${targetSafe} sự kiện`],
@@ -1071,12 +1339,12 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                       {events.map((event, idx) => {
                         let wearImpactBadge = null;
                         if (isMaint) {
-                          if (event.type.toLowerCase().includes('phanh') || event.type.toLowerCase().includes('brake') || event.severity === 'Sự kiện nguy hiểm') {
+                          if (event.type.toLowerCase().includes('phanh') || event.type.toLowerCase().includes('brake')) {
                             wearImpactBadge = <span className="font-bold text-red-400 bg-red-950/60 px-1.5 py-0.5 rounded border border-red-800/60">+3.5% phanh</span>;
                           } else if (event.type.toLowerCase().includes('tốc độ') || event.type.toLowerCase().includes('speed') || event.type.toLowerCase().includes('làn')) {
                             wearImpactBadge = <span className="font-bold text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/60">+2.0% lốp</span>;
                           } else {
-                            wearImpactBadge = <span className="text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded">+0.5% mòn</span>;
+                            wearImpactBadge = <span className="text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded">không cộng hao mòn</span>;
                           }
                         }
 
@@ -1114,30 +1382,34 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
 
         {/* --- SECTION 4A: FLEET OVERVIEW / SINGLE TRIP SUMMARY (ĐỘNG THEO CHẾ ĐỘ XEM) --- */}
         <section className={`${panel} p-5 space-y-4`}>
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2">
-            <FileText className="h-4 w-4 text-sky-400" />
-            <span className="text-sky-300">
-              {rows.length === 1 
-                ? `Nhận xét tổng quan về trip ${rows[0].trip_id} (${rows[0].trip_id})` 
-                : 'Nhận xét tổng quan đội xe (Fleet Overview & Statistical Evaluation)'}
+          <div className="flex flex-col gap-2 border-b border-slate-800 pb-3 md:flex-row md:items-start md:justify-between">
+            <div className="flex min-w-0 items-start gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
+              <FileText className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
+              <span className="min-w-0 text-sky-300">
+                {rows.length === 1
+                  ? `${reportType === 'maintenance' ? 'Đánh giá bảo trì chi tiết' : 'Đánh giá an toàn chi tiết'} - ${rows[0].trip_id}`
+                  : `${reportType === 'maintenance' ? 'Đánh giá bảo trì toàn fleet' : 'Đánh giá an toàn toàn fleet'} (Statistical Evaluation)`}
+              </span>
+            </div>
+            <span className={`w-fit shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] ${aiStatusClass(aiInsightStatus)}`}>
+              {aiStatusLabel(aiInsightStatus)}
             </span>
-            <span className="ml-auto text-emerald-400 font-mono text-[10px] bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">Bedrock Telemetry AI Engine</span>
           </div>
 
           {/* Quick Aggregate Stats Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-              <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Trip Safe Score' : 'Fleet Safe Score'}</span>
+              <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Trip Ranking Score' : 'Fleet Ranking Score'}</span>
               <span className="text-xl font-black font-mono text-sky-400 mt-1 block">{(rows.length === 1 ? rows[0].score : fleetAverage).toFixed(1)}/100</span>
             </div>
             <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-              <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Tài xế chuyến xe' : 'Tài xế xuất sắc nhất'}</span>
+              <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Trip đang đánh giá' : 'Trip ít rủi ro nhất'}</span>
               <span className="text-sm font-bold font-mono text-emerald-400 mt-1 block truncate">
                 {rows[0] ? `${rows[0].trip_id} (${rows[0].score.toFixed(0)})` : 'N/A'}
               </span>
             </div>
             <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-              <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Vi phạm phanh gấp chuyến' : 'Tổng vi phạm phanh gấp'}</span>
+              <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Hành vi lái gắt chuyến' : 'Tổng hành vi lái gắt'}</span>
               <span className="text-xl font-black font-mono text-amber-400 mt-1 block">
                 {rows.reduce((sum, r) => sum + r.harshEvents, 0)} lần
               </span>
@@ -1151,8 +1423,13 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           </div>
 
           <div className="rounded-lg bg-slate-950/80 p-4 border border-slate-800/80 leading-relaxed text-sm text-slate-200">
+            {aiInsightStatus !== 'validated' && (
+              <div className="mb-3 rounded border border-sky-500/20 bg-sky-950/20 px-3 py-2 text-xs font-semibold text-sky-200">
+                Đánh giá hiện tại lấy từ JSON/local AI. Bedrock đang chạy nền; nếu phản hồi hợp lệ, nhận xét AI sẽ được cập nhật sau.
+              </div>
+            )}
             <p className="whitespace-pre-line font-medium leading-relaxed">
-              {copilotInsight || 'AI Copilot đang tổng hợp dữ liệu số liệu toàn bộ đội xe...'}
+              {copilotInsight || aiLoadingCopy.fleet}
             </p>
           </div>
         </section>
@@ -1161,20 +1438,20 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
         {(rows.length === 1 || rows.some(r => expandedTrips[r.trip_id])) && rows.filter(r => rows.length === 1 || expandedTrips[r.trip_id]).map((expandedRow) => {
           const tripId = expandedRow.trip_id;
           const tripAi = aiTripInsights[tripId];
-          const driverName = expandedRow.trip_id;
+          const model = reportForRow(reportModels, tripId);
+          const driverName = model?.driverName ?? resolveDriverName(expandedRow.trip);
           const safeScore = expandedRow.score;
           const isMaint = reportType === 'maintenance';
 
           const logEvents = eventRowsFor(expandedRow.trip);
-          const brakeLogCount = logEvents.filter(e => e.type.toLowerCase().includes('phanh') || e.type.toLowerCase().includes('brake') || e.severity === 'Sự kiện nguy hiểm').length;
+          const brakeLogCount = expandedRow.harshEvents;
           const tireLogCount = logEvents.filter(e => e.type.toLowerCase().includes('tốc độ') || e.type.toLowerCase().includes('speed') || e.type.toLowerCase().includes('làn')).length;
           const speedingPct = expandedRow.speedingPct;
 
-          const brakeWear = Math.min(98, Math.max(12, Math.round(15 + brakeLogCount * 3.5 + expandedRow.criticalEvents * 5)));
-          const tireWear = Math.min(95, Math.max(10, Math.round(10 + speedingPct * 0.4 + tireLogCount * 2.0)));
-
-          const dtcCode = expandedRow.trip.frames?.some(f => f.behavior_flags?.harsh_brake) ? 'C0035' : 'P0000';
-          const hasC0035 = dtcCode.includes('C0035');
+          const brakeWear = model?.maintenance.brakeStress ?? Math.min(100, Math.max(12, Math.round(15 + brakeLogCount * 3.5 + Math.max(0, expandedRow.maxRisk - 60) * 0.2)));
+          const tireWear = model?.maintenance.tireStress ?? Math.min(100, Math.max(10, Math.round(10 + speedingPct * 0.4 + tireLogCount * 2.0)));
+          const dtcCode = model?.maintenance.dtcCode ?? 'N/A';
+          const hasRealDtc = dtcCode !== 'N/A';
 
           let defaultPros: string[] = [];
           let defaultCons: string[] = [];
@@ -1182,13 +1459,17 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           if (isMaint) {
             defaultPros = [
               `Hệ thống làm mát động cơ và đường dẫn nhiên liệu duy trì nhiệt độ chuẩn.`,
-              hasC0035 
+              hasRealDtc 
                 ? `Hệ thống làm mát động cơ duy trì nhiệt độ trong dải an toàn 88-92°C.`
                 : (brakeWear < 50 ? `Chỉ số Ứng suất phanh Brake MSI duy trì ở mức an toàn (${brakeWear}/100).` : `Cảm biến động cơ vận hành ổn định.`)
             ];
             defaultCons = [
-              hasC0035 ? `Phát hiện Mã lỗi OBD-II C0035 (Lỗi mạch cảm biến tốc độ bánh xe - Wheel Speed Sensor Circuit).` : `Chỉ số mòn phanh MSI tăng lên ${brakeWear}/100.`,
-              speedingPct > 0 ? `Tỷ lệ quá tốc độ ở mức ${speedingPct.toFixed(1)}% gây áp lực mài mòn TSI ${tireWear}/100 lên bề mặt lốp.` : `Ghi nhận ${brakeLogCount} lượt phanh gấp khi đang di chuyển.`
+              hasRealDtc ? `Phát hiện mã lỗi OBD-II từ dữ liệu xe: ${dtcCode}.` : `Không có DTC thật trong dữ liệu; chỉ số Brake Stress Index ở mức ${brakeWear}/100.`,
+              speedingPct > 0
+                ? `Tỷ lệ quá tốc độ ở mức ${speedingPct.toFixed(1)}% gây áp lực mài mòn TSI ${tireWear}/100 lên bề mặt lốp.`
+                : brakeLogCount > 0
+                  ? `Ghi nhận ${brakeLogCount} lượt phanh gấp thật từ behavior_flags.harsh_brake.`
+                  : `Không ghi nhận phanh gấp thật trong JSON; khuyến nghị bảo trì dựa trên max risk và chỉ số stress tổng hợp.`
             ];
           } else {
             // STRICT SAFETY LOGIC RULES
@@ -1201,9 +1482,9 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               defaultPros = [`Chưa ghi nhận hành vi an toàn tiêu biểu do tài xế vi phạm quy tắc an toàn nghiêm trọng.`];
             } else {
               if (safeScore >= 80 && !hasHighDistraction && !hasFatigue) {
-                defaultPros.push(`Safety Score thuộc nhóm xuất sắc (${safeScore.toFixed(0)}/100), kiểm soát rủi ro cực tốt.`);
+                defaultPros.push(`Ranking Score thuộc nhóm xuất sắc (${safeScore.toFixed(0)}/100), kiểm soát rủi ro cực tốt.`);
               } else if (safeScore >= 60 && !hasHighDistraction) {
-                defaultPros.push(`Safety Score ở mức trung bình khá (${safeScore.toFixed(0)}/100).`);
+                defaultPros.push(`Ranking Score ở mức trung bình khá (${safeScore.toFixed(0)}/100).`);
               }
 
               if (speedingPct === 0) {
@@ -1233,7 +1514,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               defaultCons.push(`🚨 CẢNH BÁO VI NGỦ: Phát hiện ${expandedRow.fatigueEvents} sự kiện vi ngủ/ngáp nguy hiểm.`);
             }
             if (expandedRow.criticalEvents > 0) {
-              defaultCons.push(`Phát hiện ${expandedRow.criticalEvents} sự kiện rủi ro tiềm ẩn (Near Misses/Critical) trong quá trình vận hành.`);
+              defaultCons.push(`Phát hiện ${expandedRow.criticalEvents} khung hình rủi ro cao theo risk.final_risk_score; đây là frame-level risk, không đồng nghĩa với ${expandedRow.criticalEvents} sự kiện phanh gấp/near-miss.`);
             }
 
             if (defaultCons.length === 0) {
@@ -1243,37 +1524,67 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
 
           // STRICT PRIORITY MATCHING
           const defaultEval = isMaint
-            ? (expandedRow.riskLevel === 'CRITICAL' || brakeWear >= 80 
-                ? `XE ${tripId}: 🚨 DỪNG LƯU HÀNH NGAY (Do Not Drive) - Chỉ số rủi ro cực đại / phanh gắt ${brakeWear}/100. Thu hồi khẩn về xưởng rà đĩa phanh & thay đệm lót.`
-                : expandedRow.riskLevel === 'AT_RISK' || brakeWear >= 60 || hasC0035
-                  ? `XE ${tripId}: ⚠️ BẢO TRÌ ƯU TIÊN TRONG 48H - Thu hồi xe kiểm tra cảm biến tốc độ bánh xe C0035 (~2.500.000 VNĐ dự tính).`
-                  : `XE ${tripId}: ✅ BẢO DƯỠNG ĐỊNH KỲ CHUẨN - Xe vận hành tốt, đủ điều kiện duyệt thay dầu định kỳ (~1.850.000 VNĐ dự tính).`)
+            ? (model?.maintenance.priority === 'INSPECT'
+                ? `XE ${tripId}: INSPECT - Recommended - not created. Kiểm tra xưởng theo Brake/Tire Stress Index hoặc DTC thật (${dtcCode}).`
+                : model?.maintenance.priority === 'WATCH'
+                  ? `XE ${tripId}: WATCH - Recommended - not created. Kiểm tra trong 48h theo stress index, chi phí ${model.maintenance.estimatedCostVnd.toLocaleString('vi-VN')} VNĐ (dự tính).`
+                  : `XE ${tripId}: NORMAL - duy trì bảo dưỡng định kỳ, không có DTC thật trong dữ liệu.`)
             : (safeScore >= 80 
                 ? `🏆 KHEN THƯỞNG: Tài xế ${driverName} là hình mẫu chuẩn an toàn để các tài xế khác học tập.`
                 : safeScore >= 60
                 ? `⚠️ NHẮC NHỞ: Tài xế ${driverName} cần chú ý giảm thiểu các hành vi vi phạm để nâng cao điểm số.`
                 : `🛑 COACHING 24H: Tài xế ${driverName} vi phạm nghiêm trọng (Score: ${safeScore}/100), yêu cầu đình chỉ chạy và tái đào tạo khẩn cấp.`);
 
-          const isAiLoading = isLoadingInsight && !tripAi;
-          const prosList: string[] = isAiLoading ? ['⏳ AI Copilot đang tạo insight từ Bedrock...'] : (tripAi?.pros ?? defaultPros);
-          const consList: string[] = isAiLoading ? ['⏳ AI Copilot đang phân tích dữ liệu rủi ro từ Bedrock...'] : (tripAi?.cons ?? defaultCons);
-          const evaluationText: string = isAiLoading ? '⏳ AI Copilot đang xử lý nhận xét đánh giá chuyên sâu...' : (tripAi?.evaluation ?? defaultEval);
+          const pendingPros = isMaint
+            ? [aiLoadingCopy.maintenanceStatus]
+            : [aiLoadingCopy.pros];
+          const pendingCons = isMaint
+            ? [aiLoadingCopy.dtc]
+            : [aiLoadingCopy.cons];
+          const pendingEvaluation = isMaint
+            ? `${aiLoadingCopy.evaluation}\nĐang chờ Bedrock bổ sung chẩn đoán bảo trì; KPI Brake/Tire Stress và DTC phía trên vẫn lấy trực tiếp từ JSON/local AI.`
+            : `${aiLoadingCopy.evaluation}\nĐang chờ Bedrock bổ sung nhận xét an toàn; KPI Ranking Score, risk và event count phía trên vẫn lấy trực tiếp từ JSON/local AI.`;
+          const prosList: string[] = aiInsightStatus === 'validated'
+            ? (tripAi?.pros ?? defaultPros)
+            : [...pendingPros, ...defaultPros];
+          const consList: string[] = aiInsightStatus === 'validated'
+            ? (tripAi?.cons ?? tripAi?.concerns ?? defaultCons)
+            : [...pendingCons, ...defaultCons];
+          const evaluationText: string = aiInsightStatus === 'validated'
+            ? (tripAi?.evaluation ?? tripAi?.recommendation ?? defaultEval)
+            : `${pendingEvaluation}\n${defaultEval}`;
+          const insightSourceLabel = aiInsightStatus === 'validated'
+            ? 'Bedrock insight đã xác thực'
+            : aiInsightStatus === 'loading'
+              ? 'Đánh giá JSON/local AI - Bedrock chạy nền'
+              : 'Đánh giá JSON/local AI - chờ Bedrock hợp lệ';
 
           return (
             <section key={`insight-${tripId}`} className={`${panel} p-5 space-y-4 border-amber-500/40 bg-amber-950/10 shadow-2xl`}>
-              <div className="flex items-center justify-between border-b border-amber-900/60 pb-2">
-                <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-amber-300">
-                  {isMaint ? <Wrench className="h-5 w-5 text-amber-400" /> : <UserRound className="h-5 w-5 text-sky-400" />}
-                  <span>Nhận xét tổng quan về trip {tripId} ({driverName})</span>
+              <div className="flex flex-col gap-2 border-b border-amber-900/60 pb-3 md:flex-row md:items-start md:justify-between">
+                <div className="flex min-w-0 items-start gap-2 text-sm font-black uppercase tracking-widest text-amber-300">
+                  {isMaint ? <Wrench className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" /> : <UserRound className="mt-0.5 h-5 w-5 shrink-0 text-sky-400" />}
+                  <span className="min-w-0">
+                    {isMaint ? 'Đánh giá bảo trì chi tiết' : 'Đánh giá an toàn chi tiết'} - {tripId}
+                    <span className="ml-2 text-[10px] text-slate-400 normal-case tracking-normal">({driverName})</span>
+                  </span>
                 </div>
-                <span className={`text-xs font-extrabold font-mono px-2.5 py-1 rounded ${
-                  safeScore >= 80 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : safeScore >= 60 ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300 border border-red-500/30'
-                }`}>
-                  {isMaint ? `Ưu Tiên Bảo Trì: ${expandedRow.coachingPriority}` : `Safety Score: ${safeScore.toFixed(0)}/100`}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`w-fit rounded border px-2 py-0.5 font-mono text-[10px] ${aiStatusClass(aiInsightStatus)}`}>
+                    {insightSourceLabel}
+                  </span>
+                  <span className={`w-fit rounded px-2.5 py-1 font-mono text-xs font-extrabold ${
+                    safeScore >= 80 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : safeScore >= 60 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                  }`}>
+                    {isMaint ? `Ưu tiên: ${reportForRow(reportModels, tripId)?.maintenance.priority ?? 'N/A'}` : `Ranking Score: ${safeScore.toFixed(0)}/100`}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-3 bg-[#0A0F1D] p-4 rounded-lg border border-amber-900/40 text-xs leading-relaxed">
+                <div className="rounded border border-slate-800 bg-slate-950/70 px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-slate-400">
+                  {insightSourceLabel}
+                </div>
                 {/* 🟢 Ưu điểm / Điểm kỹ thuật tốt */}
                 <div className="space-y-1.5">
                   <h4 className="font-bold text-emerald-400 text-xs uppercase flex items-center gap-1.5">
@@ -1322,4 +1633,3 @@ const MiniMetric = ({ label, value }: { label: string; value: string }) => (
     <span className="mt-1 block truncate font-mono text-base font-black text-slate-100">{value}</span>
   </div>
 );
-

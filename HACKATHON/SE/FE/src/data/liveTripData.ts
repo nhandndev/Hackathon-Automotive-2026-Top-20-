@@ -68,6 +68,23 @@ const episodeCount = (
 //  3. Recharts rendering thousands of data points → blank / crashed chart
 const MAX_UI_FRAMES = 2400;
 
+const clamp = (value: number, min = 0, max = 100) => Math.min(Math.max(value, min), max);
+
+const capSafeScoreByRisk = (score: number, maxRisk: number, averageRisk: number) => {
+  let capped = score;
+  if (maxRisk >= 95) capped = Math.min(capped, 20);
+  else if (maxRisk >= 85) capped = Math.min(capped, 35);
+  else if (maxRisk >= 75) capped = Math.min(capped, 50);
+  else if (maxRisk >= 60) capped = Math.min(capped, 65);
+  else if (maxRisk >= 45) capped = Math.min(capped, 80);
+
+  if (averageRisk >= 80) capped = Math.min(capped, 25);
+  else if (averageRisk >= 65) capped = Math.min(capped, 45);
+  else if (averageRisk >= 50) capped = Math.min(capped, 65);
+
+  return clamp(capped);
+};
+
 export const sessionToTrip = (session: LiveTripSession): TripData => {
   const snapshots = session.snapshot_history ?? [];
 
@@ -106,11 +123,9 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
     : 0;
   const metadata = session.metadata ?? {};
 
-  // FIX: clamp safe_driving_score to [0, 100].
-  // Backend risk_score may occasionally exceed 100, which would produce a
-  // negative safe_driving_score and break DriverRankingView score labels.
-  const rawSafeScore = last?.safe_driving_score ?? (100 - (last?.risk_score ?? 0));
-  const safeDrivingScore = Math.min(100, Math.max(0, rawSafeScore));
+  const currentRisk = last?.risk_score ?? averageRisk;
+  const rawSafeScore = 100 - currentRisk;
+  const safeDrivingScore = capSafeScoreByRisk(rawSafeScore, maxRisk, averageRisk);
 
   return {
     trip_id: session.trip_id,

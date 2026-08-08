@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Database, Gauge, MapPin, Sparkles, Trash2, Truck, Video } from 'lucide-react';
-import { TripData } from '../types';
+import { Frame, TripData } from '../types';
+import { buildRankingRows } from './DriverRankingView';
 
 interface FleetMapViewProps {
   vehicles: TripData[];
@@ -15,6 +16,36 @@ interface FleetMapViewProps {
 
 const finite = (value: unknown, digits = 1) =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : 'N/A';
+
+const finiteNumber = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+const formatSeconds = (value: unknown, digits = 2) => {
+  const numeric = finiteNumber(value);
+  return numeric === null ? 'No TTC data' : `${numeric.toFixed(digits)} s`;
+};
+
+const lastFiniteBy = <T,>(items: T[] | undefined, getValue: (item: T) => unknown) => {
+  for (let index = (items?.length ?? 0) - 1; index >= 0; index -= 1) {
+    const numeric = finiteNumber(getValue(items![index]));
+    if (numeric !== null) return numeric;
+  }
+  return null;
+};
+
+const averageFiniteBy = <T,>(items: T[] | undefined, getValue: (item: T) => unknown) => {
+  const values = (items ?? [])
+    .map(getValue)
+    .map(finiteNumber)
+    .filter((value): value is number => value !== null);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+};
+
+const hasRealCoordinates = (coordinates?: { lat?: number; lon?: number }) => {
+  const lat = finiteNumber(coordinates?.lat);
+  const lon = finiteNumber(coordinates?.lon);
+  return lat !== null && lon !== null && !(lat === 0 && lon === 0);
+};
 
 const statusFor = (trip: TripData) => {
   if (trip.runtime_status === 'running') return 'LIVE';
@@ -46,8 +77,18 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
   }
 
   const lastFrame = selected.frames?.[selected.frames.length - 1];
+  const selectedRanking = buildRankingRows([selected])[0];
   const status = statusFor(selected);
   const coordinates = lastFrame?.ego?.geolocation;
+  const lastTtc = finiteNumber(lastFrame?.min_ttc) ?? lastFiniteBy<Frame>(selected.frames, (frame) => frame.min_ttc);
+  const avgHeadway = averageFiniteBy<Frame>(selected.frames, (frame) => frame.headway_sec) ?? finiteNumber(selected.trip_aggregate?.avg_headway_sec);
+  const nearMissCount = selected.frames?.length
+    ? selected.frames.filter((frame) => {
+      const ttc = finiteNumber(frame.min_ttc);
+      return ttc !== undefined && ttc > 0 && ttc <= 2.5;
+    }).length
+    : selected.trip_aggregate?.near_miss_count;
+  const coordinateLabel = hasRealCoordinates(coordinates) ? null : 'No GPS coordinates in organizer dataset';
 
   return (
     <div className="flex-1 flex flex-col md:flex-row bg-[#070A12] overflow-hidden text-white">
@@ -93,7 +134,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-slate-400">
                   <span>Speed<br /><b className="text-slate-200">{finite(frame?.ego?.speed_kmh)} km/h</b></span>
-                  <span>TTC<br /><b className="text-slate-200">{finite(frame?.min_ttc, 2)} s</b></span>
+                  <span>TTC<br /><b className="text-slate-200">{formatSeconds(finiteNumber(frame?.min_ttc) ?? lastFiniteBy<Frame>(trip.frames, (item) => item.min_ttc))}</b></span>
                   <span>Driver<br /><b className="text-slate-200">{frame?.driver?.state ?? 'N/A'}</b></span>
                 </div>
               </button>
@@ -117,8 +158,8 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
 
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Metric label="Last speed" value={`${finite(lastFrame?.ego?.speed_kmh)} km/h`} />
-            <Metric label="Last TTC" value={`${finite(lastFrame?.min_ttc, 2)} s`} />
-            <Metric label="Safe score" value={finite(selected.trip_aggregate?.safe_driving_score)} />
+            <Metric label="Last valid TTC" value={formatSeconds(lastTtc)} />
+            <Metric label="Canonical safe score" value={finite(selectedRanking?.score)} />
             <Metric label="Max risk" value={finite(selected.trip_aggregate?.max_risk_score)} />
           </section>
 
@@ -126,21 +167,25 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
             <div className="rounded-xl border border-[#1E293B] bg-[#0B0F19] p-5 space-y-4">
               <h2 className="font-bold flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-400" />Recorded location</h2>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <Info label="Latitude" value={finite(coordinates?.lat, 6)} />
-                <Info label="Longitude" value={finite(coordinates?.lon, 6)} />
+                <Info label="Latitude" value={coordinateLabel ?? finite(coordinates?.lat, 6)} />
+                <Info label="Longitude" value={coordinateLabel ?? finite(coordinates?.lon, 6)} />
                 <Info label="Map source" value={selected.metadata?.map ?? 'N/A'} />
                 <Info label="Weather" value={selected.metadata?.weather ? `cloud ${finite(selected.metadata.weather.cloudiness, 0)}%` : 'N/A'} />
               </div>
-              <p className="text-xs text-slate-500">No synthetic map or vehicle positions are rendered.</p>
+              <p className="text-xs text-slate-500">
+                {coordinateLabel ?? 'No synthetic map or vehicle positions are rendered.'}
+              </p>
             </div>
 
             <div className="rounded-xl border border-[#1E293B] bg-[#0B0F19] p-5 space-y-4">
               <h2 className="font-bold flex items-center gap-2"><Gauge className="w-4 h-4 text-sky-400" />Recorded summary</h2>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <Info label="Frames" value={String(selected.frames?.length ?? 0)} />
-                <Info label="Near misses" value={String(selected.trip_aggregate?.near_miss_count ?? 'N/A')} />
-                <Info label="Avg. headway" value={`${finite(selected.trip_aggregate?.avg_headway_sec, 2)} s`} />
+                <Info label="Near misses" value={String(nearMissCount ?? 'N/A')} />
+                <Info label="Avg. headway" value={formatSeconds(avgHeadway)} />
                 <Info label="Driver state" value={lastFrame?.driver?.state ?? 'N/A'} />
+                <Info label="Avg. risk" value={finite(selectedRanking?.avgRisk)} />
+                <Info label="Risk class" value={selected.trip_aggregate?.risk_classification ?? 'N/A'} />
               </div>
             </div>
           </section>

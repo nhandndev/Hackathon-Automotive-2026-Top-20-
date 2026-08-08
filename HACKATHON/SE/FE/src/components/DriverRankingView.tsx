@@ -42,6 +42,7 @@ export interface DriverRankingRow {
   avgRisk: number;
   maxRisk: number;
   criticalEvents: number;
+  criticalEventPct: number;
   distractedPct: number;
   fatigueEvents: number;
   speedingPct: number;
@@ -159,6 +160,9 @@ const lowTtc = (frame: Frame) => {
   return value > 0 && value <= 2.5;
 };
 
+const countBehavior = (frames: Frame[], key: 'harsh_brake' | 'harsh_accel' | 'harsh_corner' | 'speeding' | 'tailgating') =>
+  frames.filter((frame) => Boolean(frame.behavior_flags?.[key])).length;
+
 export const buildRankingRows = (vehicles: TripData[]): DriverRankingRow[] => (
   vehicles.map((trip) => {
     const frames = trip.frames ?? [];
@@ -166,74 +170,50 @@ export const buildRankingRows = (vehicles: TripData[]): DriverRankingRow[] => (
     const aggregate = trip.trip_aggregate;
     const driverSummary = trip.driver_summary;
 
-    const avgRisk = finite(
-      aggregate?.avg_risk_score,
-      total > 0
-        ? frames.reduce((sum, frame) => sum + finite(frame.risk?.final_risk_score), 0) / total
-        : 0,
-    );
-    const maxRisk = finite(
-      aggregate?.max_risk_score,
-      frames.reduce((max, frame) => Math.max(max, finite(frame.risk?.final_risk_score)), 0),
-    );
-    const distractedPct = finite(
-      driverSummary?.state_distribution_pct?.distracted,
-      pct(frames.filter((frame) => isDistractedState(frame.driver?.state)).length, total),
-    );
-    const speedingPct = finite(
-      aggregate?.speeding_pct_time,
-      pct(frames.filter((frame) => frame.behavior_flags?.speeding).length, total),
-    );
-    const tailgatingPct = finite(
-      aggregate?.tailgating_pct_time,
-      pct(frames.filter((frame) => frame.behavior_flags?.tailgating).length, total),
-    );
-    // Calculate debounced harsh brake count to match Event Log table 100%
-    const lastEventTimeByType: Record<string, number> = {};
-    let debouncedHarshBrakeCount = 0;
-    for (const frame of frames) {
-      if (frame.behavior_flags?.harsh_brake) {
-        const currentTs = Number(frame.timestamp ?? 0);
-        const lastTs = lastEventTimeByType['harsh_brake'] ?? -999;
-        if (currentTs - lastTs >= 3.0) {
-          lastEventTimeByType['harsh_brake'] = currentTs;
-          debouncedHarshBrakeCount += 1;
-        }
-      }
-    }
-
-    const harshEvents = debouncedHarshBrakeCount > 0 
-      ? debouncedHarshBrakeCount 
-      : (finite(aggregate?.harsh_brake_count) + finite(aggregate?.harsh_accel_count) + finite(aggregate?.harsh_corner_count));
-    const fatigueEvents = finite(
-      driverSummary?.microsleep_count,
-      frames.filter((frame) => isFatigueState(frame.driver?.state)).length,
-    );
-    const nearMissCount = finite(
-      aggregate?.near_miss_count,
-      frames.filter(lowTtc).length,
-    );
+    const avgRisk = total > 0
+      ? frames.reduce((sum, frame) => sum + finite(frame.risk?.final_risk_score), 0) / total
+      : finite(aggregate?.avg_risk_score);
+    const maxRisk = total > 0
+      ? frames.reduce((max, frame) => Math.max(max, finite(frame.risk?.final_risk_score)), 0)
+      : finite(aggregate?.max_risk_score);
+    const distractedPct = total > 0
+      ? pct(frames.filter((frame) => isDistractedState(frame.driver?.state)).length, total)
+      : finite(driverSummary?.state_distribution_pct?.distracted);
+    const speedingPct = total > 0
+      ? pct(countBehavior(frames, 'speeding'), total)
+      : finite(aggregate?.speeding_pct_time);
+    const tailgatingPct = total > 0
+      ? pct(countBehavior(frames, 'tailgating'), total)
+      : finite(aggregate?.tailgating_pct_time);
+    const harshEvents = total > 0
+      ? countBehavior(frames, 'harsh_brake') + countBehavior(frames, 'harsh_accel') + countBehavior(frames, 'harsh_corner')
+      : finite(aggregate?.harsh_brake_count) + finite(aggregate?.harsh_accel_count) + finite(aggregate?.harsh_corner_count);
+    const fatigueEvents = total > 0
+      ? frames.filter((frame) => isFatigueState(frame.driver?.state)).length
+      : finite(driverSummary?.microsleep_count);
+    const nearMissCount = total > 0
+      ? frames.filter(lowTtc).length
+      : finite(aggregate?.near_miss_count);
     const criticalEvents = frames.filter((frame) => finite(frame.risk?.final_risk_score) >= 80 || lowTtc(frame)).length;
+    const criticalEventPct = pct(criticalEvents, total);
+    const harshEventPct = pct(harshEvents, total);
+    const fatigueEventPct = pct(fatigueEvents, total);
+    const nearMissPct = pct(nearMissCount, total);
 
-    const distractionPenalty = distractedPct * 0.45;
-    const penalty = (avgRisk * 0.25)
-      + (maxRisk * 0.15)
-      + (criticalEvents * 3)
-      + distractionPenalty
-      + (fatigueEvents * 5)
-      + (speedingPct * 0.2)
-      + (tailgatingPct * 0.25)
-      + (harshEvents * 2)
-      + (nearMissCount * 4);
+    const penalty = (avgRisk * 0.45)
+      + (maxRisk * 0.20)
+      + (criticalEventPct * 0.15)
+      + (distractedPct * 0.10)
+      + (fatigueEventPct * 0.05)
+      + (speedingPct * 0.03)
+      + (tailgatingPct * 0.04)
+      + (harshEventPct * 0.03)
+      + (nearMissPct * 0.05);
 
     let calculatedScore = clamp(100 - penalty);
-    if (distractedPct > 50) {
-      calculatedScore = Math.min(calculatedScore, 58);
-    } else if (distractedPct > 30) {
-      calculatedScore = Math.min(calculatedScore, 68);
-    }
+    if (distractedPct > 50) calculatedScore = Math.min(calculatedScore, 58);
 
-    const score = clamp(finite(aggregate?.safe_driving_score, calculatedScore));
+    const score = clamp(calculatedScore);
     const riskLevel = scoreLabel(score);
 
     return {
@@ -245,6 +225,7 @@ export const buildRankingRows = (vehicles: TripData[]): DriverRankingRow[] => (
       avgRisk,
       maxRisk,
       criticalEvents,
+      criticalEventPct,
       distractedPct,
       fatigueEvents,
       speedingPct,
@@ -262,7 +243,7 @@ export const buildRankingRows = (vehicles: TripData[]): DriverRankingRow[] => (
       ],
     };
   })
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => (b.score - a.score) || (a.avgRisk - b.avgRisk) || (a.maxRisk - b.maxRisk) || (a.criticalEventPct - b.criticalEventPct))
     .map((row, index) => ({ ...row, rank: index + 1 }))
 );
 
@@ -277,16 +258,19 @@ export const buildLocalAnalysis = (row: DriverRankingRow, fleetAverage: number):
   const firstFatigue = fatigueFrames[0];
   const firstTtc = ttcFrames[0];
   const firstHighRisk = highRiskFrames[0];
+  const harshEventPct = pct(row.harshEvents, totalFrames);
+  const fatigueEventPct = pct(row.fatigueEvents, totalFrames);
+  const nearMissPct = pct(row.nearMissCount, totalFrames);
   const estimatedPenalties = {
-    avgRisk: row.avgRisk * 0.25,
-    maxRisk: row.maxRisk * 0.15,
-    criticalEvents: row.criticalEvents * 3,
-    distracted: row.distractedPct * 0.15,
-    fatigue: row.fatigueEvents * 5,
-    speeding: row.speedingPct * 0.2,
-    tailgating: row.tailgatingPct * 0.25,
-    harsh: row.harshEvents * 2,
-    nearMiss: row.nearMissCount * 4,
+    avgRisk: row.avgRisk * 0.45,
+    maxRisk: row.maxRisk * 0.20,
+    criticalEvents: row.criticalEventPct * 0.15,
+    distracted: row.distractedPct * 0.10,
+    fatigue: fatigueEventPct * 0.05,
+    speeding: row.speedingPct * 0.03,
+    tailgating: row.tailgatingPct * 0.04,
+    harsh: harshEventPct * 0.03,
+    nearMiss: nearMissPct * 0.05,
   };
   const totalPenalty = Object.values(estimatedPenalties).reduce((sum, value) => sum + value, 0);
   const frameText = (frame: typeof frames[number] | undefined) => {
@@ -336,14 +320,15 @@ export const buildLocalAnalysis = (row: DriverRankingRow, fleetAverage: number):
       : 'monitoring';
 
   return {
-    summary: `${row.trip_id} đạt Safety Score ${row.score.toFixed(1)}/100, xếp hạng #${row.rank}. Mức ưu tiên coaching: ${row.coachingPriority}.`,
+    summary: `${row.trip_id} đạt Ranking Score ${row.score.toFixed(1)}/100, xếp hạng #${row.rank}. Mức ưu tiên coaching: ${row.coachingPriority}.`,
     ranking_reason: [
-      `Audit formula bắt đầu từ 100 điểm và trừ khoảng ${totalPenalty.toFixed(1)} điểm từ các nhóm rủi ro. Score cuối được clamp về ${row.score.toFixed(1)}/100.`,
+      `Ranking formula bắt đầu từ 100 điểm và trừ ${totalPenalty.toFixed(1)} điểm đã normalize theo tỷ lệ frame/phần trăm. Ranking Score cuối là ${row.score.toFixed(1)}/100.`,
       `1. Risk score penalty: -${(estimatedPenalties.avgRisk + estimatedPenalties.maxRisk).toFixed(1)} điểm. Mốc đại diện: ${frameText(firstHighRisk)}. Lý do: risk.final_risk_score cao cho thấy tình huống đã được AI đánh giá nguy hiểm hơn baseline.`,
       `2. Driver attention penalty: -${estimatedPenalties.distracted.toFixed(1)} điểm. Có ${distractedFrames.length}/${totalFrames} frames distracted (${row.distractedPct.toFixed(1)}%). Mốc đầu tiên: ${frameText(firstDistracted)}. Lý do: driver.state=distracted làm giảm khả năng phản ứng, dù min_ttc có thể là Infinity ở các frame đầu.`,
-      `3. Fatigue/microsleep penalty: -${estimatedPenalties.fatigue.toFixed(1)} điểm. Fatigue events=${row.fatigueEvents}. Mốc đại diện: ${frameText(firstFatigue)}. Lý do: drowsy/yawning/microsleep là rủi ro trực tiếp với tài xế, cần coaching hoặc nghỉ bắt buộc.`,
-      `4. TTC/following-distance penalty: -${(estimatedPenalties.nearMiss + estimatedPenalties.tailgating).toFixed(1)} điểm. Near miss=${row.nearMissCount}, tailgating=${row.tailgatingPct.toFixed(1)}%. Mốc đại diện: ${frameText(firstTtc)}. Lý do: min_ttc thấp hoặc tailgating làm tăng nguy cơ va chạm phía trước.`,
-      `5. Behavior penalty: -${(estimatedPenalties.speeding + estimatedPenalties.harsh).toFixed(1)} điểm từ speeding=${row.speedingPct.toFixed(1)}% và harsh_events=${row.harshEvents}. Đây là nhóm hành vi vận hành ảnh hưởng chi phí bảo hiểm, hao mòn xe và coaching priority.`,
+      `3. Critical frame penalty: -${estimatedPenalties.criticalEvents.toFixed(1)} điểm. Critical frames=${row.criticalEvents}/${totalFrames} (${row.criticalEventPct.toFixed(1)}%). Mốc đại diện: ${frameText(firstHighRisk)}.`,
+      `4. Fatigue/microsleep penalty: -${estimatedPenalties.fatigue.toFixed(1)} điểm. Fatigue events=${row.fatigueEvents}. Mốc đại diện: ${frameText(firstFatigue)}. Lý do: drowsy/yawning/microsleep là rủi ro trực tiếp với tài xế, cần coaching hoặc nghỉ bắt buộc.`,
+      `5. TTC/following-distance penalty: -${(estimatedPenalties.nearMiss + estimatedPenalties.tailgating).toFixed(1)} điểm. Near miss=${row.nearMissCount}, tailgating=${row.tailgatingPct.toFixed(1)}%. Mốc đại diện: ${frameText(firstTtc)}. Lý do: min_ttc thấp hoặc tailgating làm tăng nguy cơ va chạm phía trước.`,
+      `6. Behavior penalty: -${(estimatedPenalties.speeding + estimatedPenalties.harsh).toFixed(1)} điểm từ speeding=${row.speedingPct.toFixed(1)}% và harsh_events=${row.harshEvents}. Đây là nhóm hành vi vận hành ảnh hưởng chi phí bảo hiểm, hao mòn xe và coaching priority.`,
     ].join('\n\n'),
     top_risk_factors: factors.map((factor) => ({
       factor: factor.factor,
@@ -352,7 +337,7 @@ export const buildLocalAnalysis = (row: DriverRankingRow, fleetAverage: number):
       severity: factor.severity as RankingAnalysis['top_risk_factors'][number]['severity'],
     })),
     fleet_comparison: {
-      score_vs_average: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} điểm so với fleet average ${fleetAverage.toFixed(1)}`,
+      score_vs_average: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} điểm so với fleet average ranking score ${fleetAverage.toFixed(1)}`,
       risk_vs_average: `Average risk ${row.avgRisk.toFixed(1)}, max risk ${row.maxRisk.toFixed(1)}`,
       behavior_vs_average: `Distracted ${row.distractedPct.toFixed(1)}%, speeding ${row.speedingPct.toFixed(1)}%, tailgating ${row.tailgatingPct.toFixed(1)}%`,
     },
@@ -371,7 +356,7 @@ export const buildLocalAnalysis = (row: DriverRankingRow, fleetAverage: number):
     coaching_plan: {
       focus: row.fatigueEvents > 0 ? 'Fatigue management, nghỉ bắt buộc và nhận diện microsleep.' : row.distractedPct > 10 ? 'Giảm distracted driving và tăng tập trung phía trước.' : 'Duy trì hành vi lái ổn định.',
       next_review: 'Sau 1-2 trip hoặc sau ca chạy kế tiếp.',
-      success_metric: 'Safety Score tăng, Max Risk giảm, distracted/tailgating/near miss giảm.',
+      success_metric: 'Ranking Score tăng, Max Risk giảm, distracted/tailgating/near miss giảm.',
     },
   };
 };
@@ -429,7 +414,7 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
             <span className="text-xs font-mono text-sky-400">DRIVER SCORECARD</span>
             <h1 className="mt-1 text-2xl font-extrabold">Driver Ranking</h1>
             <p className="mt-1 max-w-3xl text-sm text-slate-400">
-              Ranking dùng dữ liệu AI contract gốc: driver.state, alertness_score, min_ttc, headway_sec, behavior_flags và risk.final_risk_score.
+              Ranking xếp theo Ranking Score riêng của bảng này. Điểm được tính từ JSON/local AI risk, critical frames, distracted, fatigue, TTC/headway và behavior flags; không dùng BTC safe score cũ.
             </p>
           </div>
           <button
@@ -443,19 +428,20 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
 
         <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
           <MetricCard icon={Trophy} label="Drivers ranked" value={String(rows.length)} tone="sky" />
-          <MetricCard icon={Gauge} label="Fleet avg score" value={fleetAverage.toFixed(1)} tone="emerald" />
+          <MetricCard icon={Gauge} label="Fleet avg ranking score" value={fleetAverage.toFixed(1)} tone="emerald" />
           <MetricCard icon={Target} label="Need coaching" value={String(criticalDrivers)} tone="amber" />
-          <MetricCard icon={AlertTriangle} label="Critical signals" value={String(criticalAlerts)} tone="red" />
+          <MetricCard icon={AlertTriangle} label="High-risk frames/signals" value={String(criticalAlerts)} tone="red" />
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
           <div className="overflow-hidden rounded-xl border border-[#1E293B] bg-[#0B0F19]">
-            <div className="grid grid-cols-[70px_1fr_110px_120px_120px_140px] border-b border-[#1E293B] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="grid grid-cols-[70px_1fr_110px_120px_120px_120px_140px] border-b border-[#1E293B] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               <span>Rank</span>
               <span>Driver</span>
-              <span>Score</span>
+              <span>Ranking Score</span>
               <span>Risk</span>
-              <span>Events</span>
+              <span>Avg Risk</span>
+              <span>High-Risk Frames</span>
               <span>Coaching</span>
             </div>
             <div className="divide-y divide-[#1E293B]">
@@ -463,7 +449,7 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
                 <button
                   key={row.trip_id}
                   onClick={() => handleSelect(row)}
-                  className={`grid w-full grid-cols-[70px_1fr_110px_120px_120px_140px] items-center px-4 py-3 text-left transition-colors ${
+                  className={`grid w-full grid-cols-[70px_1fr_110px_120px_120px_120px_140px] items-center px-4 py-3 text-left transition-colors ${
                     row.trip_id === selectedRow.trip_id ? 'bg-slate-900/90' : 'hover:bg-slate-900/50'
                   }`}
                 >
@@ -476,6 +462,7 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
                   <span className={`w-fit rounded-full border px-2 py-1 text-[10px] font-bold ${riskClass(row.riskLevel)}`}>
                     {row.riskLevel}
                   </span>
+                  <span className="font-mono text-sm font-bold text-sky-300">{row.avgRisk.toFixed(1)}</span>
                   <span className="text-sm text-slate-300">{row.criticalEvents}</span>
                   <span className="text-xs font-bold text-slate-300">{row.coachingPriority}</span>
                 </button>

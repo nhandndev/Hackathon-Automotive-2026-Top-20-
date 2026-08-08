@@ -57,6 +57,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       metadata: vehicle.metadata,
       driver_summary: vehicle.driver_summary,
       trip_aggregate: vehicle.trip_aggregate,
+      frames: vehicle.frames,
     }));
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -168,7 +169,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                     </div>
 
                     <h3 className="text-sm font-extrabold text-white leading-snug break-words">
-                      {msg.cardData.driverName} đang có rủi ro cao nhất — Safe Score <span className="text-amber-400 font-mono">{msg.cardData.score}/100</span>
+                      {msg.cardData.driverName} đang có rủi ro cao nhất — Ranking Score <span className="text-amber-400 font-mono">{msg.cardData.score}/100</span>
                     </h3>
 
                     <div className="flex flex-wrap gap-1.5">
@@ -240,7 +241,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                     {msg.cardData.rankedDrivers && msg.cardData.rankedDrivers.length > 0 && (
                       <div className="space-y-1.5 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 overflow-hidden">
                         <div className="flex items-center justify-between text-[10px] font-bold uppercase text-amber-400 border-b border-slate-900 pb-1.5 mb-1 gap-1">
-                          <span className="truncate">{msg.cardData.sortRule || (msg.cardData.reportType === 'maintenance' ? 'Sắp xếp: Ưu tiên bảo trì TỪ CAO ➔ THẤP' : 'Sắp xếp: Mức độ an toàn TỪ CAO ➔ THẤP')}</span>
+                          <span className="truncate">{msg.cardData.sortRule || (msg.cardData.reportType === 'maintenance' ? 'Sắp xếp: Ưu tiên bảo trì TỪ CAO ➔ THẤP' : 'Xếp hạng theo điểm an toàn Ranking Score TỪ CAO ➔ THẤP')}</span>
                           <span className="font-mono text-slate-400 shrink-0">({msg.cardData.rankedDrivers.length} trips)</span>
                         </div>
                         {msg.cardData.rankedDrivers.map((d: any, rankIdx: number) => (
@@ -258,8 +259,12 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                                 #{rankIdx + 1}
                               </span>
                               <div className="truncate min-w-0">
-                                <span className="font-bold text-slate-100 group-hover:text-sky-300 block truncate">{d.driverName}</span>
-                                <span className="text-[10px] font-mono text-slate-400 block truncate">Mã: {d.trip_id} {d.dtcCode ? `• ${d.dtcCode}` : ''}</span>
+                                <span className="font-bold text-slate-100 group-hover:text-sky-300 block truncate">{d.trip_id}</span>
+                                <span className="text-[10px] font-mono text-slate-400 block truncate">
+                                  {d.riskLevel || d.driverName || 'N/A'}
+                                  {typeof d.maxRisk === 'number' ? ` • Max risk ${d.maxRisk}/100` : ''}
+                                  {d.dtcCode && d.dtcCode !== 'N/A' ? ` • DTC ${d.dtcCode}` : ''}
+                                </span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">

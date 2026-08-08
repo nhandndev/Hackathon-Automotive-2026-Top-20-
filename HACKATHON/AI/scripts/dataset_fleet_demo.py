@@ -391,6 +391,7 @@ def main() -> int:
                         engine.end_trip(event_stream)
                 finally:
                     intervention_stop.set()
+                    intervention_overlay.clear()
                     
                 with csv_path.open("w", newline="", encoding="utf-8") as stream:
                     writer = csv.DictWriter(stream, fieldnames=CSV_FIELDS)

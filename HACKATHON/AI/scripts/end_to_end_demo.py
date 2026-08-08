@@ -276,6 +276,7 @@ def main() -> int:
             trip_finished = True
     finally:
         _stop_poll.set()
+        intervention_overlay.clear()
         media_executor.shutdown(wait=True, cancel_futures=False)
         engine.close()
         if capture is not None: capture.release()

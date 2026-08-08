@@ -78,7 +78,15 @@ class InterventionOverlayState:
         with self._lock:
             self._cmd = None
             self._expires = 0.0
-        self._beep_stop.set()
+            beep_stop = self._beep_stop
+            beep_thread = self._beep_thread
+        beep_stop.set()
+        if (
+            beep_thread is not None
+            and beep_thread.is_alive()
+            and threading.current_thread() is not beep_thread
+        ):
+            beep_thread.join(timeout=0.5)
 
     def get_active(self) -> dict | None:
         with self._lock:
@@ -97,8 +105,17 @@ class InterventionOverlayState:
             return max(0.0, self._expires - time.perf_counter())
 
     def _start_beep(self, notif_type: str) -> None:
-        self._beep_stop.set()
-        self._beep_stop = threading.Event()
+        old_stop = self._beep_stop
+        old_thread = self._beep_thread
+        old_stop.set()
+        if (
+            old_thread is not None
+            and old_thread.is_alive()
+            and threading.current_thread() is not old_thread
+        ):
+            old_thread.join(timeout=0.2)
+        beep_stop = threading.Event()
+        self._beep_stop = beep_stop
 
         def loop() -> None:
             patterns = {
@@ -107,15 +124,15 @@ class InterventionOverlayState:
                 "call": [(700, 180), (900, 180), (700, 180), (900, 180)],
             }
             pattern = patterns.get(str(notif_type), patterns["alarm"])
-            while not self._beep_stop.is_set():
+            while not beep_stop.is_set():
                 for freq, duration in pattern:
-                    if self._beep_stop.is_set():
+                    if beep_stop.is_set():
                         return
                     try:
                         winsound.Beep(freq, duration)
                     except Exception:
                         return
-                self._beep_stop.wait(0.9)
+                beep_stop.wait(0.9)
 
         self._beep_thread = threading.Thread(target=loop, daemon=True)
         self._beep_thread.start()
@@ -731,6 +748,7 @@ def main() -> int:
         pass
     finally:
         _stop_poll.set()
+        intervention_overlay.clear()
         driver.close()
         if writer is not None:
             writer.release()

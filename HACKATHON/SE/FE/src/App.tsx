@@ -325,6 +325,7 @@ export default function App() {
             selectedVehicle
               ? <PerformanceInsightsView
                   vehicle={selectedVehicle}
+                  vehicles={vehicles}
                   liveAlerts={liveAlerts}
                   onOpenCopilot={() => setIsCopilotOpen(true)}
                 />

@@ -110,7 +110,7 @@ type ReportMode = "safety_detail" | "safety_overview" | "maintenance_detail" | "
 
 type CopilotTripInput = {
   tripId: string;
-  driverName: string;
+  tripLabel?: string;
   rank: number;
   safety: {
     score: number;
@@ -165,7 +165,7 @@ function compactTripForBedrock(trip: CopilotTripInput, mode?: string) {
   if (mode?.startsWith("safety")) {
     return {
       tripId: trip.tripId,
-      driverName: trip.driverName,
+      tripLabel: trip.tripLabel || trip.tripId,
       rank: trip.rank,
       safety: trip.safety,
       eventSummary: trip.eventSummary,
@@ -181,7 +181,7 @@ function compactTripForBedrock(trip: CopilotTripInput, mode?: string) {
   }
   return {
     tripId: trip.tripId,
-    driverName: trip.driverName,
+    tripLabel: trip.tripLabel || trip.tripId,
     rank: trip.rank,
     safety: trip.safety,
     eventSummary: trip.eventSummary,
@@ -320,8 +320,16 @@ const detectReportType = (message: string): { type: CopilotReportType; requested
   if (lower.includes("so sánh") || lower.includes("compare")) {
     return { type: "compare", requestedCount: Math.max(2, Number(countMatch?.[1] || 2) || 2) };
   }
-  if (lower.includes("bảo trì") || lower.includes("maintenance")) {
-    return { type: "maintenance", requestedCount: 3 };
+  if (
+    lower.includes("bảo trì")
+    || lower.includes("bao tri")
+    || lower.includes("maintenance")
+    || lower.includes("kiểm tra")
+    || lower.includes("kiem tra")
+    || lower.includes("inspection")
+    || lower.includes("triage")
+  ) {
+    return { type: "maintenance", requestedCount: 999 };
   }
   if (lower.includes("báo cáo") || lower.includes("an toàn") || lower.includes("safety")) {
     return { type: "safety", requestedCount: 4 };
@@ -418,15 +426,15 @@ function buildCopilotRankingRow(v: TripSummary) {
     - (nearMissPct * 0.05));
   const dtcCodes = aggregate?.dtc_codes;
   const dtcCode = Array.isArray(dtcCodes) && dtcCodes.length > 0 ? dtcCodes.join(", ") : "N/A";
-  const maintenancePriority = rankingScore < 45 || maxRisk >= 95 || harshBraking >= 10
-    ? "CRITICAL"
-    : rankingScore < 65 || maxRisk >= 75 || harshBraking > 0
+  const maintenancePriority = dtcCode !== "N/A" || harshBraking >= 20
+    ? "INSPECT"
+    : rankingScore < 65 || maxRisk >= 95 || harshBraking > 0
       ? "HIGH"
       : "ROUTINE";
 
   return {
     trip_id: v.trip_id,
-    driverName: v.metadata?.driver_profile ?? driverSummary?.subject_id ?? "N/A",
+    tripLabel: v.trip_id,
     safeScore: Number(rankingScore.toFixed(1)),
     rankingScore: Number(rankingScore.toFixed(1)),
     riskLevel: riskLabelForScore(rankingScore),
@@ -468,9 +476,9 @@ function getGeminiClient(): GoogleGenAI | null {
 
 // Fleet Data Context for AI Copilot
 const fleetSystemContext = `
-Bạn là Fleet AI Copilot - Trợ lý trí tuệ nhân tạo giám sát an toàn đội xe Fleet Command.
+Bạn là Fleet AI Copilot - Trợ lý trí tuệ nhân tạo giám sát an toàn các trip Fleet Command.
 Chỉ dùng dữ liệu có trong Trip context từ Dashboard.
-Không được bịa trip_id, tài xế, score, DTC, chi phí, phụ tùng, work order hoặc timeline.
+Không được bịa trip_id, driver name, vehicle name, score, DTC, chi phí, phụ tùng, work order hoặc timeline; trong UI/report chỉ gọi đối tượng là trip.
 Nếu thiếu dữ liệu, nói rõ là chưa có dữ liệu.
 Bạn chỉ diễn giải và khuyến nghị bằng tiếng Việt chuyên nghiệp; số liệu authoritative thuộc JSON/local AI telemetry.
 `;
@@ -606,7 +614,7 @@ app.post("/api/copilot", async (req, res) => {
     if (reportRequest.type === "compare" && selectedTripIds.length < reportRequest.requestedCount) {
       res.json({
         reply: [
-          `Bạn muốn so sánh ${reportRequest.requestedCount} tài xế/trip, nhưng hiện mới thấy ${selectedTripIds.length ? selectedTripIds.join(", ") : "chưa có trip_id nào"}.`,
+          `Bạn muốn so sánh ${reportRequest.requestedCount} trip, nhưng hiện mới thấy ${selectedTripIds.length ? selectedTripIds.join(", ") : "chưa có trip_id nào"}.`,
           `Bạn gửi thêm ${reportRequest.requestedCount - selectedTripIds.length} trip_id còn thiếu nha.`,
           `Trip hiện có: ${availableTripIds(vehicles).join(", ") || "chưa có trip nào từ Dashboard"}.`,
         ].join("\n"),
@@ -631,18 +639,22 @@ app.post("/api/copilot", async (req, res) => {
     try {
       const prompt = isMaintenance
         ? `
-Bạn là Fleet Maintenance AI Copilot cho FPTU DMS Vision.
-Nhiệm vụ: tạo lời mở đầu ngắn gọn cho BÁO CÁO ƯU TIÊN BẢO TRÌ TELEMETRY ĐỘI XE.
-Ghi rõ: Báo cáo đã sắp xếp TOÀN BỘ ${rankedDrivers.length} xe theo telemetry JSON/local AI, từ ưu tiên cao đến thấp: ${rankedDrivers.map(d => `Xe ${d.trip_id} (${d.driverName} - Score: ${d.safeScore}/100, Max risk: ${d.maxRisk}/100, Harsh brake: ${d.harshBraking}, DTC: ${d.dtcCode})`).join(", ")}.
-Không được bịa mã DTC, chi phí, phụ tùng hoặc work order nếu không có trong JSON.
+Bạn là Fleet Inspection Triage AI Copilot cho FPTU DMS Vision.
+Nhiệm vụ: tạo lời mở đầu ngắn gọn cho BÁO CÁO ƯU TIÊN KIỂM TRA KỸ THUẬT DỰA TRÊN SAFETY TELEMETRY.
+Ghi rõ: Báo cáo đã sắp xếp TOÀN BỘ ${rankedDrivers.length} trip theo telemetry JSON/local AI, từ ưu tiên review cao đến thấp: ${rankedDrivers.map(d => `Trip ${d.trip_id} (Ranking Score: ${d.safeScore}/100, Max risk: ${d.maxRisk}/100, Harsh behavior: ${d.harshBraking}, DTC: ${d.dtcCode})`).join(", ")}.
+Không được bịa mã DTC, chi phí, phụ tùng, work order hoặc kết luận trip có lỗi kỹ thuật nếu không có vehicle-health telemetry.
+Nếu DTC là N/A, phải nói đây là safety-based inspection triage, không phải chẩn đoán bảo trì.
+Luôn format điểm 1 chữ số thập phân, ví dụ 42.9/100; không viết 43/100 hoặc float dài.
 Trả lời tiếng Việt, 2-3 câu ngắn gọn, chuyên nghiệp.
 
 User request: ${message}
 `
         : `
 Bạn là Fleet AI Copilot cho FPTU DMS Vision.
-Nhiệm vụ: tạo lời mở đầu ngắn gọn cho BÁO CÁO AN TOÀN ĐỘI XE.
+Nhiệm vụ: tạo lời mở đầu ngắn gọn cho BÁO CÁO AN TOÀN THEO TRIP.
 Ghi rõ: Báo cáo đã sắp xếp TOÀN BỘ ${rankedDrivers.length} chuyến đi theo điểm an toàn Ranking Score từ JSON/local AI risk và behavior fields. ${allCritical ? "Tất cả chuyến đều thuộc nhóm nguy hiểm/rủi ro cao; không được gọi là an toàn tuyệt đối." : "Nếu có chuyến an toàn hơn, chỉ nói là tương đối an toàn hơn trong nhóm."} Danh sách: ${rankedDrivers.map(d => `${d.trip_id} (${d.safeScore}/100, avg risk ${d.avgRisk}/100, max risk ${d.maxRisk}/100, ${d.riskLevel})`).join(", ")}.
+Nếu trip đứng #1, phải nói rõ đây là relative fleet rank, không có nghĩa là safe nếu Trip Safety Risk vẫn CRITICAL.
+Luôn format điểm 1 chữ số thập phân, ví dụ 42.9/100; không viết 43/100 hoặc float dài.
 Trả lời tiếng Việt, 2-3 câu ngắn gọn, chuyên nghiệp.
 
 User request: ${message}
@@ -654,24 +666,24 @@ User request: ${message}
         cardType: "COMPARISON",
         cardData: {
           title: isMaintenance
-            ? `Báo Cáo Ưu Tiên Bảo Trì Telemetry (Ưu Tiên Cao ➔ Thấp)`
+            ? `Báo Cáo Ưu Tiên Kiểm Tra Kỹ Thuật Dựa Trên Safety Telemetry`
             : reportRequest.type === "compare"
-              ? `Bảng Xếp Hạng Mức Độ An Toàn (Từ Cao ➔ Thấp)`
+              ? `Bảng Xếp Hạng Mức Độ An Toàn Theo Trip (Từ Cao ➔ Thấp)`
               : `Bảng Xếp Hạng An Toàn Fleet (Từ Cao ➔ Thấp)`,
-          details: aiReply || (isMaintenance
-            ? "AI Copilot đã diễn giải telemetry JSON/local AI; DTC chỉ hiển thị khi có dữ liệu thật."
-            : allCritical
+          details: isMaintenance
+            ? `Card dùng JSON/local AI để xếp ưu tiên kiểm tra kỹ thuật theo trip: ${rankedDrivers.map(d => d.trip_id).join(" → ")}. DTC chỉ hiển thị khi có dữ liệu thật; không kết luận lỗi kỹ thuật khi thiếu vehicle-health telemetry.`
+            : (aiReply || (allCritical
               ? "Tất cả trip trong JSON/local AI đang thuộc nhóm rủi ro cao; danh sách vẫn xếp theo điểm an toàn Ranking Score từ cao xuống thấp."
-              : "AI Copilot đã diễn giải danh sách trip theo điểm an toàn Ranking Score từ JSON/local AI."),
+              : "AI Copilot đã diễn giải danh sách trip theo điểm an toàn Ranking Score từ JSON/local AI.")),
           sortRule: isMaintenance
-            ? "Sắp xếp: Mức độ ưu tiên bảo trì từ CAO ➔ THẤP (Xe hỏng hóc/rủi ro cao xếp trước)"
+            ? "Sắp xếp: Ưu tiên safety review / inspection triage từ CAO ➔ THẤP; không phải chẩn đoán hỏng hóc"
             : allCritical
               ? "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP; Avg Risk/Max Risk dùng để audit"
               : "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP",
           functionName: isMaintenance
             ? "create_maintenance_priority_report"
             : reportRequest.type === "compare"
-              ? "create_driver_comparison_report"
+              ? "create_trip_comparison_report"
               : "create_fleet_safety_report",
           reportType: reportRequest.type,
           count: finalTripIds.length,
@@ -687,24 +699,24 @@ User request: ${message}
         cardType: "COMPARISON",
         cardData: {
           title: isMaintenance
-            ? `Báo Cáo Ưu Tiên Bảo Trì Telemetry (Ưu Tiên Cao ➔ Thấp)`
+            ? `Báo Cáo Ưu Tiên Kiểm Tra Kỹ Thuật Dựa Trên Safety Telemetry`
             : reportRequest.type === "compare"
-              ? `Bảng Xếp Hạng Mức Độ An Toàn (Từ Cao ➔ Thấp)`
+              ? `Bảng Xếp Hạng Mức Độ An Toàn Theo Trip (Từ Cao ➔ Thấp)`
               : `Bảng Xếp Hạng An Toàn Fleet (Từ Cao ➔ Thấp)`,
           details: (isMaintenance
-            ? "Đang chờ AI Copilot/Bedrock diễn giải. Card chỉ dùng telemetry JSON/local AI; không hiển thị DTC giả."
+            ? "Đang chờ AI Copilot/Bedrock diễn giải. Card chỉ dùng safety telemetry JSON/local AI; không hiển thị DTC, chi phí hoặc chẩn đoán giả."
             : allCritical
               ? "Đang chờ AI Copilot/Bedrock diễn giải. Tất cả trip trong JSON/local AI đang ở nhóm rủi ro cao; list vẫn xếp theo điểm an toàn Ranking Score."
               : "Đang chờ AI Copilot/Bedrock diễn giải. Card chỉ dùng telemetry JSON/local AI; không hiển thị dữ liệu giả."),
           sortRule: isMaintenance
-            ? "Sắp xếp: Mức độ ưu tiên bảo trì từ CAO ➔ THẤP (Xe hỏng hóc/rủi ro cao xếp trước)"
+            ? "Sắp xếp: Ưu tiên safety review / inspection triage từ CAO ➔ THẤP; không phải chẩn đoán hỏng hóc"
             : allCritical
               ? "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP; Avg Risk/Max Risk dùng để audit"
               : "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP",
           functionName: isMaintenance
             ? "create_maintenance_priority_report"
             : reportRequest.type === "compare"
-              ? "create_driver_comparison_report"
+              ? "create_trip_comparison_report"
               : "create_fleet_safety_report",
           reportType: reportRequest.type,
           count: finalTripIds.length,
@@ -735,7 +747,7 @@ User: ${message}
 
 Trả lời tiếng Việt, dùng số liệu nếu có, không bịa field mới.
 `);
-      res.json({ reply: reply || "Đã phân tích xong dữ liệu đội xe." });
+      res.json({ reply: reply || "Đã phân tích xong dữ liệu trip." });
       return;
     } catch (err) {
       console.error("Bedrock API Error:", err);
@@ -758,7 +770,7 @@ Trả lời tiếng Việt, dùng số liệu nếu có, không bịa field mớ
         ],
       });
 
-      const reply = response.text || "Đã phân tích xong dữ liệu đội xe.";
+      const reply = response.text || "Đã phân tích xong dữ liệu trip.";
       res.json({ reply });
       return;
     } catch (err) {
@@ -846,7 +858,10 @@ app.post("/api/copilot/report", async (req, res) => {
       "Write detailed Vietnamese operational evaluation, but never invent metrics.",
       "For every trip insight, include: 2-3 pros if supported by nonzero/zero metrics, 3-5 concerns with exact numbers, and a concrete recommendation with why/priority/action.",
       "For safety reports, explain why the trip is risky using score, avgRisk, maxRisk, highRiskFrames, eventSummary, distractedPct, fatigueEvents, nearMissCount, harshBrakeCount, speedingPct, tailgatingPct.",
-      "For maintenance reports, explain brakeStress, tireStress, DTC, priority, estimatedCostVnd, estimatedDowntime, and workOrderStatus only.",
+      "Always format scores with exactly one decimal place like 42.9/100. Never output 43/100 or long floats like 42.93888888888889/100.",
+      "Use the label Trip Safety Risk for risk level. If a trip is rank #1 but CRITICAL, explicitly state rank is relative and does not mean safe.",
+      "For safety actions, prefer safety review before next dispatch. Do not conclude driver suspension, urgent suspension, or confirmed misconduct unless the canonical input includes direct evidence.",
+      "For maintenance reports, treat the output as safety-based inspection triage, not confirmed mechanical diagnosis. Explain brakeStress estimate, tireStress estimate, DTC availability, priority, estimatedCostVnd only if nonzero, estimatedDowntime, and workOrderStatus only. If DTC/vehicle-health telemetry is unavailable, say repair cost is N/A until workshop inspection.",
       "Return JSON only: {\"fleet_insight\":\"detailed string\",\"trip_insights\":{\"TRIP_ID\":{\"pros\":[\"detailed string\"],\"concerns\":[\"detailed string\"],\"recommendation\":\"detailed string\"}}}.",
       `Report mode: ${reportMode || "unknown"}`,
       `Request id: ${canonicalInput?.request_id || "N/A"}`,

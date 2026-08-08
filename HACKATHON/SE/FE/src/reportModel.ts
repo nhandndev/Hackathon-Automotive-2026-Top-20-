@@ -14,7 +14,7 @@ export interface CanonicalSafetyEvent {
 
 export interface VehicleReportModel {
   tripId: string;
-  driverName: string;
+  tripLabel: string;
   score: number;
   riskLevel: 'SAFE' | 'WATCH' | 'AT_RISK' | 'CRITICAL';
   rank: number;
@@ -47,10 +47,7 @@ const finite = (value: unknown, fallback = 0) =>
 
 const pct = (count: number, total: number) => (total > 0 ? (count / total) * 100 : 0);
 
-export const resolveDriverName = (trip: TripData) =>
-  trip.driver_summary?.subject_id && trip.driver_summary.subject_id !== 'runtime'
-    ? trip.driver_summary.subject_id
-    : trip.trip_id;
+export const resolveTripLabel = (trip: TripData) => trip.trip_id;
 
 export const extractCanonicalSafetyEvents = (trip: TripData): CanonicalSafetyEvent[] => {
   const events: CanonicalSafetyEvent[] = [];
@@ -70,7 +67,7 @@ export const extractCanonicalSafetyEvents = (trip: TripData): CanonicalSafetyEve
     else if (behavior?.harsh_brake) type = 'Phanh gấp (Harsh brake)';
     else if (behavior?.tailgating) type = 'Bám đuôi gần (Tailgating)';
     else if (behavior?.speeding) type = 'Vượt quá tốc độ (Speeding)';
-    else if (state !== 'alert') type = `Tài xế ${state}`;
+    else if (state !== 'alert') type = `Trạng thái trip: ${state}`;
     else if (isLowTtc) type = 'TTC thấp / near miss';
     else if (risk >= 50) type = 'Risk score cao';
 
@@ -126,17 +123,16 @@ const buildMaintenance = (trip: TripData, events: CanonicalSafetyEvent[], score:
   const tireStress = Math.min(100, Math.round(10 + speedingPct * 0.4 + tireEventCount * 2));
   const dtcCode = getRealDtcCode(trip);
   const priority: MaintenancePriority =
-    dtcCode !== 'N/A' || brakeStress >= 75 || tireStress >= 75 || score < 45 ? 'INSPECT'
-      : brakeStress >= 50 || tireStress >= 50 || score < 65 ? 'WATCH'
+    dtcCode !== 'N/A' || brakeStress >= 75 || tireStress >= 75 ? 'INSPECT'
+      : brakeStress >= 50 || tireStress >= 50 || score < 65 || maxRisk >= 95 ? 'WATCH'
         : 'NORMAL';
-  const estimatedCostVnd = priority === 'INSPECT' ? 2500000 + brakeEventCount * 250000 : priority === 'WATCH' ? 1500000 + brakeEventCount * 150000 : 900000;
   return {
     brakeStress,
     tireStress,
     priority,
     dtcCode,
-    estimatedCostVnd,
-    estimatedDowntime: priority === 'INSPECT' ? '1.0 ngày (dự tính)' : priority === 'WATCH' ? '0.5 ngày (dự tính)' : '0.5 ngày hoặc gộp lịch định kỳ (dự tính)',
+    estimatedCostVnd: 0,
+    estimatedDowntime: priority === 'NORMAL' ? 'Theo lịch định kỳ' : 'N/A - cần kiểm tra kỹ thuật thực tế',
     workOrderStatus: 'Recommended - not created' as const,
   };
 };
@@ -156,7 +152,7 @@ export const buildVehicleReportModels = (vehicles: TripData[], selectedTrips: Tr
 
     return {
       tripId: row.trip_id,
-      driverName: resolveDriverName(row.trip),
+      tripLabel: resolveTripLabel(row.trip),
       score: row.score,
       riskLevel: row.riskLevel,
       rank: row.rank,
@@ -189,7 +185,7 @@ export const buildCopilotInput = (models: VehicleReportModel[], reportMode: Repo
   report_mode: reportMode,
   trips: models.map((model) => ({
     tripId: model.tripId,
-    driverName: model.driverName,
+    tripLabel: model.tripLabel,
     rank: model.rank,
     safety: {
       score: model.score,

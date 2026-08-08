@@ -56,6 +56,19 @@ const statusFor = (trip: TripData) => {
   return 'SAFE';
 };
 
+const riskExplanationFor = (row: ReturnType<typeof buildRankingRows>[number] | undefined) => {
+  if (!row) return 'No ranking evidence available.';
+  const reasons = [
+    row.avgRisk >= 60 ? `avg risk ${row.avgRisk.toFixed(1)}` : null,
+    row.maxRisk >= 80 ? `max risk ${row.maxRisk.toFixed(1)}` : null,
+    row.criticalEvents > 0 ? `${row.criticalEvents} high-risk frames` : null,
+    row.distractedPct > 0 ? `${row.distractedPct.toFixed(1)}% distracted` : null,
+    row.harshEvents > 0 ? `${row.harshEvents} harsh behavior events` : null,
+    row.nearMissCount > 0 ? `${row.nearMissCount} near misses` : null,
+  ].filter(Boolean);
+  return reasons.length ? `Primary cause: ${reasons.slice(0, 3).join(' · ')}` : 'Primary cause: lowest relative risk in current fleet.';
+};
+
 export const FleetMapView: React.FC<FleetMapViewProps> = ({
   vehicles,
   selectedVehicle,
@@ -71,7 +84,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
   if (!selected) {
     return (
       <div className="flex-1 grid place-items-center bg-[#070A12] text-slate-400">
-        No organizer trip data loaded.
+        No trip data loaded.
       </div>
     );
   }
@@ -95,7 +108,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
       <aside className="w-full md:w-80 bg-[#0B0F19] border-r border-[#1E293B] flex flex-col shrink-0">
         <div className="p-4 border-b border-[#1E293B]">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold tracking-widest text-slate-300 uppercase">Dataset Fleet</h2>
+            <h2 className="text-xs font-bold tracking-widest text-slate-300 uppercase">Fleet Overview</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -110,7 +123,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
               </span>
             </div>
           </div>
-          <p className="mt-2 text-xs text-slate-500">Trips replay sequentially; completed histories are temporary for demo.</p>
+          <p className="mt-2 text-xs text-slate-500">Demo trips replay from JSON/local AI telemetry.</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -135,7 +148,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
                 <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-slate-400">
                   <span>Speed<br /><b className="text-slate-200">{finite(frame?.ego?.speed_kmh)} km/h</b></span>
                   <span>TTC<br /><b className="text-slate-200">{formatSeconds(finiteNumber(frame?.min_ttc) ?? lastFiniteBy<Frame>(trip.frames, (item) => item.min_ttc))}</b></span>
-                  <span>Driver<br /><b className="text-slate-200">{frame?.driver?.state ?? 'N/A'}</b></span>
+                  <span>State<br /><b className="text-slate-200">{frame?.driver?.state ?? 'N/A'}</b></span>
                 </div>
               </button>
             );
@@ -147,34 +160,35 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
         <div className="max-w-5xl mx-auto space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <span className="text-xs font-mono text-sky-400">ORGANIZER DATASET SNAPSHOT</span>
+              <span className="text-xs font-mono text-sky-400">FLEET OVERVIEW</span>
               <h1 className="mt-1 text-2xl font-extrabold">{selected.trip_id}</h1>
               <p className="mt-2 text-sm text-slate-400">{selected.metadata?.description ?? 'No trip description provided.'}</p>
             </div>
-            <span className={`rounded-full border px-3 py-1 text-xs font-bold ${status === 'CRITICAL' ? 'border-red-500 text-red-300' : status === 'WARNING' ? 'border-amber-500 text-amber-300' : 'border-emerald-500 text-emerald-300'}`}>
-              {status}
-            </span>
+            <div className="max-w-md text-right">
+              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${status === 'CRITICAL' ? 'border-red-500 text-red-300' : status === 'WARNING' ? 'border-amber-500 text-amber-300' : 'border-emerald-500 text-emerald-300'}`}>
+                {status}
+              </span>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">{riskExplanationFor(selectedRanking)}</p>
+            </div>
           </div>
 
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Metric label="Last speed" value={`${finite(lastFrame?.ego?.speed_kmh)} km/h`} />
             <Metric label="Last valid TTC" value={formatSeconds(lastTtc)} />
-            <Metric label="Canonical safe score" value={finite(selectedRanking?.score)} />
+            <Metric label="Ranking score" value={finite(selectedRanking?.score)} />
             <Metric label="Max risk" value={finite(selected.trip_aggregate?.max_risk_score)} />
           </section>
 
           <section className="grid md:grid-cols-2 gap-4">
             <div className="rounded-xl border border-[#1E293B] bg-[#0B0F19] p-5 space-y-4">
-              <h2 className="font-bold flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-400" />Recorded location</h2>
+              <h2 className="font-bold flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-400" />Location</h2>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <Info label="Latitude" value={coordinateLabel ?? finite(coordinates?.lat, 6)} />
                 <Info label="Longitude" value={coordinateLabel ?? finite(coordinates?.lon, 6)} />
                 <Info label="Map source" value={selected.metadata?.map ?? 'N/A'} />
                 <Info label="Weather" value={selected.metadata?.weather ? `cloud ${finite(selected.metadata.weather.cloudiness, 0)}%` : 'N/A'} />
               </div>
-              <p className="text-xs text-slate-500">
-                {coordinateLabel ?? 'No synthetic map or vehicle positions are rendered.'}
-              </p>
+              <p className="text-xs text-slate-500">{coordinateLabel ? 'Location unavailable. GPS information was not provided for this trip.' : 'GPS coordinates are available for this trip.'}</p>
             </div>
 
             <div className="rounded-xl border border-[#1E293B] bg-[#0B0F19] p-5 space-y-4">
@@ -191,7 +205,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
           </section>
 
           <div className="flex flex-wrap gap-3">
-            <button onClick={() => onViewLiveFeed(selected)} className="flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-bold hover:bg-sky-500"><Video className="w-4 h-4" />Live cameras</button>
+            <button onClick={() => onViewLiveFeed(selected)} className="flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-bold hover:bg-sky-500"><Video className="w-4 h-4" />Live monitor</button>
             <button onClick={() => onViewTripDetail(selected)} className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-bold hover:bg-slate-800">Trip detail</button>
             {status !== 'SAFE' && <button onClick={() => onIntervene(selected)} className="flex items-center gap-2 rounded-lg border border-red-500 px-4 py-2 text-sm font-bold text-red-300 hover:bg-red-950"><AlertTriangle className="w-4 h-4" />Intervene</button>}
             <button onClick={onOpenCopilot} className="ml-auto flex items-center gap-2 rounded-lg border border-indigo-500 px-4 py-2 text-sm font-bold text-indigo-300 hover:bg-indigo-950"><Sparkles className="w-4 h-4" />AI Copilot</button>

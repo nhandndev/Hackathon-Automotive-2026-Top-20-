@@ -155,27 +155,34 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
           <div className="mb-0.5 flex items-center gap-1.5 font-mono text-[10px] text-slate-400"><span>FLEET</span><span>&gt;</span><span>SAFETY</span><span>&gt;</span><b className="text-slate-200">TRIP {vehicle.trip_id}</b></div>
           <h1 className="text-xl font-black tracking-tight">Trip Detail: {vehicle.trip_id}</h1>
         </div>
-        <button onClick={onViewLiveFeed} className="flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-[11px] font-bold"><Play className="h-3.5 w-3.5 fill-current" />Live Feed</button>
+        <button onClick={onViewLiveFeed} className="flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-[11px] font-bold"><Play className="h-3.5 w-3.5 fill-current" />Open Monitor</button>
       </div>
+
+      <section className="grid shrink-0 grid-cols-2 gap-2 rounded-xl border border-[#1E293B] bg-[#0B0F19] p-3 text-xs md:grid-cols-4">
+        <Status label="Driver camera" value={snapshotConnected ? 'Live' : 'Offline'} active={snapshotConnected} />
+        <Status label="Road camera" value={snapshotConnected ? 'Live' : 'Offline'} active={snapshotConnected} />
+        <Status label="Telemetry" value={snapshotConnected ? 'Live' : 'Replay'} active />
+        <Status label="Event stream" value={alertsConnected ? 'Live' : 'Replay'} active={alertsConnected} />
+      </section>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="flex min-h-0 flex-col gap-4 lg:col-span-8">
-          <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-3">
+          <div className="flex min-h-0 shrink-0 flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-3">
             <div className="mb-2 flex shrink-0 items-center justify-between">
               <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-300">Synchronized AI camera frames</span>
               <span className={`flex items-center gap-1 text-[9px] font-bold ${snapshotConnected ? 'text-emerald-400' : 'text-sky-400'}`}>{snapshotConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}{snapshotConnected ? `LIVE · FRAME ${snapshot?.frame_id}` : `SAVED · FRAME ${displaySnapshot?.frame_id ?? '--'}`}</span>
             </div>
-            <div className="grid min-h-0 flex-1 grid-cols-2 gap-3">
-              <div className="relative h-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950"><LiveCameraFrame tripId={vehicle.trip_id} camera="cabin" className="absolute inset-0 h-full w-full object-cover" /></div>
-              <div className="relative h-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950"><LiveCameraFrame tripId={vehicle.trip_id} camera="road" className="absolute inset-0 h-full w-full object-cover" /></div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="relative aspect-video overflow-hidden rounded-lg border border-slate-800 bg-slate-950"><LiveCameraFrame tripId={vehicle.trip_id} camera="cabin" className="absolute inset-0 h-full w-full object-cover" /></div>
+              <div className="relative aspect-video overflow-hidden rounded-lg border border-slate-800 bg-slate-950"><LiveCameraFrame tripId={vehicle.trip_id} camera="road" className="absolute inset-0 h-full w-full object-cover" /></div>
             </div>
           </div>
 
-          <div className="flex h-48 shrink-0 flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-3">
-            <div className="mb-1 flex shrink-0 items-center justify-between"><span className="text-[10px] font-bold uppercase text-slate-300">Live telemetry · current session</span><div className="flex gap-3 font-mono text-[9px] text-slate-400"><span className="text-sky-400">— Speed</span><span className="text-indigo-400">— C3 Risk</span></div></div>
+          <div className="flex h-44 shrink-0 flex-col rounded-xl border border-[#1E293B] bg-[#0B0F19] p-3 lg:h-48">
+            <div className="mb-1 flex shrink-0 items-center justify-between"><span className="text-[10px] font-bold uppercase text-slate-300">{snapshotConnected ? 'Live telemetry' : 'Replay telemetry'} · current trip</span><div className="flex gap-3 font-mono text-[9px] text-slate-400"><span className="text-sky-400">— Speed</span><span className="text-indigo-400">— C3 Risk</span></div></div>
             <div className="min-h-0 flex-1">
-              {telemetry.length < 2 ? <div className="grid h-full place-items-center text-xs text-slate-500">Waiting for realtime telemetry…</div> : (
-                <ResponsiveContainer width="100%" height="100%"><LineChart data={telemetry} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}><XAxis dataKey="frame" stroke="#475569" fontSize={9} tickLine={false} axisLine={false} /><YAxis domain={[0, 100]} stroke="#475569" fontSize={9} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', fontSize: '10px' }} /><Line type="monotone" dataKey="speed" stroke="#38bdf8" strokeWidth={2} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="risk" stroke="#818cf8" strokeWidth={1.5} strokeDasharray="3 3" dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer>
+              {(snapshotConnected ? telemetry : (vehicle.frames ?? []).map((frame) => ({ frame: frame.frame_id, speed: Number(frame.ego?.speed_kmh ?? 0), risk: Number(frame.risk?.final_risk_score ?? 0), ttc: Number.isFinite(frame.min_ttc) ? frame.min_ttc : null }))).length < 2 ? <div className="grid h-full place-items-center text-xs text-slate-500">No telemetry series available.</div> : (
+                <ResponsiveContainer width="100%" height="100%"><LineChart data={snapshotConnected ? telemetry : (vehicle.frames ?? []).map((frame) => ({ frame: frame.frame_id, speed: Number(frame.ego?.speed_kmh ?? 0), risk: Number(frame.risk?.final_risk_score ?? 0), ttc: Number.isFinite(frame.min_ttc) ? frame.min_ttc : null }))} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}><XAxis dataKey="frame" stroke="#475569" fontSize={9} tickLine={false} axisLine={false} /><YAxis domain={[0, 100]} stroke="#475569" fontSize={9} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', fontSize: '10px' }} /><Line type="monotone" dataKey="speed" stroke="#38bdf8" strokeWidth={2} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="risk" stroke="#818cf8" strokeWidth={1.5} strokeDasharray="3 3" dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer>
               )}
             </div>
           </div>
@@ -183,7 +190,7 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
 
         <div className="flex min-h-0 flex-col gap-4 lg:col-span-4">
           <div className="shrink-0 rounded-xl border border-[#1E293B] bg-[#0B0F19] p-4">
-            <div className="flex justify-between"><span className="text-[10px] font-bold uppercase text-slate-300">Challenge 3 scores</span><AlertTriangle className="h-3.5 w-3.5 text-amber-400" /></div>
+            <div className="flex justify-between"><span className="text-[10px] font-bold uppercase text-slate-300">Trip score context</span><AlertTriangle className="h-3.5 w-3.5 text-amber-400" /></div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center"><Metric label="RANK" value={formatNumber(safetyScore)} /><Metric label="RISK" value={formatNumber(displaySnapshot?.risk_score)} /><Metric label="TTC" value={displaySnapshot?.predicted_ttc_sec === null ? '∞' : formatNumber(displaySnapshot?.predicted_ttc_sec, 2)} /></div>
             <p className="mt-3 text-[9px] text-slate-500">Ranking Score dùng JSON/local AI risk và behavior fields. Live risk/TTC dùng snapshot nếu có, nếu không dùng saved frame cuối.</p>
           </div>
@@ -203,3 +210,10 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
 };
 
 const Metric = ({ label, value }: { label: string; value: string }) => <div className="rounded-lg border border-slate-800 bg-slate-950 p-2"><span className="block text-[8px] text-slate-500">{label}</span><b className="font-mono text-lg">{value}</b></div>;
+
+const Status = ({ label, value, active }: { label: string; value: string; active?: boolean }) => (
+  <div className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2">
+    <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
+    <span className={`mt-0.5 block text-xs font-black ${active ? 'text-emerald-300' : 'text-slate-400'}`}>{value}</span>
+  </div>
+);

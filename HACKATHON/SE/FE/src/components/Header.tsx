@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-[#1E293B] hover:bg-[#334155] rounded-md transition-colors text-slate-200"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Map</span>
+              <span>Back to Overview</span>
             </button>
             <div className="h-5 w-[1px] bg-[#334155]" />
             <div className="flex items-center gap-3">
@@ -69,11 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
             <input
               id="header-search-input"
               type="text"
-              placeholder={
-                currentView === 'INSIGHTS'
-                  ? 'Hỏi Trợ lý AI về đoàn xe của bạn...'
-                  : 'Search vehicles, drivers...'
-              }
+              placeholder={currentView === 'INSIGHTS' ? 'Hỏi Trợ lý AI về fleet...' : 'Search trips, scenarios...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -89,65 +85,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right side actions */}
       <div className="flex items-center gap-3">
-        {/* Quick view selector buttons for previewing all screenshots */}
-        <div className="hidden xl:flex items-center gap-1 bg-[#111827] p-1 rounded-lg border border-[#1F2937] text-xs">
-          <button
-            id="nav-tab-map"
-            onClick={() => setCurrentView('MAP')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-              currentView === 'MAP'
-                ? 'bg-sky-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            1. Map
-          </button>
-          <button
-            id="nav-tab-vehicle-live"
-            onClick={() => setCurrentView('VEHICLE_LIVE')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-              currentView === 'VEHICLE_LIVE'
-                ? 'bg-sky-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            2. Live Cam
-          </button>
-          <button
-            id="nav-tab-trip-detail"
-            onClick={() => setCurrentView('TRIP_DETAIL')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-              currentView === 'TRIP_DETAIL'
-                ? 'bg-sky-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            3. Trip Detail
-          </button>
-          <button
-            id="nav-tab-insights"
-            onClick={() => setCurrentView('INSIGHTS')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-              currentView === 'INSIGHTS'
-                ? 'bg-sky-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            4. Insights
-          </button>
-          <button
-            id="nav-tab-ranking"
-            onClick={() => setCurrentView('RANKING')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-              currentView === 'RANKING'
-                ? 'bg-sky-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            5. Ranking
-          </button>
-        </div>
-
         {/* Notifications Icon */}
         <button
           id="btn-header-notifications"

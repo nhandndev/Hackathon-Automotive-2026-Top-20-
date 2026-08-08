@@ -71,7 +71,7 @@ const buildAuditTrail = (row: DriverRankingRow) => {
   const distractedFrame = firstBy((frame) => frame.driver?.state === 'distracted');
   const fatigueFrame = firstBy((frame) => ['drowsy', 'yawning', 'microsleep'].includes(frame.driver?.state ?? ''));
   const ttcFrame = firstBy((frame) => Number.isFinite(frame.min_ttc) && frame.min_ttc <= 2.5);
-  const highRiskFrame = firstBy((frame) => Number(frame.risk?.final_risk_score ?? 0) >= 60);
+  const highRiskFrame = firstBy((frame) => Number(frame.risk?.final_risk_score ?? 0) >= 80 || (Number.isFinite(frame.min_ttc) && (frame.min_ttc as number) > 0 && (frame.min_ttc as number) <= 2.5));
   const speedingFrame = firstBy((frame) => Boolean(frame.behavior_flags?.speeding));
   const tailgatingFrame = firstBy((frame) => Boolean(frame.behavior_flags?.tailgating));
   const harshFrame = firstBy((frame) => Boolean(frame.behavior_flags?.harsh_brake || frame.behavior_flags?.harsh_accel || frame.behavior_flags?.harsh_corner));
@@ -89,14 +89,14 @@ const buildAuditTrail = (row: DriverRankingRow) => {
       id: `${row.trip_id}-distracted`,
       timestamp: `${Number(distractedFrame.timestamp ?? 0).toFixed(1)}s`,
       event: `Attention penalty: -${(row.distractedPct * 0.10).toFixed(1)} pts`,
-      evidence: `${countBy((frame) => frame.driver?.state === 'distracted')}/${totalFrames} frames distracted (${row.distractedPct.toFixed(1)}%). ${frameEvidence(distractedFrame)}. Mốc này làm giảm điểm vì tài xế mất tập trung, kể cả khi min_ttc=Infinity nghĩa là chưa có nguy cơ va chạm tức thời.`,
+      evidence: `${countBy((frame) => frame.driver?.state === 'distracted')}/${totalFrames} frames distracted (${row.distractedPct.toFixed(1)}%). ${frameEvidence(distractedFrame)}. Mốc này làm giảm điểm vì driver.state=distracted trong trip làm tăng rủi ro phản ứng trước tình huống phía trước.`,
       severity: row.distractedPct >= 25 ? 'high' : 'medium',
     },
     fatigueFrame && {
       id: `${row.trip_id}-fatigue`,
       timestamp: `${Number(fatigueFrame.timestamp ?? 0).toFixed(1)}s`,
       event: `Fatigue penalty: -${(((row.fatigueEvents / totalFrames) * 100) * 0.05).toFixed(1)} pts`,
-      evidence: `${row.fatigueEvents} fatigue/microsleep events. ${frameEvidence(fatigueFrame)}. Mốc này làm giảm điểm vì drowsy/yawning/microsleep là rủi ro trực tiếp với tài xế và cần coaching/nghỉ bắt buộc.`,
+      evidence: `${row.fatigueEvents} fatigue/microsleep events. ${frameEvidence(fatigueFrame)}. Mốc này làm giảm điểm vì drowsy/yawning/microsleep là trạng thái rủi ro trong trip và cần review vận hành.`,
       severity: fatigueFrame.driver?.state === 'microsleep' ? 'critical' : 'high',
     },
     highRiskFrame && {
@@ -117,7 +117,7 @@ const buildAuditTrail = (row: DriverRankingRow) => {
       id: `${row.trip_id}-tailgating`,
       timestamp: `${Number(tailgatingFrame.timestamp ?? 0).toFixed(1)}s`,
       event: `Tailgating penalty: -${(row.tailgatingPct * 0.04).toFixed(1)} pts`,
-      evidence: `${row.tailgatingPct.toFixed(1)}% frames tailgating. ${frameEvidence(tailgatingFrame)}. Mốc này làm giảm điểm vì khoảng cách theo xe thấp làm tăng nguy cơ phanh gấp và va chạm.`,
+      evidence: `${row.tailgatingPct.toFixed(1)}% frames tailgating. ${frameEvidence(tailgatingFrame)}. Mốc này làm giảm điểm vì khoảng cách bám đuôi thấp làm tăng nguy cơ phanh gấp và va chạm.`,
       severity: row.tailgatingPct >= 20 ? 'high' : 'medium',
     },
     speedingFrame && {
@@ -131,14 +131,21 @@ const buildAuditTrail = (row: DriverRankingRow) => {
       id: `${row.trip_id}-harsh`,
       timestamp: `${Number(harshFrame.timestamp ?? 0).toFixed(1)}s`,
       event: `Harsh behavior penalty: -${(((row.harshEvents / totalFrames) * 100) * 0.03).toFixed(1)} pts`,
-      evidence: `${row.harshEvents} harsh events. ${frameEvidence(harshFrame)}. Mốc này làm giảm điểm vì hành vi lái gắt ảnh hưởng an toàn, hao mòn xe và chi phí vận hành.`,
+      evidence: `${row.harshEvents} harsh behavior events. ${frameEvidence(harshFrame)}. Mốc này làm giảm điểm vì hành vi lái gắt ảnh hưởng an toàn và kiểm soát trip.`,
       severity: row.harshEvents >= 3 ? 'high' : 'medium',
     },
     {
       id: `${row.trip_id}-final`,
       timestamp: 'END',
       event: `Final score: ${row.score.toFixed(1)}/100`,
-      evidence: `Kết luận audit: driver xếp #${row.rank}, riskLevel=${row.riskLevel}, coachingPriority=${row.coachingPriority}. Các penalty chính đến từ attention, fatigue, risk score, TTC/following distance và behavior flags.`,
+      evidence: `Kết luận audit: trip xếp relative rank #${row.rank}, absolute safety=${row.riskLevel}, coachingPriority=${row.coachingPriority}. Các penalty chính: ${[
+        row.avgRisk > 0 || row.maxRisk > 0 ? 'risk score' : null,
+        row.criticalEvents > 0 ? 'critical frames' : null,
+        row.distractedPct > 0 ? 'driver attention' : null,
+        row.fatigueEvents > 0 ? 'fatigue' : null,
+        row.nearMissCount > 0 || row.tailgatingPct > 0 ? 'TTC/following distance' : null,
+        row.harshEvents > 0 || row.speedingPct > 0 ? 'behavior flags' : null,
+      ].filter(Boolean).join(', ')}.`,
       severity: row.riskLevel === 'CRITICAL' ? 'critical' : row.riskLevel === 'AT_RISK' ? 'high' : row.riskLevel === 'WATCH' ? 'medium' : 'low',
     },
   ].filter(Boolean);
@@ -166,7 +173,7 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
     { label: 'Fatigue', value: fatigueEventPct * 0.05, detail: `${fatigueEventPct.toFixed(1)}% × 0.05` },
     { label: 'Speeding', value: row.speedingPct * 0.03, detail: `${row.speedingPct.toFixed(1)}% × 0.03` },
     { label: 'Tailgating', value: row.tailgatingPct * 0.04, detail: `${row.tailgatingPct.toFixed(1)}% × 0.04` },
-    { label: 'Harsh events', value: harshEventPct * 0.03, detail: `${harshEventPct.toFixed(1)}% × 0.03` },
+    { label: 'Harsh behavior', value: harshEventPct * 0.03, detail: `${harshEventPct.toFixed(1)}% × 0.03` },
     { label: 'Near misses', value: nearMissPct * 0.05, detail: `${nearMissPct.toFixed(1)}% × 0.05` },
   ].filter((item) => item.value > 0.01) : [];
   const estimatedTotalPenalty = estimatedPenalties.reduce((sum, item) => sum + item.value, 0);
@@ -183,7 +190,7 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
   if (!row || !analysis) {
     return (
       <div className="min-h-screen bg-[#070A12] p-8 text-slate-300">
-        Driver ranking analysis is not available.
+        Trip ranking analysis is not available.
       </div>
     );
   }
@@ -193,10 +200,10 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b border-[#1E293B] pb-6">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500">AI Driver Ranking Report</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500">AI Trip Ranking Report</span>
             <h1 className="mt-2 text-3xl font-black tracking-tight">{row.trip_id}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400">
-              Phân tích ranking dựa trên AI contract gốc: trip_id, metadata, frames, ego, driver, min_ttc, headway_sec, behavior_flags và risk.
+              Phân tích relative ranking và absolute safety dựa trên AI contract gốc: trip_id, metadata, frames, ego, driver, min_ttc, headway_sec, behavior_flags và risk.
             </p>
           </div>
           <div className={`rounded-lg border px-4 py-3 text-right ${statusClass(analysis.top_risk_factors[0]?.severity ?? 'low')}`}>
@@ -230,7 +237,7 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
               </ResponsiveContainer>
             </div>
             <div className="-mt-36 grid h-24 place-items-center text-center">
-              <span className="font-mono text-4xl font-black" style={{ color: metricColor(row.score) }}>{row.score.toFixed(0)}</span>
+              <span className="font-mono text-4xl font-black" style={{ color: metricColor(row.score) }}>{row.score.toFixed(1)}</span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ranking Score</span>
             </div>
           </div>
@@ -284,7 +291,7 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
                   : `${row.trip_id} đang đứng đầu fleet vì có Ranking Score cao nhất trong danh sách hiện tại.`}
                 {' '}
                 {nextRow
-                  ? `Xe ngay phía sau là ${nextRow.trip_id}, thấp hơn ${Math.abs(row.score - nextRow.score).toFixed(1)} điểm.`
+                  ? `Trip ngay phía sau là ${nextRow.trip_id}, thấp hơn ${Math.abs(row.score - nextRow.score).toFixed(1)} điểm.`
                   : 'Đây là trip cuối bảng theo Ranking Score hiện tại.'}
               </p>
               <div className="mt-4 space-y-2">

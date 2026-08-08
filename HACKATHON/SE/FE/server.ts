@@ -363,7 +363,7 @@ app.post("/api/copilot", async (req, res) => {
     const isMaintenance = reportRequest.type === "maintenance";
     const targetTripIds = (mentionedTripIds.length > 0) ? mentionedTripIds : availableTripIds(vehicles);
     const selectedVehicles = vehicles.filter((vehicle) => targetTripIds.includes(vehicle.trip_id));
-    
+
     // Calculate ranking list
     // For SAFETY: Sorted from HIGHEST safety score to LOWEST safety score (Safe driver #1)
     // For MAINTENANCE: Sorted from LOWEST safety score / HIGHEST risk (Highest Maintenance Priority #1)
@@ -959,9 +959,9 @@ Trả về JSON với đúng cấu trúc sau. Mô tả dưới đây là kiểu 
     }
   ],
   "action_orders": {
-    "do_not_drive": "<đích danh trip_id/tài xế + lý do cụ thể, hoặc 'Không có xe nào trong diện dừng khẩn cấp'>",
-    "priority_48h": "<đích danh xe/tài xế cần bảo trì/coaching khẩn + hành động cụ thể>",
-    "routine_maintenance": "<danh sách xe an toàn + hạng mục bảo dưỡng thường quy>"
+    "do_not_drive": "${reportModeTag === 'SAFETY_DETAIL' ? `<CHỈ về tài xế ${singleId}: nếu safe_score < 60 HOẶC vi ngủ → lệnh Coaching 24H bắt buộc + đình chỉ lưu hành. Nếu an toàn → ghi Tài xế ${singleId} không thuộc diện đình chỉ khẩn cấp>` : reportModeTag === 'SAFETY_OVERVIEW' ? '<SAFETY OVERVIEW – liệt kê đích danh driver_name/trip_id các tài xế score < 60 hoặc vi ngủ cần Coaching 24H + đình chỉ. Nếu không có → ghi rõ>' : reportModeTag === 'MAINTENANCE_DETAIL' ? `<CHỈ về xe ${singleId}: nếu DTC = C0035/P0300 HOẶC brake_wear > 75% → lệnh Dừng Lưu Hành (Do Not Drive) khẩn cấp. Nếu ổn → ghi Xe ${singleId} không thuộc diện dừng khẩn cấp>` : '<MAINTENANCE OVERVIEW – liệt kê đích danh trip_id các xe có DTC nghiêm trọng (C0035/P0300) hoặc brake_wear > 75%. Thu hồi về xưởng ngay>'}",
+    "priority_48h": "${reportModeTag === 'SAFETY_DETAIL' ? `<CHỈ về tài xế ${singleId}: nếu safe_score 60-79 HOẶC xao nhãng > 15% → Nhắc Nhở Kỷ Luật Vận Hành trong 48h với hành động cụ thể. Nếu không cần → ghi Không cần can thiệp 48h cho ${singleId}>` : reportModeTag === 'SAFETY_OVERVIEW' ? '<SAFETY OVERVIEW – liệt kê đích danh driver_name/trip_id các tài xế score 60-79 hoặc xao nhãng 15-30% cần Nhắc Nhở Kỷ Luật Vận Hành trong 48h>' : reportModeTag === 'MAINTENANCE_DETAIL' ? `<CHỈ về xe ${singleId}: nếu có C0035 HOẶC brake_wear 50-75% → Bảo Trì Ưu Tiên trong 48h (kiểm tra cảm biến tốc độ bánh xe, cân chỉnh lốp). Dự toán chi phí cụ thể>` : '<MAINTENANCE OVERVIEW – liệt kê trip_id các xe cần bảo trì ưu tiên trong 48h (C0035 hoặc brake_wear 50-75%). Hạng mục kiểm tra + dự toán chi phí>'}",
+    "routine_maintenance": "${reportModeTag === 'SAFETY_DETAIL' ? `<CHỈ về tài xế ${singleId}: nếu safe_score >= 80 VÀ không vi phạm → Khen Thưởng Tài Xế Mẫu Mực. Hình thức: vinh danh Safe Driver tháng, ghi nhận thành tích cụ thể>` : reportModeTag === 'SAFETY_OVERVIEW' ? '<SAFETY OVERVIEW – liệt kê đích danh driver_name/trip_id các tài xế mẫu mực (score >= 80, xao nhãng < 10%, phanh gấp = 0). Đề xuất vinh danh Safe Driver tháng + hình thức khen>' : reportModeTag === 'MAINTENANCE_DETAIL' ? `<CHỈ về xe ${singleId}: nếu P0000 (không lỗi) VÀ brake_wear < 50% → Bảo Dưỡng Định Kỳ Chuẩn (thay dầu, lọc gió, kiểm tra áp suất lốp). Dự toán chi phí định kỳ>` : '<MAINTENANCE OVERVIEW – liệt kê trip_id các xe healthy (P0000, brake_wear < 50%). Lịch bảo dưỡng định kỳ rolling>'}"
   }
 }
 `;
@@ -1042,7 +1042,7 @@ app.post("/api/intervention", async (req, res) => {
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { 
+      server: {
         middlewareMode: true,
         hmr: {
           port: PORT + 20000 // Avoid port 24678 collision by offsetting HMR port

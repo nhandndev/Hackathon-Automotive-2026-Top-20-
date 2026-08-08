@@ -278,7 +278,14 @@ def load_predictions(csv_path: Path) -> Dict[int, FramePrediction]:
             state: Optional[str] = None
             if has_driver_state:
                 raw = (row.get("predicted_driver_state") or "").strip().lower()
-                state = raw if raw else None
+                if raw:
+                    from core.challenge2_driver.label_contract import normalize_driver_state
+                    try:
+                        state = normalize_driver_state(raw)
+                    except ValueError:
+                        # Fallback for unrecognized classes if we want evaluator to handle them gracefully,
+                        # but in evaluation we should raise or set it to raw so it fails the validation correctly
+                        state = raw
 
             risk: Optional[float] = None
             if has_risk_score:
@@ -316,7 +323,8 @@ def load_ground_truth_from_trip(trip_dir: Path) -> TripGroundTruth:
     frames = ds.frame_records
     for f in frames:
         ttc[f.frame_id] = f.min_ttc
-        driver_state[f.frame_id] = f.driver_state
+        from core.challenge2_driver.label_contract import normalize_driver_state
+        driver_state[f.frame_id] = normalize_driver_state(f.driver_state)
 
     harsh_brake = harsh_accel = harsh_corner = 0
     speeding_frames = 0
@@ -569,6 +577,18 @@ def evaluate(
     should be trusted; omitting it only makes sense for a quick informal
     smoke-test where you already know there's no real GT to compare to.
     """
+    predictions_dir = Path(predictions_dir).resolve()
+    print(f"Predictions: {predictions_dir}")
+    if data_dir is not None:
+        data_dir = Path(data_dir).resolve()
+        print(f"Ground truth dataset: {data_dir}")
+        if not data_dir.is_dir():
+            raise FileNotFoundError(f"Ground truth directory not found: {data_dir}")
+    print(f"Output: {output_json}")
+
+    if not predictions_dir.exists():
+        raise FileNotFoundError(f"Predictions path not found: {predictions_dir}")
+
     if data_dir is None:
         raise RuntimeError(
             "No --data-dir/--trip-dir given. Ground truth is always loaded "
@@ -695,8 +715,12 @@ def evaluate(
                 "per_trip": [asdict(m) for m in per_trip_c3],
             } if per_trip_c3 else None,
         }
-        output_json.parent.mkdir(parents=True, exist_ok=True)
-        output_json.write_text(json.dumps(doc, indent=2))
+        from core.runtime.paths import resolve_json_output
+        output_json = resolve_json_output(output_json, predictions_dir)
+        output_json.write_text(
+            json.dumps(doc, indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
         logger.info("Report written to %s", output_json)
 
     return report

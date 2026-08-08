@@ -49,3 +49,23 @@ batch:
   drowsy_closed_fraction_min: 0.10
   drowsy_ear_q10_max: 0.14
   distracted_median_mar_min: 0.205
+
+ml:
+  architecture: architect_v2
+  feature_schema: unified_84_legacy59_hand25
+
+hand:
+  # Required by the current 84-feature Random Forest artifact.
+  enabled: true
+  palm_model: palm_detection_lite.onnx
+  landmark_model: hand_landmark_lite.onnx
+  inference_interval_frames: 3
+  max_stale_frames: 6
+  min_detection_confidence: 0.50
+  min_landmark_confidence: 0.50
+  intra_op_num_threads: 1
+  motion_active_threshold: 0.15
+  missing_distance_value: 2.0
+  near_mouth_norm_threshold: 0.45
+  near_ear_norm_threshold: 0.45
+  near_face_norm_threshold: 0.70

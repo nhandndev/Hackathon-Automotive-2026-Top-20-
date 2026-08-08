@@ -15,6 +15,7 @@ import cv2
 import numpy as np
 
 from .face_landmarker import OnnxFaceLandmarker
+from .hand_landmarker import OnnxHandLandmarker
 
 EYE_A = (33, 160, 158, 133, 153, 144)
 EYE_B = (362, 385, 387, 263, 373, 380)
@@ -92,6 +93,10 @@ class DMSCore:
             face,
             default_model_dir=Path(__file__).resolve().parents[2] / "models",
         )
+        self.hand_landmarker = OnnxHandLandmarker(
+            config.get("hand", {}),
+            default_model_dir=Path(__file__).resolve().parents[2] / "models",
+        )
         self.started_ms: int | None = None
         self.last_face_ms: int | None = None
         self.eye_closed_since: int | None = None
@@ -104,9 +109,16 @@ class DMSCore:
         self.history: deque[_Sample] = deque()
         self.ear_filter: deque[float] = deque(maxlen=int(config["smoothing"]["primitive_median_window_frames"]))
         self.mar_filter: deque[float] = deque(maxlen=int(config["smoothing"]["primitive_median_window_frames"]))
+        
+        self._last_hand_frame_id = -9999
+        self._last_hand_results = []
+        self._last_hand_x_rel = 0.0
+        self._last_hand_y_rel = 0.0
+        self._last_hand_ms: int | None = None
 
     def close(self) -> None:
         self.face_landmarker.close()
+        self.hand_landmarker.close()
 
     def reset_temporal(self) -> None:
         """Reset sequence state without discarding subject calibration."""
@@ -118,6 +130,9 @@ class DMSCore:
         self.history.clear()
         self.ear_filter.clear()
         self.mar_filter.clear()
+        self._last_hand_frame_id = -9999
+        self._last_hand_results = []
+        self._last_hand_ms = None
 
     def _pose(self, pts: np.ndarray, width: int, height: int) -> tuple[np.ndarray, bool]:
         image_points = pts[list(POSE_LANDMARKS)].astype(np.float64)
@@ -152,7 +167,13 @@ class DMSCore:
             "driver_state": "unknown", "state_confidence": 0.0, "alertness_score": 0.0,
             "attention_state": "unknown", "fatigue_level": "unknown",
             "eye_state": "unknown", "eye_event": "none", "mouth_state": "unknown",
-            "mouth_event": "none", "head_state": "unknown", "features": {},
+            "mouth_event": "none", "head_state": "unknown", 
+            "features": {
+                "hand_visible": 0.0, "hand_x_rel_face": 0.0, "hand_y_rel_face": 0.0,
+                "hand_to_face_distance": 2.0, "hand_motion": 0.0, "hand_active": 0.0,
+                "head_side_and_hand_active": 0.0, "head_down_and_hand_active": 0.0,
+                "head_hand_interaction": 0.0,
+            },
             "observation": {"face_detected": False, "face_confidence": 0.0,
                 "left_eye_valid": False, "right_eye_valid": False, "mouth_valid": False,
             "head_pose_valid": False, "coverage_30s": 0.0,
@@ -298,6 +319,123 @@ class DMSCore:
 
         self.history.append(_Sample(timestamp_ms, True, closed, off_road))
         perclos, coverage, vats_ms = self._window_stats(timestamp_ms)
+        
+        # Hand processing
+        hand_cfg = self.cfg.get("hand", {})
+        if hand_cfg.get("enabled", True):
+            if frame_id - self._last_hand_frame_id >= hand_cfg.get("inference_interval_frames", 3):
+                self._last_hand_results = self.hand_landmarker.detect(frame, frame_id)
+                self._last_hand_frame_id = frame_id
+            if frame_id - self._last_hand_frame_id > hand_cfg.get("max_stale_frames", 6):
+                self._last_hand_results = []
+                self._last_hand_ms = None
+        else:
+            self._last_hand_results = []
+            
+        hand_visible = float(len(self._last_hand_results) > 0)
+        hand_count = float(len(self._last_hand_results))
+        hand_x_rel_face = 0.0
+        hand_y_rel_face = 0.0
+        missing_dist = float(hand_cfg.get("missing_distance_value", 2.0))
+        hand_to_face_distance = missing_dist
+        hand_motion = 0.0
+        hand_active = 0.0
+        
+        # Architect-v2 distance anchors
+        min_hand_to_mouth_norm = missing_dist
+        min_hand_to_ear_side_norm = missing_dist
+        min_hand_to_eye_norm = missing_dist
+        min_hand_to_face_center_norm = missing_dist
+        min_hand_to_left_ear_side_norm = missing_dist
+        min_hand_to_right_ear_side_norm = missing_dist
+        hand_motion_norm = 0.0
+        
+        face_x1, face_y1, face_x2, face_y2 = visualization["face_bbox"]
+        face_w = max(face_x2 - face_x1, 1)
+        face_h = max(face_y2 - face_y1, 1)
+        face_cx = (face_x1 + face_x2) / 2
+        face_cy = (face_y1 + face_y2) / 2
+        face_diag = hypot(face_w, face_h)
+        
+        # Face anchors
+        mouth_center = np.mean(pts[[13, 14, 78, 308]], axis=0)
+        left_eye_center = np.mean(pts[list(EYE_A)], axis=0)
+        right_eye_center = np.mean(pts[list(EYE_B)], axis=0)
+        # Left ear-side anchor (outermost left face contour point e.g. 234)
+        # Right ear-side anchor (outermost right face contour point e.g. 454)
+        left_ear_side = pts[234]
+        right_ear_side = pts[454]
+        
+        if hand_visible:
+            PALM_INDICES = (0, 5, 9, 13, 17)
+            palm_centers = []
+            for hand_res in self._last_hand_results:
+                if hasattr(hand_res, "landmarks") and len(hand_res.landmarks) > max(PALM_INDICES):
+                    p_x = float(np.mean([hand_res.landmarks[i][0] * width for i in PALM_INDICES]))
+                    p_y = float(np.mean([hand_res.landmarks[i][1] * height for i in PALM_INDICES]))
+                    palm_centers.append(np.array([p_x, p_y]))
+                    
+            if palm_centers:
+                # Use first hand for legacy fields
+                palm_x_px, palm_y_px = palm_centers[0][0], palm_centers[0][1]
+                hand_x_rel_face = (palm_x_px - face_cx) / face_w
+                hand_y_rel_face = (palm_y_px - face_cy) / face_h
+                hand_to_face_distance = hypot(palm_x_px - face_cx, palm_y_px - face_cy) / max(face_diag, 1e-6)
+                
+                if self._last_hand_ms is not None:
+                    dx = hand_x_rel_face - self._last_hand_x_rel
+                    dy = hand_y_rel_face - self._last_hand_y_rel
+                    dt = (timestamp_ms - self._last_hand_ms) / 1000.0
+                    hand_motion = hypot(dx, dy) / max(dt, 1e-6)
+                    hand_motion_norm = hand_motion
+                    
+                self._last_hand_x_rel = hand_x_rel_face
+                self._last_hand_y_rel = hand_y_rel_face
+                self._last_hand_ms = timestamp_ms
+                
+                hand_active_threshold = float(hand_cfg.get("motion_active_threshold", 0.15))
+                hand_active = float(hand_motion >= hand_active_threshold)
+                
+                # Minimum norm distances over all palm centers
+                mouth_dists = [hypot(p[0] - mouth_center[0], p[1] - mouth_center[1]) / max(face_diag, 1e-6) for p in palm_centers]
+                left_ear_dists = [hypot(p[0] - left_ear_side[0], p[1] - left_ear_side[1]) / max(face_diag, 1e-6) for p in palm_centers]
+                right_ear_dists = [hypot(p[0] - right_ear_side[0], p[1] - right_ear_side[1]) / max(face_diag, 1e-6) for p in palm_centers]
+                eye_dists = [
+                    min(hypot(p[0] - left_eye_center[0], p[1] - left_eye_center[1]),
+                        hypot(p[0] - right_eye_center[0], p[1] - right_eye_center[1])) / max(face_diag, 1e-6)
+                    for p in palm_centers
+                ]
+                face_center_dists = [hypot(p[0] - face_cx, p[1] - face_cy) / max(face_diag, 1e-6) for p in palm_centers]
+                
+                min_hand_to_mouth_norm = float(min(mouth_dists))
+                min_hand_to_left_ear_side_norm = float(min(left_ear_dists))
+                min_hand_to_right_ear_side_norm = float(min(right_ear_dists))
+                min_hand_to_ear_side_norm = float(min(min_hand_to_left_ear_side_norm, min_hand_to_right_ear_side_norm))
+                min_hand_to_eye_norm = float(min(eye_dists))
+                min_hand_to_face_center_norm = float(min(face_center_dists))
+            else:
+                self._last_hand_ms = None
+        else:
+            self._last_hand_ms = None
+            
+        head_side = float(abs(yaw) >= self.cfg["attention"]["candidate_yaw_deg"])
+        head_down = float(pitch >= self.cfg["attention"]["candidate_pitch_deg"])
+        head_side_and_hand_active = head_side * hand_active
+        head_down_and_hand_active = head_down * hand_active
+        head_hand_interaction = max(head_side_and_hand_active, head_down_and_hand_active)
+        
+        # Hand near thresholds
+        near_mouth_thresh = float(hand_cfg.get("near_mouth_norm_threshold", 0.45))
+        near_ear_thresh = float(hand_cfg.get("near_ear_norm_threshold", 0.45))
+        near_face_thresh = float(hand_cfg.get("near_face_norm_threshold", 0.70))
+        
+        hand_near_mouth = float(min_hand_to_mouth_norm < near_mouth_thresh)
+        hand_near_ear = float(min_hand_to_ear_side_norm < near_ear_thresh)
+        hand_near_face = float(min_hand_to_face_center_norm < near_face_thresh)
+        
+        offroad_and_hand_visible = float(off_road > 0 and hand_visible > 0)
+        offroad_and_hand_active = float(off_road > 0 and hand_active > 0)
+        
         microsleep = self.cfg["eye"]["microsleep_min_ms"] <= closure_ms < self.cfg["eye"]["microsleep_max_ms"]
         sleep_candidate = closure_ms >= self.cfg["eye"]["sleep_min_ms"]
         yawn = mouth_ms >= self.cfg["mouth"]["yawn_min_ms"]
@@ -336,6 +474,29 @@ class DMSCore:
                 "continuous_eye_closure_ms": closure_ms,
                 "mouth_open_duration_ms": mouth_ms,
                 "off_road_duration_ms": off_road_ms,
+                "hand_visible": hand_visible,
+                "hand_x_rel_face": round(hand_x_rel_face, 3),
+                "hand_y_rel_face": round(hand_y_rel_face, 3),
+                "hand_to_face_distance": round(hand_to_face_distance, 3),
+                "hand_motion": round(hand_motion, 3),
+                "hand_active": hand_active,
+                "head_side_and_hand_active": head_side_and_hand_active,
+                "head_down_and_hand_active": head_down_and_hand_active,
+                "head_hand_interaction": head_hand_interaction,
+                # Architect-v2 features
+                "hand_count": hand_count,
+                "min_hand_to_mouth_norm": round(min_hand_to_mouth_norm, 3),
+                "min_hand_to_ear_side_norm": round(min_hand_to_ear_side_norm, 3),
+                "min_hand_to_eye_norm": round(min_hand_to_eye_norm, 3),
+                "min_hand_to_face_center_norm": round(min_hand_to_face_center_norm, 3),
+                "min_hand_to_left_ear_side_norm": round(min_hand_to_left_ear_side_norm, 3),
+                "min_hand_to_right_ear_side_norm": round(min_hand_to_right_ear_side_norm, 3),
+                "hand_motion_norm": round(hand_motion_norm, 3),
+                "hand_near_mouth": hand_near_mouth,
+                "hand_near_ear": hand_near_ear,
+                "hand_near_face": hand_near_face,
+                "offroad_and_hand_visible": offroad_and_hand_visible,
+                "offroad_and_hand_active": offroad_and_hand_active,
             },
             "observation": {
                 "face_detected": True, "face_confidence": round(result.confidence, 3), "left_eye_valid": ear_left is not None,

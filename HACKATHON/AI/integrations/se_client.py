@@ -1,6 +1,7 @@
 """HTTP client for handing canonical DecisionEvents to the SE boundary."""
 from __future__ import annotations
 
+import math
 import time
 from typing import Any
 
@@ -106,11 +107,64 @@ class SEApiClient:
         road_jpeg: bytes,
         snapshot: dict[str, Any],
     ) -> dict[str, Any]:
+        trip_timestamp_ms = int(
+            snapshot.get(
+                "trip_timestamp_ms",
+                snapshot.get("timestamp_ms", 0),
+            )
+        )
         headers = {
             "Content-Type": "image/jpeg",
             "X-Trip-ID": str(snapshot["trip_id"]),
             "X-Frame-ID": str(snapshot["frame_id"]),
-            "X-Timestamp-MS": str(snapshot["trip_timestamp_ms"]),
+            "X-Timestamp-MS": str(trip_timestamp_ms),
+        }
+        predicted_ttc = snapshot.get("predicted_ttc_sec")
+        try:
+            predicted_ttc = float(predicted_ttc)
+        except (TypeError, ValueError):
+            predicted_ttc = None
+        if predicted_ttc is not None and not math.isfinite(predicted_ttc):
+            predicted_ttc = None
+
+        snapshot_payload = {
+            "schema_version": "1.0",
+            "trip_id": str(snapshot["trip_id"]),
+            "frame_id": int(snapshot["frame_id"]),
+            "trip_timestamp_ms": trip_timestamp_ms,
+            "speed_kmh": float(snapshot.get("speed_kmh", 0.0) or 0.0),
+            "predicted_ttc_sec": predicted_ttc,
+            "risk_score": float(
+                snapshot.get(
+                    "risk_score",
+                    snapshot.get("c3_risk_score", 0.0),
+                )
+                or 0.0
+            ),
+            "driver_state": str(snapshot.get("driver_state", "alert")),
+            "driver_confidence": float(
+                snapshot.get("driver_confidence", 0.0) or 0.0
+            ),
+            "alertness_score": float(
+                snapshot.get("alertness_score", 1.0) or 1.0
+            ),
+            "longitudinal_accel": float(snapshot.get("longitudinal_accel", 0.0) or 0.0),
+            "lateral_accel": float(snapshot.get("lateral_accel", 0.0) or 0.0),
+            "speed_limit_kmh": float(snapshot.get("speed_limit_kmh", 0.0) or 0.0),
+            "safe_driving_score": float(snapshot.get("c3_safe_score", 100.0) or 100.0),
+            "penalty_points": float(snapshot.get("c3_penalty_points", 0.0) or 0.0),
+            "harsh_brake": bool(snapshot.get("harsh_brake", False)),
+            "harsh_accel": bool(snapshot.get("harsh_accel", False)),
+            "harsh_corner": bool(snapshot.get("harsh_corner", False)),
+            "speeding": bool(snapshot.get("speeding", False)),
+            "tailgating": bool(snapshot.get("tailgating", False)),
+            "harsh_brake_count": int(snapshot.get("harsh_brake_count", 0) or 0),
+            "harsh_accel_count": int(snapshot.get("harsh_accel_count", 0) or 0),
+            "harsh_corner_count": int(snapshot.get("harsh_corner_count", 0) or 0),
+            "near_miss_count": int(snapshot.get("near_miss_count", 0) or 0),
+            "speeding_pct_time": float(snapshot.get("speeding_pct_time", 0.0) or 0.0),
+            "tailgating_pct_time": float(snapshot.get("tailgating_pct_time", 0.0) or 0.0),
+            "avg_headway_sec": float(snapshot.get("avg_headway_sec", 0.0) or 0.0),
         }
         results: dict[str, Any] = {}
         errors: list[str] = []
@@ -125,7 +179,10 @@ class SEApiClient:
             except Exception as exc:
                 errors.append(f"{name}: {exc}")
         try:
-            response = self._post_with_retry(self.snapshot_endpoint, json=snapshot)
+            response = self._post_with_retry(
+                self.snapshot_endpoint,
+                json=snapshot_payload,
+            )
             response.raise_for_status()
             results["snapshot"] = response.json()
         except Exception as exc:

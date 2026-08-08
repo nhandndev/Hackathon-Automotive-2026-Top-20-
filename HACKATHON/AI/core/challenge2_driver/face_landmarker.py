@@ -260,11 +260,12 @@ class OnnxFaceLandmarker:
                 # a CPU fallback for non-NVIDIA deployment machines.
                 pass
         available_providers = set(ort.get_available_providers())
-        providers = (
-            ["CUDAExecutionProvider", "CPUExecutionProvider"]
-            if "CUDAExecutionProvider" in available_providers
-            else ["CPUExecutionProvider"]
-        )
+        if "CUDAExecutionProvider" not in available_providers:
+            raise RuntimeError(
+                "Challenge 2 ONNX runtime requires CUDAExecutionProvider, "
+                f"but available providers are: {ort.get_available_providers()}"
+            )
+        providers = ["CUDAExecutionProvider"]
         self.detector = _OnnxYuNetDetector(
             detector_path,
             providers,
@@ -278,6 +279,12 @@ class OnnxFaceLandmarker:
             sess_options=session_options,
             providers=providers,
         )
+        # Verify GPU session initialization
+        active_providers = self.session.get_providers()
+        if not any(p in active_providers for p in ("TensorrtExecutionProvider", "CUDAExecutionProvider")):
+            raise RuntimeError(
+                f"ONNX session did not initialize on GPU: {active_providers}"
+            )
         model_input = self.session.get_inputs()[0]
         model_outputs = self.session.get_outputs()
         if list(model_input.shape) != [1, 192, 192, 3]:

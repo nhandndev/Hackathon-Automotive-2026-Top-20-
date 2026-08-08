@@ -55,6 +55,38 @@ def _feature(row: dict[str, Any], name: str) -> float | None:
     return value if np.isfinite(value) else None
 
 
+MIN_BLINK_EAR_DROP = 0.01
+MIN_CLOSED_EAR_DROP = 0.025
+
+
+def _neutral_ear(neutral_samples: list[dict[str, float]]) -> float:
+    if not neutral_samples:
+        return float("nan")
+    return float(np.median([item["ear_robust"] for item in neutral_samples]))
+
+
+def _blink_drop(
+    neutral_samples: list[dict[str, float]],
+    blink_samples: list[dict[str, float]],
+) -> float:
+    if not neutral_samples or not blink_samples:
+        return float("-inf")
+    neutral_ear = _neutral_ear(neutral_samples)
+    blink_ear_low = float(np.quantile([item["ear_robust"] for item in blink_samples], 0.10))
+    return neutral_ear - blink_ear_low
+
+
+def _closed_eye_drop(
+    neutral_samples: list[dict[str, float]],
+    closed_samples: list[dict[str, float]],
+) -> float:
+    if not neutral_samples or not closed_samples:
+        return float("-inf")
+    neutral_ear = _neutral_ear(neutral_samples)
+    closed_ear_low = float(np.quantile([item["ear_robust"] for item in closed_samples], 0.20))
+    return neutral_ear - closed_ear_low
+
+
 class EnrollmentAccumulator:
     """Collect only numeric primitives; frames are never retained."""
 
@@ -127,10 +159,6 @@ class EnrollmentAccumulator:
             mar_neutral + 0.02,
             mar_neutral + 0.55 * (yawn_peak - mar_neutral),
         )
-        if ear_open - ear_closed < 0.025:
-            raise ValueError(
-                "Open/closed eye samples are not sufficiently separated"
-            )
         if yawn_peak - mar_neutral < 0.03:
             raise ValueError(
                 "Neutral/yawn mouth samples are not sufficiently separated"
@@ -142,14 +170,14 @@ class EnrollmentAccumulator:
         neutral_yaw = self._values(("neutral",), "raw_yaw_deg")
         neutral_pitch = self._values(("neutral",), "raw_pitch_deg")
         down_pitch = self._values(("down",), "raw_pitch_deg")
-        blink_ears = self._values(("blink",), "ear_robust")
         pose_range = abs(float(np.median(yaw_left) - np.median(yaw_right)))
         left_delta = float(np.median(yaw_left) - np.median(neutral_yaw))
         right_delta = float(np.median(yaw_right) - np.median(neutral_yaw))
         pitch_range = float(
             np.median(down_pitch) - np.median(neutral_pitch)
         )
-        blink_drop = ear_open - float(np.quantile(blink_ears, 0.10))
+        blink_drop = _blink_drop(self.samples["neutral"], self.samples["blink"])
+        closed_drop = _closed_eye_drop(self.samples["neutral"], self.samples["closed"])
         if left_delta > -5.0 or right_delta < 5.0 or pose_range < 10.0:
             raise ValueError(
                 "Left/right head samples do not show opposite directions"
@@ -158,9 +186,13 @@ class EnrollmentAccumulator:
             raise ValueError(
                 "Neutral/down head samples are not sufficiently separated"
             )
-        if blink_drop < 0.01:
+        if blink_drop < MIN_BLINK_EAR_DROP:
             raise ValueError(
                 "Natural blink was not observed during enrollment"
+            )
+        if closed_drop < MIN_CLOSED_EAR_DROP:
+            raise ValueError(
+                "Open/closed eye samples are not sufficiently separated"
             )
         sample_score = min(
             1.0, min(len(self.samples[p]) for p in required) / 20.0
@@ -269,12 +301,8 @@ class GuidedEnrollment:
                 f"relaxed MAR delta {delta:+.3f} (need within +/-0.050)"
             )
         if step.key == "blink":
-            drop = neutral_ear - float(
-                np.quantile(
-                    [item["ear_robust"] for item in current], 0.10
-                )
-            )
-            return drop >= 0.01, f"EAR drop {drop:.3f} (need >= 0.010)"
+            drop = _blink_drop(samples["neutral"], current)
+            return drop >= MIN_BLINK_EAR_DROP, f"EAR drop {drop:.3f} (need >= {MIN_BLINK_EAR_DROP:.3f})"
         if step.key == "left":
             current_yaw = float(
                 np.median([item["raw_yaw_deg"] for item in current])
@@ -318,12 +346,9 @@ class GuidedEnrollment:
                 f"MAR increase {delta:.3f} (need >= 0.030)"
             )
         if step.key == "closed":
-            current_ear = float(
-                np.quantile([item["ear_robust"] for item in current], 0.20)
-            )
-            drop = neutral_ear - current_ear
-            return drop >= 0.025, (
-                f"EAR drop {drop:.3f} (need >= 0.025)"
+            drop = _closed_eye_drop(samples["neutral"], current)
+            return drop >= MIN_CLOSED_EAR_DROP, (
+                f"EAR drop {drop:.3f} (need >= {MIN_CLOSED_EAR_DROP:.3f})"
             )
         return True, "Feature observed"
 
@@ -397,3 +422,51 @@ class GuidedEnrollment:
         return self.accumulator.build_profile(
             self.driver_id, eye_closure_threshold
         )
+
+    def diagnostics(self) -> dict[str, float]:
+        samples = self.accumulator.samples
+        neutral = samples["neutral"]
+        blink = samples["blink"]
+        closed = samples["closed"]
+        yawn = samples["yawn"]
+        left = samples["left"]
+        right = samples["right"]
+        down = samples["down"]
+        mouth = samples["mouth"]
+        
+        neutral_ear = _neutral_ear(neutral)
+        blink_ear_q10 = float(np.quantile([item["ear_robust"] for item in blink], 0.10)) if blink else float("nan")
+        blink_drop = _blink_drop(neutral, blink)
+        closed_ear_q20 = float(np.quantile([item["ear_robust"] for item in closed], 0.20)) if closed else float("nan")
+        closed_drop = _closed_eye_drop(neutral, closed)
+        
+        neutral_mars = [item["mar"] for phase in ("neutral", "mouth") for item in samples[phase]]
+        neutral_mar = float(np.median(neutral_mars)) if neutral_mars else float("nan")
+        yawn_mar_q75 = float(np.quantile([item["mar"] for item in yawn], 0.75)) if yawn else float("nan")
+        yawn_delta = yawn_mar_q75 - neutral_mar if yawn else float("nan")
+        
+        neutral_yaw = float(np.median([item["raw_yaw_deg"] for item in neutral])) if neutral else float("nan")
+        left_yaw = float(np.median([item["raw_yaw_deg"] for item in left])) if left else float("nan")
+        right_yaw = float(np.median([item["raw_yaw_deg"] for item in right])) if right else float("nan")
+        left_yaw_delta = left_yaw - neutral_yaw if left else float("nan")
+        right_yaw_delta = right_yaw - neutral_yaw if right else float("nan")
+        yaw_separation = abs(right_yaw - left_yaw) if left and right else float("nan")
+        
+        neutral_pitch = float(np.median([item["raw_pitch_deg"] for item in neutral])) if neutral else float("nan")
+        down_pitch = float(np.median([item["raw_pitch_deg"] for item in down])) if down else float("nan")
+        down_pitch_delta = down_pitch - neutral_pitch if down else float("nan")
+        
+        return {
+            "neutral_ear": round(neutral_ear, 4),
+            "blink_ear_q10": round(blink_ear_q10, 4),
+            "blink_drop": round(blink_drop, 4),
+            "closed_ear_q20": round(closed_ear_q20, 4),
+            "closed_drop": round(closed_drop, 4),
+            "neutral_mar": round(neutral_mar, 4),
+            "yawn_mar_q75": round(yawn_mar_q75, 4),
+            "yawn_delta": round(yawn_delta, 4),
+            "yaw_left_delta": round(left_yaw_delta, 2),
+            "yaw_right_delta": round(right_yaw_delta, 2),
+            "yaw_separation": round(yaw_separation, 2),
+            "down_pitch_delta": round(down_pitch_delta, 2),
+        }

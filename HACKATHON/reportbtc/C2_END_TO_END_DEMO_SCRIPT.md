@@ -99,13 +99,13 @@ cd ..\..
 Ba file sau bắt buộc phải có:
 
 ```powershell
-Test-Path AI\models\driver_state_rf_v4_dataset_v2.joblib
+Test-Path AI\models\driver_state_current.joblib
 Test-Path AI\models\face_landmark_468.onnx
 Test-Path AI\models\face_detection_yunet_2023mar.onnx
 ```
 
 Tất cả phải trả về `True`. Hiện hai file `.onnx` bị ignore bởi
-`AI/.gitignore`, vì vậy maintainer phải phát hành chúng qua Git LFS/release hoặc
+`AI/.gitignore`, vì vậy duy trì phải phát hành chúng qua Git LFS/release hoặc
 gửi kèm model package; máy clone đặt đúng vào `AI\models\` trước khi chạy.
 
 Tạo cấu hình Backend cục bộ:
@@ -125,8 +125,7 @@ Nếu dùng personalization, enroll một lần:
 python AI\scripts\webcam_driver_demo.py `
   --camera 0 `
   --driver-id driver_001 `
-  --enroll `
-  --model AI\models\driver_state_rf_v4_dataset_v2.joblib
+  --enroll
 ```
 
 ## 2. Demo A — BTC road + webcam tài xế
@@ -137,7 +136,6 @@ python AI\scripts\webcam_driver_demo.py `
   -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
   -Camera 0 `
   -DriverId driver_001 `
-  -DriverModel AI\models\driver_state_rf_v4_dataset_v2.joblib `
   -OpenDashboard
 ```
 
@@ -150,7 +148,6 @@ Runner kiểm tra môi trường/CarSky, mở Backend và Dashboard rồi chạy
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
   -DataDir E:\automotive_cc\Practice_Dataset `
-  -DriverModel AI\models\driver_state_rf_v4_dataset_v2.joblib `
   -OpenDashboard
 ```
 
@@ -184,7 +181,6 @@ DecisionEvent vẫn là contract tích hợp chính.
 python AI\scripts\run_inference.py `
   --data-dir E:\automotive_cc\Practice_Dataset `
   --samples-only `
-  --driver-model AI\models\driver_state_rf_v4_dataset_v2.joblib `
   --out AI\artifacts\predictions_6_samples
 
 python AI\team_kit\evaluation.py `

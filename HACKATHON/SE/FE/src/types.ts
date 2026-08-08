@@ -192,6 +192,23 @@ export interface LiveSnapshot {
   driver_state: string;
   driver_confidence: number;
   alertness_score: number;
+  longitudinal_accel?: number;
+  lateral_accel?: number;
+  speed_limit_kmh?: number;
+  safe_driving_score?: number;
+  penalty_points?: number;
+  harsh_brake?: boolean;
+  harsh_accel?: boolean;
+  harsh_corner?: boolean;
+  speeding?: boolean;
+  tailgating?: boolean;
+  harsh_brake_count?: number;
+  harsh_accel_count?: number;
+  harsh_corner_count?: number;
+  near_miss_count?: number;
+  speeding_pct_time?: number;
+  tailgating_pct_time?: number;
+  avg_headway_sec?: number;
 }
 
 export interface LiveTripSession {

@@ -54,6 +54,23 @@ class LiveSnapshotPayload(BaseModel):
     driver_state: str = Field(min_length=1)
     driver_confidence: float = Field(ge=0, le=1)
     alertness_score: float = Field(ge=0, le=1)
+    longitudinal_accel: float = 0.0
+    lateral_accel: float = 0.0
+    speed_limit_kmh: float = 0.0
+    safe_driving_score: float = Field(default=100.0, ge=0, le=100)
+    penalty_points: float = Field(default=0.0, ge=0)
+    harsh_brake: bool = False
+    harsh_accel: bool = False
+    harsh_corner: bool = False
+    speeding: bool = False
+    tailgating: bool = False
+    harsh_brake_count: int = Field(default=0, ge=0)
+    harsh_accel_count: int = Field(default=0, ge=0)
+    harsh_corner_count: int = Field(default=0, ge=0)
+    near_miss_count: int = Field(default=0, ge=0)
+    speeding_pct_time: float = Field(default=0.0, ge=0, le=100)
+    tailgating_pct_time: float = Field(default=0.0, ge=0, le=100)
+    avg_headway_sec: float = Field(default=0.0, ge=0)
 
 
 class TripRegistration(BaseModel):
@@ -409,4 +426,3 @@ async def pending_interventions(
         cmd["consumed"] = True
         result.append({k: v for k, v in cmd.items() if k != "consumed"})
     return {"count": len(result), "items": result}
-

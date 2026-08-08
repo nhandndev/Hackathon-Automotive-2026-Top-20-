@@ -1,0 +1,46 @@
+mode: auto
+
+target_display_fps: 20.0
+
+control_period_ms: 1000
+
+target_gpu_utilization: 0.82
+max_gpu_memory_ratio: 0.90
+
+overload:
+  min_display_fps: 19.0
+  max_frame_p95_ms: 55.0
+  consecutive_windows: 2
+
+headroom:
+  min_display_fps: 19.7
+  max_frame_p95_ms: 50.0
+  consecutive_windows: 3
+
+road:
+  min_interval_ms: 50
+  max_interval_ms: 250
+  initial_interval_ms: auto
+  step_ms: 25
+
+driver:
+  min_interval_ms: 50
+  max_interval_ms: 150
+  initial_interval_ms: auto
+  step_ms: 25
+
+face_detector:
+  target_period_ms: 500
+
+hand:
+  target_period_ms: 150
+
+warmup:
+  frames: 8
+
+benchmark:
+  calls_per_model: 12
+  estimated_load_target: 0.72
+
+logging:
+  print_every_sec: 2

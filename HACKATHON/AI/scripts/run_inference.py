@@ -28,6 +28,7 @@ from core.decision_engine import (  # noqa: E402
     DecisionSnapshot,
 )
 from core.btc_trip import TripDataset  # noqa: E402
+from core.runtime.model_registry import resolve_driver_model  # noqa: E402
 
 LOGGER = logging.getLogger("run_inference")
 CSV_FIELDS = [
@@ -315,7 +316,8 @@ def main() -> int:
     parser.add_argument(
         "--driver-model",
         type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf_v3_onnx.joblib",
+        default=None,
+        help="Override the Challenge-2 registry production model",
     )
     parser.add_argument(
         "--speed-limit-kmh",
@@ -374,6 +376,8 @@ def main() -> int:
     if args.output_csv is not None and args.trip_dir is None:
         parser.error("--output-csv requires --trip-dir")
     road_config = load_yaml(args.road_config)
+    driver_model = resolve_driver_model(AI_ROOT, args.driver_model)
+    LOGGER.info("Challenge-2 model: %s", driver_model)
     for trip in trips:
         output_path = (
             args.output_csv
@@ -385,7 +389,7 @@ def main() -> int:
             output_path,
             road_config,
             args.driver_config,
-            args.driver_model,
+            driver_model,
             args.speed_limit_kmh,
             decision_config=(
                 args.decision_config

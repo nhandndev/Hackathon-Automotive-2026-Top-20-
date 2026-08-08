@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,13 +16,21 @@ from .driver_profile import DriverProfile
 from .face_landmarker import LANDMARK_BACKEND
 from .ml_features import (
     CausalFeatureBuffer,
+    FatigueFeatureBuffer,
+    DistractionFeatureBuffer,
+    ArchitectV2FeatureBuffer,
     feature_names,
+    fatigue_feature_names,
+    distraction_feature_names,
     predict_latest,
 )
 
-DRIVER_STATES = {
-    "alert", "drowsy", "yawning", "distracted", "microsleep"
-}
+from .label_contract import FINAL_LABELS as DRIVER_STATES
+from .model_contract import load_driver_artifact, validate_driver_artifact
+
+
+# Landmark backend validation is done inside validate_driver_artifact
+
 
 
 @dataclass(frozen=True)
@@ -33,6 +42,29 @@ class FusionResult:
     source: str
     reason: str | None = None
 
+def choose_hierarchical_state(
+    *,
+    fatigue_state: str,
+    fatigue_confidence: float,
+    distracted_probability: float,
+    distracted_threshold: float,
+) -> tuple[str, float, str]:
+    if distracted_probability >= distracted_threshold:
+        return (
+            "distracted",
+            distracted_probability,
+            "distraction-model",
+        )
+
+    return (
+        fatigue_state,
+        fatigue_confidence,
+        "fatigue-model",
+    )
+
+
+from .safety_fusion import should_force_microsleep
+
 
 def fuse_driver_state(
     ml_state: str,
@@ -41,20 +73,10 @@ def fuse_driver_state(
     microsleep_min_ms: int,
 ) -> FusionResult:
     """Override ML only for reliable continuous eye-closure evidence."""
-    observation = dms_output.get("observation", {})
-    features = dms_output.get("features", {})
-    reliable = bool(
-        observation.get("face_detected")
-        and observation.get("left_eye_valid")
-        and observation.get("right_eye_valid")
-        and observation.get("monitoring_available")
-        and observation.get("quality_status")
-        not in {"face_missing", "invalid", "calibrating"}
-    )
-    closure_ms = max(
-        0, int(features.get("continuous_eye_closure_ms", 0) or 0)
-    )
-    if reliable and closure_ms >= int(microsleep_min_ms):
+    if should_force_microsleep(dms_output, microsleep_min_ms):
+        closure_ms = max(
+            0, int(dms_output.get("features", {}).get("continuous_eye_closure_ms", 0) or 0)
+        )
         return FusionResult(
             state="microsleep",
             confidence=max(float(ml_confidence), 0.95),
@@ -87,36 +109,48 @@ class DriverStatePredictor:
         self.config.setdefault("face", {})["detector_interval_frames"] = max(
             1, int(face_detector_interval_frames)
         )
-        self.artifact: dict[str, Any] = joblib.load(self.model_path)
-        # Batch/live inference predicts one feature row at a time.  Parallel
-        # tree prediction adds joblib overhead and, with recent sklearn,
-        # emits a delayed/Parallel configuration warning.  One worker is
-        # deterministic and faster for this per-frame path; training remains
-        # fully parallel.
-        model = self.artifact.get("model")
-        if model is not None and hasattr(model, "n_jobs"):
-            model.n_jobs = 1
-        if self.artifact.get("feature_names") != feature_names():
-            raise ValueError(
-                "Model feature schema does not match Challenge 2 runtime"
-            )
-        if self.artifact.get("landmark_backend") != LANDMARK_BACKEND:
-            raise ValueError(
-                "Model was not trained with the active ONNX landmark backend; "
-                "use driver_state_rf_v3_onnx.joblib or retrain it"
-            )
-        model_classes = set(self.artifact.get("model_classes", []))
-        if not model_classes or not model_classes <= DRIVER_STATES:
-            raise ValueError(f"Invalid model classes: {sorted(model_classes)}")
+        
+        self.artifact = load_driver_artifact(self.model_path)
+        validate_driver_artifact(self.artifact)
+            
+        self.architecture = self.artifact.get("architecture", "legacy_5class")
+        if self.architecture == "legacy_5class":
+            self.model = self.artifact.get("model")
+            if self.model is not None and hasattr(self.model, "n_jobs"):
+                self.model.n_jobs = 1
+        elif self.architecture in ("hierarchical_v1", "hierarchical_v2"):
+            self.fatigue_model = self.artifact["fatigue_model"]
+            self.distraction_model = self.artifact["distraction_model"]
+            if hasattr(self.fatigue_model, "n_jobs"):
+                self.fatigue_model.n_jobs = 1
+            if hasattr(self.distraction_model, "n_jobs"):
+                self.distraction_model.n_jobs = 1
+        elif self.architecture == "architect_v2":
+            self.model = self.artifact.get("model")
+            if self.model is not None and hasattr(self.model, "n_jobs"):
+                self.model.n_jobs = 1
+                
         self.driver_profile = driver_profile
         self._engine = DMSCore(
             self.config, driver_profile=self.driver_profile
         )
-        self._features = CausalFeatureBuffer()
+        if self.architecture == "legacy_5class":
+            self._features = CausalFeatureBuffer()
+        elif self.architecture == "hierarchical_v1":
+            self._fatigue_features = FatigueFeatureBuffer()
+            self._distraction_features = DistractionFeatureBuffer()
+        elif self.architecture == "hierarchical_v2":
+            self._fatigue_features = CausalFeatureBuffer()
+            self._distraction_features = DistractionFeatureBuffer()
+        elif self.architecture == "architect_v2":
+            self._features = ArchitectV2FeatureBuffer()
 
     @property
     def model_classes(self) -> list[str]:
         return list(self.artifact["model_classes"])
+
+    def set_face_detector_interval_frames(self, interval: int) -> None:
+        self._engine.face_landmarker.detector_interval_frames = max(1, int(interval))
 
     def predict_frame(
         self,
@@ -127,9 +161,56 @@ class DriverStatePredictor:
         primitive = self._engine.process(
             cabin_bgr, int(frame_id), int(timestamp_ms)
         )
-        state, confidence = predict_latest(
-            primitive, self.artifact, self._features
-        )
+        
+        fatigue_state_debug = "alert"
+        fatigue_conf_debug = 0.0
+        distraction_prob_debug = 0.0
+        
+        if self.architecture == "legacy_5class":
+            state, confidence = predict_latest(
+                primitive, self.artifact, self._features
+            )
+            prediction_source = "ML model"
+        elif self.architecture in ("hierarchical_v1", "hierarchical_v2"):
+            fatigue_vector = self._fatigue_features.update(primitive).reshape(1, -1)
+            distraction_vector = self._distraction_features.update(primitive).reshape(1, -1)
+            
+            fatigue_probs = self.fatigue_model.predict_proba(fatigue_vector)[0]
+            distraction_probs = self.distraction_model.predict_proba(distraction_vector)[0]
+            
+            fatigue_idx = int(np.argmax(fatigue_probs))
+            fatigue_state = str(self.fatigue_model.classes_[fatigue_idx])
+            fatigue_confidence = float(fatigue_probs[fatigue_idx])
+            
+            distraction_classes = list(self.distraction_model.classes_)
+            p_distracted = float(distraction_probs[distraction_classes.index("distracted")])
+            
+            distracted_threshold = float(
+                self.artifact.get("fusion", {}).get("distracted_threshold", self.config.get("ml", {}).get("distracted_threshold", 0.70))
+            )
+            
+            state, confidence, prediction_source = choose_hierarchical_state(
+                fatigue_state=fatigue_state,
+                fatigue_confidence=fatigue_confidence,
+                distracted_probability=p_distracted,
+                distracted_threshold=distracted_threshold,
+            )
+            
+            fatigue_state_debug = fatigue_state
+            fatigue_conf_debug = fatigue_confidence
+            distraction_prob_debug = p_distracted
+        elif self.architecture == "architect_v2":
+            vector = self._features.update(primitive).reshape(1, -1)
+            probs = self.model.predict_proba(vector)[0]
+            index = int(np.argmax(probs))
+            state = str(self.model.classes_[index])
+            confidence = float(probs[index])
+            prediction_source = "architect-v2"
+            
+            classes = list(self.model.classes_)
+            p_distracted = float(probs[classes.index("distracted")])
+            distraction_prob_debug = p_distracted
+            
         if state not in DRIVER_STATES:
             state = "alert"
         fused = fuse_driver_state(
@@ -142,7 +223,7 @@ class DriverStatePredictor:
         return {
             "state": fused.state,
             "confidence": fused.confidence,
-            "prediction_source": fused.source,
+            "prediction_source": fused.source if self.architecture == "legacy_5class" or fused.source == "safety-fusion" else prediction_source,
             "fusion_reason": fused.reason,
             "alertness_score": float(primitive["alertness_score"]),
             "eye_state": primitive["eye_state"],
@@ -161,6 +242,21 @@ class DriverStatePredictor:
             ),
             "features": primitive["features"],
             "visualization": primitive.get("visualization", {}),
+            # webcam compatibility
+            "driver_state": fused.state,
+            "state_confidence": fused.confidence,
+            "rule_driver_state": primitive.get("driver_state", "unknown"),
+            "attention_state": primitive.get("attention_state", "unknown"),
+            "fatigue_level": primitive.get("fatigue_level", "unknown"),
+            "eye_event": primitive.get("eye_event", "none"),
+            "mouth_event": primitive.get("mouth_event", "none"),
+            "head_state": primitive.get("head_state", "unknown"),
+            "observation": observation,
+            # new debug fields
+            "fatigue_state": fatigue_state_debug,
+            "fatigue_confidence": fatigue_conf_debug,
+            "distraction_probability": distraction_prob_debug,
+            "personalization": "profile" if self.driver_profile is not None else "session",
         }
 
     def reset(self) -> None:
@@ -168,11 +264,19 @@ class DriverStatePredictor:
         self._engine = DMSCore(
             self.config, driver_profile=self.driver_profile
         )
-        self._features.reset()
+        if self.architecture in ("legacy_5class", "architect_v2"):
+            self._features.reset()
+        elif self.architecture in ("hierarchical_v1", "hierarchical_v2"):
+            self._fatigue_features.reset()
+            self._distraction_features.reset()
 
     def close(self) -> None:
         self._engine.close()
-        self._features.reset()
+        if self.architecture in ("legacy_5class", "architect_v2"):
+            self._features.reset()
+        elif self.architecture in ("hierarchical_v1", "hierarchical_v2"):
+            self._fatigue_features.reset()
+            self._distraction_features.reset()
 
     def __enter__(self) -> "DriverStatePredictor":
         return self

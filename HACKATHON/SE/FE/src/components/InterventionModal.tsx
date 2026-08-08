@@ -11,13 +11,14 @@ interface InterventionModalProps {
 
 export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, isOpen, onClose, onSendNotif }) => {
   const [sentAlert, setSentAlert] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   if (!isOpen || !vehicle) return null;
 
   const lastFrame = vehicle.frames?.[vehicle.frames.length - 1];
   const isRunning = vehicle.runtime_status === 'running';
 
-  const handleSendAction = (
+  const handleSendAction = async (
     actionTitle: string,
     notifType: InterventionNotif['type'],
     overlayMessage: string,
@@ -29,20 +30,28 @@ export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, i
       timestamp: Date.now(),
     };
 
-    // 1. Fire React state → overlay on VehicleLiveView (same browser window)
-    onSendNotif?.(notif);
-
-    // 2. POST to Python AI desktop app via Node.js proxy → FastAPI
-    fetch('/api/intervention', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: notif.type,
-        tripId: notif.tripId,
-        message: notif.message,
-        timestamp: notif.timestamp,
-      }),
-    }).catch((err) => console.warn('[intervention] POST failed (BE offline):', err));
+    setSendError(null);
+    try {
+      const response = await fetch('/api/intervention', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: notif.type,
+          tripId: notif.tripId,
+          message: notif.message,
+          timestamp: notif.timestamp,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`Backend returned ${response.status}`);
+      }
+      // Local browser feedback only after backend accepted the command.
+      onSendNotif?.(notif);
+    } catch (err) {
+      console.warn('[intervention] POST failed:', err);
+      setSendError('Không gửi được lệnh xuống AI Desktop. Kiểm tra FastAPI backend ở port 8000.');
+      return;
+    }
 
     setSentAlert(actionTitle);
     setTimeout(() => {
@@ -87,6 +96,12 @@ export const InterventionModal: React.FC<InterventionModalProps> = ({ vehicle, i
             <p className="text-[11px] text-amber-200 leading-snug">
               <span className="font-bold text-amber-300">Trip đã kết thúc</span> — Lệnh can thiệp sẽ được ghi nhận nhưng không tới tài xế theo thời gian thực.
             </p>
+          </div>
+        )}
+
+        {sendError && (
+          <div className="bg-red-950/80 border border-red-500/60 rounded-xl px-3 py-2 text-xs text-red-100">
+            {sendError}
           </div>
         )}
 

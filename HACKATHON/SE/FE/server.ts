@@ -20,6 +20,39 @@ if (!fs.existsSync(SAVED_TRIPS_DIR)) {
   fs.mkdirSync(SAVED_TRIPS_DIR, { recursive: true });
 }
 
+function clearSavedTripFiles(): number {
+  if (!fs.existsSync(SAVED_TRIPS_DIR)) return 0;
+  const files = fs.readdirSync(SAVED_TRIPS_DIR).filter((f) => f.endsWith(".json"));
+  for (const file of files) {
+    fs.unlinkSync(path.join(SAVED_TRIPS_DIR, file));
+  }
+  return files.length;
+}
+
+function clearSavedTripsForDemo(reason: string): void {
+  try {
+    const count = clearSavedTripFiles();
+    if (count > 0) {
+      console.log(`[trip-clear] Cleared ${count} saved demo trip(s): ${reason}`);
+    }
+  } catch (err) {
+    console.error(`[trip-clear] Failed to clear saved demo trips during ${reason}:`, err);
+  }
+}
+
+clearSavedTripsForDemo("Fleet Dashboard startup");
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.once(signal, () => {
+    clearSavedTripsForDemo(signal);
+    process.exit(0);
+  });
+}
+
+process.once("exit", () => {
+  clearSavedTripsForDemo("process exit");
+});
+
 type TripSummary = {
   trip_id: string;
   runtime_status?: "pending" | "running" | "completed";
@@ -287,15 +320,8 @@ app.get("/api/trips/saved/:trip_id", (req, res) => {
  */
 app.delete("/api/trips/saved", (_req, res) => {
   try {
-    if (fs.existsSync(SAVED_TRIPS_DIR)) {
-      const files = fs.readdirSync(SAVED_TRIPS_DIR).filter((f) => f.endsWith(".json"));
-      for (const file of files) {
-        fs.unlinkSync(path.join(SAVED_TRIPS_DIR, file));
-      }
-      res.json({ deleted: true, count: files.length });
-      return;
-    }
-    res.json({ deleted: true, count: 0 });
+    const count = clearSavedTripFiles();
+    res.json({ deleted: true, count });
   } catch (err) {
     console.error("[trip-clear] Failed to clear saved trips:", err);
     res.status(500).json({ error: "Failed to clear saved trips" });
@@ -1031,9 +1057,11 @@ app.post("/api/intervention", async (req, res) => {
     }
     res.status(response.ok ? 202 : response.status).json(data);
   } catch (err) {
-    // If Python BE is offline: still acknowledge to the React UI so the demo works
-    console.warn("[intervention] Python BE offline, simulating acceptance:", err);
-    res.status(202).json({ accepted: true, offline: true });
+    console.warn("[intervention] Python BE offline; command was not delivered:", err);
+    res.status(503).json({
+      accepted: false,
+      error: "Python AI backend is offline; intervention command was not delivered",
+    });
   }
 });
 

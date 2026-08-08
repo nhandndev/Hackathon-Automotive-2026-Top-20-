@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Gauge, ShieldAlert, Video, Wifi, WifiOff } from 'lucide-react';
-import { DecisionAlert, InterventionNotif, LiveSnapshot, TripData } from '../types';
+import { DecisionAlert, LiveSnapshot, TripData } from '../types';
 import { LiveCameraFrame } from './LiveCameraFrame';
 
 interface VehicleLiveViewProps {
@@ -8,7 +8,6 @@ interface VehicleLiveViewProps {
   liveAlerts: DecisionAlert[];
   alertsConnected: boolean;
   onIntervene?: () => void;
-  interventionNotif?: InterventionNotif | null;
 }
 
 const formatTtc = (value: number | null | undefined) => {
@@ -19,88 +18,16 @@ const formatTtc = (value: number | null | undefined) => {
 
 const formatEventTime = (timestampMs: number) => `${(timestampMs / 1000).toFixed(1)}s`;
 
-// ─── Web Audio alert — plays ONLY inside this AI window ────────────────────
-function playAlertSound(type: InterventionNotif['type']) {
-  try {
-    const ctx = new AudioContext();
-    const master = ctx.createGain();
-    master.gain.value = 0.6;
-    master.connect(ctx.destination);
-
-    const schedule = (freq: number, startSec: number, durationSec: number) => {
-      const osc = ctx.createOscillator();
-      const env = ctx.createGain();
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      env.gain.setValueAtTime(0, startSec);
-      env.gain.linearRampToValueAtTime(1, startSec + 0.02);
-      env.gain.linearRampToValueAtTime(0, startSec + durationSec);
-      osc.connect(env);
-      env.connect(master);
-      osc.start(ctx.currentTime + startSec);
-      osc.stop(ctx.currentTime + startSec + durationSec + 0.05);
-    };
-
-    if (type === 'alarm') {
-      // 3 sharp beeps — high frequency (emergency)
-      schedule(880, 0.0, 0.15);
-      schedule(880, 0.2, 0.15);
-      schedule(880, 0.4, 0.15);
-      schedule(1100, 0.6, 0.25);
-    } else if (type === 'stop') {
-      // 2 medium tone beeps
-      schedule(440, 0.0, 0.3);
-      schedule(550, 0.4, 0.3);
-    } else {
-      // call — ringtone-style rising pair
-      schedule(660, 0.0, 0.2);
-      schedule(880, 0.25, 0.2);
-      schedule(660, 0.55, 0.2);
-      schedule(880, 0.80, 0.2);
-    }
-  } catch {
-    // AudioContext blocked — silently skip
-  }
-}
-
 export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
   vehicle,
   liveAlerts,
   alertsConnected,
   onIntervene,
-  interventionNotif,
 }) => {
   const [snapshot, setSnapshot] = useState<LiveSnapshot | null>(null);
   const [snapshotConnected, setSnapshotConnected] = useState(false);
   const snapshotEndpoint = import.meta.env.VITE_LIVE_SNAPSHOT_URL
     || 'http://127.0.0.1:8000/api/v1/alerts/snapshot';
-
-  // Play audio in a loop when a new notification arrives for this vehicle's trip, until completed
-  useEffect(() => {
-    if (!interventionNotif || interventionNotif.tripId !== vehicle.trip_id) {
-      return;
-    }
-    
-    // If the trip is already completed, do not play sound
-    if (vehicle.runtime_status === 'completed') {
-      return;
-    }
-
-    // Play immediately
-    playAlertSound(interventionNotif.type);
-
-    // Loop playing every 1.5 seconds
-    const intervalId = setInterval(() => {
-      // Check if it transitioned to completed during the interval
-      if (vehicle.runtime_status === 'completed') {
-        clearInterval(intervalId);
-        return;
-      }
-      playAlertSound(interventionNotif.type);
-    }, 1500);
-
-    return () => clearInterval(intervalId);
-  }, [interventionNotif, vehicle.trip_id, vehicle.runtime_status]);
 
   useEffect(() => {
     let stopped = false;
@@ -114,7 +41,11 @@ export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
           `${snapshotEndpoint}${separator}trip_id=${encodeURIComponent(vehicle.trip_id)}&v=${Date.now()}`,
           { cache: 'no-store' },
         );
-        if (!response.ok) throw new Error(`snapshot ${response.status}`);
+        if (!response.ok) {
+          if (!stopped) setSnapshotConnected(false);
+          inFlight = false;
+          return;
+        }
         const payload = await response.json() as LiveSnapshot;
         if (!stopped) {
           setSnapshot(payload);

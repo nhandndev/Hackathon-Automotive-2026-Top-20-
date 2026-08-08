@@ -18,8 +18,8 @@ const toFrame = (snapshot: LiveSnapshot): Frame => ({
   timestamp: snapshot.trip_timestamp_ms / 1000,
   ego: {
     speed_kmh: snapshot.speed_kmh ?? 0,
-    longitudinal_accel: 0,
-    lateral_accel: 0,
+    longitudinal_accel: snapshot.longitudinal_accel ?? 0,
+    lateral_accel: snapshot.lateral_accel ?? 0,
     location: { x: 0, y: 0, z: 0 },
     rotation: { yaw: 0, pitch: 0, roll: 0 },
     geolocation: { lat: 0, lon: 0, alt: 0 },
@@ -38,11 +38,11 @@ const toFrame = (snapshot: LiveSnapshot): Frame => ({
   min_ttc: snapshot.predicted_ttc_sec != null ? snapshot.predicted_ttc_sec : Number.POSITIVE_INFINITY,
   headway_sec: snapshot.predicted_ttc_sec != null ? snapshot.predicted_ttc_sec : Number.POSITIVE_INFINITY,
   behavior_flags: {
-    harsh_brake: false,
-    harsh_accel: false,
-    harsh_corner: false,
-    speeding: false,
-    tailgating: false,
+    harsh_brake: snapshot.harsh_brake ?? false,
+    harsh_accel: snapshot.harsh_accel ?? false,
+    harsh_corner: snapshot.harsh_corner ?? false,
+    speeding: snapshot.speeding ?? false,
+    tailgating: snapshot.tailgating ?? false,
   },
   risk: {
     base_risk: snapshot.risk_score ?? 0,
@@ -80,6 +80,9 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
 
   const risks = recentSnapshots.map((item) => item.risk_score ?? 0);
   const alertness = recentSnapshots.map((item) => item.alertness_score ?? 0);
+  const finiteHeadways = recentSnapshots
+    .map((item) => item.predicted_ttc_sec)
+    .filter((value): value is number => value !== null && value !== undefined && Number.isFinite(value));
   const last = session.latest_snapshot ?? recentSnapshots[recentSnapshots.length - 1];
 
   // FIX: use reduce() instead of Math.max(...array).
@@ -94,6 +97,9 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
   const averageAlertness = alertness.length
     ? alertness.reduce((sum, value) => sum + value, 0) / alertness.length
     : 1;
+  const averageHeadway = finiteHeadways.length
+    ? finiteHeadways.reduce((sum, value) => sum + value, 0) / finiteHeadways.length
+    : 0;
 
   const duration = recentSnapshots.length
     ? recentSnapshots[recentSnapshots.length - 1].trip_timestamp_ms / 1000
@@ -103,7 +109,7 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
   // FIX: clamp safe_driving_score to [0, 100].
   // Backend risk_score may occasionally exceed 100, which would produce a
   // negative safe_driving_score and break DriverRankingView score labels.
-  const rawSafeScore = 100 - (last?.risk_score ?? 0);
+  const rawSafeScore = last?.safe_driving_score ?? (100 - (last?.risk_score ?? 0));
   const safeDrivingScore = Math.min(100, Math.max(0, rawSafeScore));
 
   return {
@@ -141,16 +147,24 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
     },
     trip_aggregate: {
       safe_driving_score: safeDrivingScore,
-      harsh_brake_count: 0,
-      harsh_accel_count: 0,
-      harsh_corner_count: 0,
-      near_miss_count: episodeCount(
+      harsh_brake_count: last?.harsh_brake_count ?? recentSnapshots.filter((item) => item.harsh_brake).length,
+      harsh_accel_count: last?.harsh_accel_count ?? recentSnapshots.filter((item) => item.harsh_accel).length,
+      harsh_corner_count: last?.harsh_corner_count ?? recentSnapshots.filter((item) => item.harsh_corner).length,
+      near_miss_count: last?.near_miss_count ?? episodeCount(
         recentSnapshots,
         (item) => item.predicted_ttc_sec !== null && item.predicted_ttc_sec !== undefined && item.predicted_ttc_sec <= 1.5,
       ),
-      speeding_pct_time: 0,
-      tailgating_pct_time: 0,
-      avg_headway_sec: 0,
+      speeding_pct_time: last?.speeding_pct_time ?? (
+        recentSnapshots.length
+          ? 100 * recentSnapshots.filter((item) => item.speeding).length / recentSnapshots.length
+          : 0
+      ),
+      tailgating_pct_time: last?.tailgating_pct_time ?? (
+        recentSnapshots.length
+          ? 100 * recentSnapshots.filter((item) => item.tailgating).length / recentSnapshots.length
+          : 0
+      ),
+      avg_headway_sec: averageHeadway,
       max_risk_score: maxRisk,
       avg_risk_score: averageRisk,
       risk_classification: maxRisk >= 75 ? 'high' : maxRisk >= 50 ? 'medium' : 'low',

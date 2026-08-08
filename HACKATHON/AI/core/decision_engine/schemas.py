@@ -53,6 +53,19 @@ class DecisionSnapshot(StrictModel):
     mouth_open_duration_ms: int = Field(default=0, ge=0)
     c3_risk_score: float = Field(default=0.0, ge=0, le=100)
     c3_safe_score: float = Field(default=100.0, ge=0, le=100)
+    c3_penalty_points: float = Field(default=0.0, ge=0)
+    harsh_brake: bool = False
+    harsh_accel: bool = False
+    harsh_corner: bool = False
+    speeding: bool = False
+    tailgating: bool = False
+    harsh_brake_count: int = Field(default=0, ge=0)
+    harsh_accel_count: int = Field(default=0, ge=0)
+    harsh_corner_count: int = Field(default=0, ge=0)
+    near_miss_count: int = Field(default=0, ge=0)
+    speeding_pct_time: float = Field(default=0.0, ge=0, le=100)
+    tailgating_pct_time: float = Field(default=0.0, ge=0, le=100)
+    avg_headway_sec: float = Field(default=0.0, ge=0)
     vigilance_lapse_probability: float | None = Field(default=None, ge=0, le=1)
     vigilance_evidence_groups: int = Field(default=0, ge=0, le=4)
     hmi_response_latency_ms: int | None = Field(default=None, ge=0)
@@ -66,6 +79,10 @@ class DecisionSnapshot(StrictModel):
         "perclos_30s",
         "c3_risk_score",
         "c3_safe_score",
+        "c3_penalty_points",
+        "speeding_pct_time",
+        "tailgating_pct_time",
+        "avg_headway_sec",
     )
     @classmethod
     def finite_numbers(cls, value: float) -> float:

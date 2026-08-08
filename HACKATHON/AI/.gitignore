@@ -25,6 +25,7 @@ __pycache__/
 *.pyc
 *.pyo
 
+/models/ch2_feature_cache/
 /models/*.json
 
 #hide some unsused model

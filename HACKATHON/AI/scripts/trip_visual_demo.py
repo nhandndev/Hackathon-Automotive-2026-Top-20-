@@ -15,6 +15,7 @@ import threading
 import urllib.request
 import urllib.error
 import json
+import winsound
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +46,7 @@ CSV_FIELDS = [
 
 # ─── Fleet Intervention Overlay ────────────────────────────────────────────
 INTERVENTION_ENDPOINT = "http://127.0.0.1:8000/api/v1/alerts/interventions/pending"
-INTERVENTION_DISPLAY_SEC = 8.0
+INTERVENTION_DISPLAY_SEC = 18.0
 
 _INTERVENTION_ICONS = {
     "alarm": "!! CANH BAO KHAN CAP !!",
@@ -64,11 +65,20 @@ class InterventionOverlayState:
         self._lock = threading.Lock()
         self._cmd: dict | None = None
         self._expires: float = 0.0
+        self._beep_stop = threading.Event()
+        self._beep_thread: threading.Thread | None = None
 
     def set(self, cmd: dict) -> None:
         with self._lock:
             self._cmd = cmd
             self._expires = time.perf_counter() + INTERVENTION_DISPLAY_SEC
+        self._start_beep(cmd.get("type", "alarm"))
+
+    def clear(self) -> None:
+        with self._lock:
+            self._cmd = None
+            self._expires = 0.0
+        self._beep_stop.set()
 
     def get_active(self) -> dict | None:
         with self._lock:
@@ -76,6 +86,7 @@ class InterventionOverlayState:
                 return None
             if time.perf_counter() > self._expires:
                 self._cmd = None
+                self._beep_stop.set()
                 return None
             return self._cmd
 
@@ -85,14 +96,39 @@ class InterventionOverlayState:
                 return 0.0
             return max(0.0, self._expires - time.perf_counter())
 
+    def _start_beep(self, notif_type: str) -> None:
+        self._beep_stop.set()
+        self._beep_stop = threading.Event()
+
+        def loop() -> None:
+            patterns = {
+                "alarm": [(1100, 180), (1100, 180), (900, 260)],
+                "stop": [(650, 320), (520, 320)],
+                "call": [(700, 180), (900, 180), (700, 180), (900, 180)],
+            }
+            pattern = patterns.get(str(notif_type), patterns["alarm"])
+            while not self._beep_stop.is_set():
+                for freq, duration in pattern:
+                    if self._beep_stop.is_set():
+                        return
+                    try:
+                        winsound.Beep(freq, duration)
+                    except Exception:
+                        return
+                self._beep_stop.wait(0.9)
+
+        self._beep_thread = threading.Thread(target=loop, daemon=True)
+        self._beep_thread.start()
+
 
 def _poll_interventions(
     overlay: InterventionOverlayState,
     trip_id: str,
     stop_event: threading.Event,
+    endpoint: str = INTERVENTION_ENDPOINT,
 ) -> None:
     """Background thread: poll FastAPI for pending intervention commands."""
-    url = f"{INTERVENTION_ENDPOINT}?trip_id={trip_id}"
+    url = f"{endpoint}?trip_id={trip_id}"
     while not stop_event.is_set():
         try:
             with urllib.request.urlopen(url, timeout=2) as resp:  # noqa: S310
@@ -152,6 +188,8 @@ def draw_intervention_overlay(canvas: np.ndarray, cmd: dict, remaining: float) -
     cv2.rectangle(canvas, (bar_x0, bar_y - 6), (fill_x, bar_y + 6), border_color, -1)
     cv2.putText(canvas, f"{remaining:.0f}s", (bar_x1 + 6, bar_y + 5),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.48, (220, 220, 220), 1, cv2.LINE_AA)
+    cv2.putText(canvas, "Press C to dismiss fleet command", (20, h - 42),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.52, (240, 240, 240), 1, cv2.LINE_AA)
     return canvas
 
 
@@ -504,7 +542,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--driver-model", type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf_v3_onnx.joblib",
+        default=None,
     )
     parser.add_argument("--start-frame", type=int, default=0)
     parser.add_argument(
@@ -537,7 +575,14 @@ def main() -> int:
     road = RoadTTCPredictor(dataset.load_calibration(), road_cfg)
     road.set_trip_dir(dataset.trip_dir)
     road.reset()
-    driver = DriverStatePredictor(args.driver_model, args.driver_config)
+    from core.runtime.model_registry import resolve_driver_model
+    try:
+        driver_model_path = resolve_driver_model(AI_ROOT, args.driver_model)
+    except Exception as e:
+        print(f"Model resolver error: {e}", file=sys.stderr)
+        return 1
+        
+    driver = DriverStatePredictor(driver_model_path, args.driver_config)
     try:
         speed_limit_kmh = (
             float(args.speed_limit_kmh)
@@ -693,8 +738,10 @@ def main() -> int:
 
 
     if args.output_csv:
-        args.output_csv.parent.mkdir(parents=True, exist_ok=True)
-        with args.output_csv.open(
+        from core.runtime.paths import resolve_csv_output
+        output_csv = resolve_csv_output(args.output_csv, dataset.trip_id)
+        output_csv.parent.mkdir(parents=True, exist_ok=True)
+        with output_csv.open(
             "w", newline="", encoding="utf-8"
         ) as stream:
             csv_writer = csv.DictWriter(stream, fieldnames=CSV_FIELDS)

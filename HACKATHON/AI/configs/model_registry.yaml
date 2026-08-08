@@ -1,0 +1,5 @@
+challenge2:
+  production:
+    # Main Driver-State artifact used by batch, webcam and end-to-end demos
+    # when --driver-model/--model is omitted.
+    artifact: models/driver_state_current.joblib

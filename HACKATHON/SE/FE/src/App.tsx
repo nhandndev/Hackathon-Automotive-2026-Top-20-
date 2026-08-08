@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { DecisionAlert, InterventionNotif, LiveTripSession, ViewMode, TripData } from './types';
+import { DecisionAlert, LiveTripSession, ViewMode, TripData } from './types';
 import { btcTripData } from './data/btcTripData';
 import { sessionToTrip } from './data/liveTripData';
 import { Header } from './components/Header';
@@ -46,7 +46,6 @@ export default function App() {
   const [selectedVehicle, setSelectedVehicle] = useState<TripData | null>(null);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isInterventionOpen, setIsInterventionOpen] = useState(false);
-  const [interventionNotif, setInterventionNotif] = useState<InterventionNotif | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [liveAlerts, setLiveAlerts] = useState<DecisionAlert[]>([]);
   const [alertsConnected, setAlertsConnected] = useState(false);
@@ -217,6 +216,28 @@ export default function App() {
     setIsInterventionOpen(true);
   };
 
+  const handleClearSavedTrips = async () => {
+    try {
+      const resp = await fetch('/api/trips/saved', { method: 'DELETE' });
+      if (!resp.ok) {
+        throw new Error(`DELETE /api/trips/saved returned ${resp.status}`);
+      }
+      savedTripsCacheRef.current = [];
+      const liveOnly = vehicles.filter((trip) => trip.runtime_status !== 'completed');
+      setVehicles(liveOnly);
+      setSelectedVehicle((selected) => (
+        selected && liveOnly.some((trip) => trip.trip_id === selected.trip_id)
+          ? selected
+          : liveOnly[0] ?? null
+      ));
+      followRunningTrip.current = true;
+      console.info('[trip-clear] Cleared saved demo trips.');
+    } catch (err) {
+      console.warn('[trip-clear] Could not clear saved trips:', err);
+      window.alert('Không xoá được saved trips. Kiểm tra Fleet Dashboard server.');
+    }
+  };
+
   if (standaloneView === 'ranking-analysis') {
     return (
       <DriverRankingAnalysisPage
@@ -269,6 +290,7 @@ export default function App() {
               onViewTripDetail={handleViewTripDetail}
               onIntervene={handleOpenIntervention}
               onOpenCopilot={() => setIsCopilotOpen(true)}
+              onClearSavedTrips={handleClearSavedTrips}
             />
           )}
 
@@ -279,7 +301,6 @@ export default function App() {
                   liveAlerts={liveAlerts}
                   alertsConnected={alertsConnected}
                   onIntervene={() => handleOpenIntervention(selectedVehicle)}
-                  interventionNotif={interventionNotif}
                 />
               : <WaitingForData />
           )}
@@ -355,11 +376,6 @@ export default function App() {
           vehicle={selectedVehicle}
           isOpen={isInterventionOpen}
           onClose={() => setIsInterventionOpen(false)}
-          onSendNotif={(notif) => {
-            setInterventionNotif(notif);
-            // Auto-clear overlay after 5 minutes (allowing sound loop to run)
-            setTimeout(() => setInterventionNotif(null), 300_000);
-          }}
         />
       )}
     </div>

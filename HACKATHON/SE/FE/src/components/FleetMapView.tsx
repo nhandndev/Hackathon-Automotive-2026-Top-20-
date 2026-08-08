@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Database, Gauge, MapPin, Sparkles, Truck, Video } from 'lucide-react';
+import { AlertTriangle, Database, Gauge, MapPin, Sparkles, Trash2, Truck, Video } from 'lucide-react';
 import { TripData } from '../types';
 
 interface FleetMapViewProps {
@@ -10,6 +10,7 @@ interface FleetMapViewProps {
   onViewTripDetail: (v: TripData) => void;
   onIntervene: (v: TripData) => void;
   onOpenCopilot: () => void;
+  onClearSavedTrips: () => void;
 }
 
 const finite = (value: unknown, digits = 1) =>
@@ -32,6 +33,7 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
   onViewTripDetail,
   onIntervene,
   onOpenCopilot,
+  onClearSavedTrips,
 }) => {
   const selected = selectedVehicle ?? vehicles[0] ?? null;
 
@@ -53,11 +55,21 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
         <div className="p-4 border-b border-[#1E293B]">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold tracking-widest text-slate-300 uppercase">Dataset Fleet</h2>
-            <span className="flex items-center gap-1.5 text-[10px] text-sky-300 font-mono">
-              <Database className="w-3 h-3" /> ORGANIZER DATA
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClearSavedTrips}
+                title="Clear saved demo trips"
+                className="flex items-center gap-1 rounded-md border border-red-500/40 px-2 py-1 text-[10px] font-bold uppercase text-red-300 hover:bg-red-950/60"
+              >
+                <Trash2 className="w-3 h-3" /> Clear
+              </button>
+              <span className="flex items-center gap-1.5 text-[10px] text-sky-300 font-mono">
+                <Database className="w-3 h-3" /> ORGANIZER DATA
+              </span>
+            </div>
           </div>
-          <p className="mt-2 text-xs text-slate-500">Trips replay sequentially; completed histories remain selectable.</p>
+          <p className="mt-2 text-xs text-slate-500">Trips replay sequentially; completed histories are temporary for demo.</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">

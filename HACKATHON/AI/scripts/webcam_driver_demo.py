@@ -8,26 +8,19 @@ import time
 from pathlib import Path
 
 import cv2
-import joblib
 import yaml
 
 AI_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(AI_ROOT))
 
-from core.challenge2_driver.dms_core import DMSCore
-from core.challenge2_driver.face_landmarker import LANDMARK_BACKEND
-from core.challenge2_driver.ml_features import (
-    CausalFeatureBuffer,
-    feature_names,
-    predict_latest,
-)
-from core.challenge2_driver.driver_enrollment import GuidedEnrollment
-from core.challenge2_driver.predict_state import fuse_driver_state
+from core.challenge2_driver.predict_state import DriverStatePredictor
 from core.challenge2_driver.driver_profile import (
     DriverProfile,
     ProfileStore,
     validate_driver_id,
 )
+from core.challenge2_driver.driver_enrollment import GuidedEnrollment
+from core.runtime.model_registry import resolve_driver_model
 
 
 def overlay(frame, output, mirror=True):
@@ -233,6 +226,7 @@ def enroll_driver(
     store: ProfileStore,
 ) -> DriverProfile:
     """Run guided enrollment; only numeric primitives are persisted."""
+    from core.challenge2_driver.dms_core import DMSCore
     guide = GuidedEnrollment(driver_id)
     engine = DMSCore(config)
     started = time.perf_counter_ns()
@@ -274,13 +268,31 @@ def enroll_driver(
             cv2.destroyWindow("FPTU DMS - Driver Enrollment")
         except cv2.error:
             pass
-    threshold = float(config["eye"].get("closure_threshold_ratio", 0.72))
-    profile = guide.build_profile(threshold)
+    threshold = float(
+        config["eye"].get(
+            "closure_threshold_ratio",
+            0.72,
+        )
+    )
+    try:
+        profile = guide.build_profile(threshold)
+    except ValueError as exc:
+        raise RuntimeError(
+            "Enrollment finished collecting samples but "
+            f"profile validation failed: {exc}. "
+            "Please run --enroll again."
+        ) from exc
+        
     path = store.save(profile)
     print(
         f"Saved driver profile {driver_id} "
         f"(quality={profile.quality_score:.2f}) to {path}"
     )
+    print("\nEnrollment diagnostics:")
+    diag = guide.diagnostics()
+    for k, v in diag.items():
+        print(f"  {k:<17}: {v}")
+    print()
     return profile
 
 
@@ -295,8 +307,8 @@ def main():
     parser.add_argument(
         "--model",
         type=Path,
-        default=AI_ROOT / "models" / "driver_state_rf_v4_dataset_v2.joblib",
-        help="Validation-tuned ONNX-landmark Random Forest v4",
+        default=None,
+        help="Override the Challenge-2 registry production model",
     )
     parser.add_argument(
         "--output",
@@ -320,8 +332,6 @@ def main():
     parser.add_argument("--no-display", action="store_true", help="Process without an OpenCV window")
     parser.add_argument("--max-frames", type=int, default=0, help="0 means unlimited")
     args = parser.parse_args()
-    if args.model and (args.model.suffix.lower() != ".joblib" or not args.model.is_file()):
-        parser.error(f"--model must be an existing .joblib file: {args.model}")
     if args.enroll and not args.driver_id:
         parser.error("--enroll requires --driver-id")
     if args.driver_id:
@@ -330,20 +340,6 @@ def main():
         except ValueError as exc:
             parser.error(str(exc))
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
-    artifact = joblib.load(args.model) if args.model else None
-    if artifact is not None:
-        model = artifact.get("model")
-        if model is not None and hasattr(model, "n_jobs"):
-            # Per-frame prediction does not benefit from spawning joblib
-            # workers and recent sklearn warns about that parallel path.
-            model.n_jobs = 1
-    if artifact is not None and artifact.get("feature_names") != feature_names():
-        raise ValueError("Model feature schema does not match this code; retrain it")
-    if artifact is not None and artifact.get("landmark_backend") != LANDMARK_BACKEND:
-        raise ValueError(
-            "Model was not trained with the active ONNX landmark backend; "
-            "use driver_state_rf_v4_dataset_v2.joblib or retrain it"
-        )
     camera_index = config["camera"]["index"] if args.camera is None else args.camera
     capture = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, config["camera"]["width"])
@@ -354,13 +350,18 @@ def main():
     profile_store = ProfileStore(args.profiles_dir)
     if args.driver_id:
         if args.enroll or not profile_store.exists(args.driver_id):
-            if args.no_display:
-                parser.error(
-                    "A missing/forced profile requires the enrollment window"
+            if args.enroll:
+                if args.no_display:
+                    parser.error(
+                        "A missing/forced profile requires the enrollment window"
+                    )
+                profile = enroll_driver(
+                    capture, config, args.driver_id, profile_store
                 )
-            profile = enroll_driver(
-                capture, config, args.driver_id, profile_store
-            )
+            else:
+                raise FileNotFoundError(
+                    f"Driver profile '{args.driver_id}' not found. Run webcam_driver_demo.py --driver-id {args.driver_id} --enroll first."
+                )
         else:
             try:
                 profile = profile_store.load(args.driver_id)
@@ -375,12 +376,30 @@ def main():
                 )
             else:
                 print(
-                    f"Loaded driver profile {profile.driver_id} "
+                    f"Driver profile: {profile.driver_id} "
                     f"(quality={profile.quality_score:.2f})"
                 )
+    else:
+        print("Driver profile: GLOBAL")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    engine = DMSCore(config, driver_profile=profile)
-    feature_buffer = CausalFeatureBuffer()
+    try:
+        resolved_model = resolve_driver_model(AI_ROOT, args.model)
+    except Exception as exc:
+        print(f"Model resolver error: {exc}", file=sys.stderr)
+        return 1
+    predictor = DriverStatePredictor(resolved_model, args.config, profile)
+
+    active_providers = predictor._engine.face_landmarker.session.get_providers()
+    print("\nChallenge 2 model:")
+    print(f"  artifact: {resolved_model.name}")
+    print(f"  architecture: {predictor.architecture}")
+    print("Driver:")
+    print(f"  id: {profile.driver_id if profile else 'GLOBAL'}")
+    print(f"  personalization: {'ACTIVE' if profile is not None else 'SESSION'}")
+    print("Runtime:")
+    print(f"  ONNX provider: {active_providers[0] if active_providers else 'None'}")
+    print("  RF backend: sklearn CPU\n")
+        
     started = time.perf_counter_ns()
     frame_id = 0
     try:
@@ -390,34 +409,11 @@ def main():
                 if not ok:
                     raise RuntimeError("Webcam stopped returning frames.")
                 timestamp_ms = (time.perf_counter_ns() - started) // 1_000_000
-                output = engine.process(frame, frame_id, timestamp_ms)
-                rule_state = output["driver_state"]
-                output["rule_driver_state"] = rule_state
+                
+                output = predictor.predict_frame(frame_id, timestamp_ms, frame)
                 output["driver_id"] = profile.driver_id if profile else None
-                output["profile_quality"] = (
-                    profile.quality_score if profile else None
-                )
-                if artifact is None:
-                    output["prediction_source"] = "rule-based"
-                else:
-                    state, confidence = predict_latest(
-                        output, artifact, feature_buffer
-                    )
-                    if profile is None:
-                        output["driver_state"] = state
-                        output["state_confidence"] = confidence
-                        output["prediction_source"] = "ML model"
-                    else:
-                        fused = fuse_driver_state(
-                            state,
-                            confidence,
-                            output,
-                            int(config["eye"]["microsleep_min_ms"]),
-                        )
-                        output["driver_state"] = fused.state
-                        output["state_confidence"] = fused.confidence
-                        output["prediction_source"] = fused.source
-                        output["fusion_reason"] = fused.reason
+                output["profile_quality"] = profile.quality_score if profile else None
+                    
                 stream.write(json.dumps(output, ensure_ascii=False) + "\n")
                 stream.flush()
                 if not args.no_display:
@@ -426,15 +422,13 @@ def main():
                     if key in (ord("q"), 27):
                         break
                     if key == ord("r"):
-                        engine.close()
-                        engine = DMSCore(config, driver_profile=profile)
-                        feature_buffer.reset()
+                        predictor.reset()
                         started = time.perf_counter_ns()
                 frame_id += 1
                 if args.max_frames and frame_id >= args.max_frames:
                     break
     finally:
-        engine.close()
+        predictor.close()
         capture.release()
         cv2.destroyAllWindows()
     print(f"Wrote {frame_id} records to {args.output}")

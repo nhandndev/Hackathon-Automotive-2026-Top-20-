@@ -21,6 +21,7 @@ $productRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $aiRoot = Join-Path $productRoot "AI"
 $beRoot = Join-Path $productRoot "SE\BE"
 $feRoot = Join-Path $productRoot "SE\FE"
+$savedTripsDir = Join-Path $feRoot "src\data\saved_trips"
 $aiScript = Join-Path $aiRoot "scripts\end_to_end_demo.py"
 $fleetAiScript = Join-Path $aiRoot "scripts\dataset_fleet_demo.py"
 $carSkyScript = Join-Path $beRoot "scripts\carsky_phase05.py"
@@ -42,7 +43,7 @@ $driverModelPath = if ($DriverModel) {
     (Resolve-Path $DriverModel).Path
 }
 else {
-    Join-Path $aiRoot "models\driver_state_rf_v4_dataset_v2.joblib"
+    $null
 }
 
 $backendProcess = $null
@@ -59,6 +60,15 @@ function Test-Http([string]$Url) {
     try {
         $null = Invoke-RestMethod -Uri $Url -TimeoutSec 2
         return $true
+    }
+    catch { return $false }
+}
+
+function Test-BackendSnapshotContract {
+    try {
+        $schema = Invoke-RestMethod -Uri "http://127.0.0.1:8000/openapi.json" -TimeoutSec 2
+        $props = $schema.components.schemas.LiveSnapshotPayload.properties
+        return ($null -ne $props.safe_driving_score -and $null -ne $props.harsh_brake_count)
     }
     catch { return $false }
 }
@@ -101,6 +111,23 @@ function Show-LogTail([string]$Path) {
     }
 }
 
+function Clear-SavedDemoTrips {
+    $resolvedFeRoot = (Resolve-Path -LiteralPath $feRoot).Path
+    if (!(Test-Path -LiteralPath $savedTripsDir)) { return }
+    $resolvedSavedTripsDir = (Resolve-Path -LiteralPath $savedTripsDir).Path
+    if (!$resolvedSavedTripsDir.StartsWith($resolvedFeRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Write-Warning "Skip saved trip cleanup because path is outside FE root: $resolvedSavedTripsDir"
+        return
+    }
+    $jsonFiles = Get-ChildItem -LiteralPath $resolvedSavedTripsDir -Filter "*.json" -File -ErrorAction SilentlyContinue
+    foreach ($file in $jsonFiles) {
+        Remove-Item -LiteralPath $file.FullName -Force -ErrorAction SilentlyContinue
+    }
+    if ($jsonFiles.Count -gt 0) {
+        Write-Host "Cleared saved demo trips: $($jsonFiles.Count) file(s)." -ForegroundColor DarkYellow
+    }
+}
+
 try {
     Write-Step "Preflight local environment"
     if ($Mode -eq "hybrid-live" -and !$tripPath) {
@@ -109,8 +136,15 @@ try {
     if ($Mode -eq "dataset-fleet" -and !$dataPath) {
         throw "Mode dataset-fleet requires -DataDir."
     }
-    $projectPython = Join-Path $productRoot ".venv\Scripts\python.exe"
-    if (Test-Path -LiteralPath $projectPython) {
+    $repoRoot = (Resolve-Path (Join-Path $productRoot "..")).Path
+    $pythonCandidates = @(
+        (Join-Path $repoRoot ".venv\Scripts\python.exe"),
+        (Join-Path $productRoot ".venv\Scripts\python.exe")
+    )
+    $projectPython = $pythonCandidates |
+        Where-Object { Test-Path -LiteralPath $_ } |
+        Select-Object -First 1
+    if ($projectPython) {
         $pythonExe = $projectPython
     }
     else {
@@ -120,13 +154,21 @@ try {
     & $pythonExe -c "import cv2, fastapi, httpx, onnxruntime, pydantic_settings, sklearn, torch, ultralytics, uvicorn, yaml; assert hasattr(cv2, 'STEREO_SGBM_MODE_SGBM_3WAY'); print('Python dependencies: OK')"
     if ($LASTEXITCODE -ne 0) { throw "Python dependency check failed in project .venv/current environment." }
 
-    foreach ($requiredPath in @($aiScript, $fleetAiScript, $carSkyScript, $beEnvFile, $driverModelPath)) {
+    foreach ($requiredPath in @($aiScript, $fleetAiScript, $carSkyScript, $beEnvFile)) {
         if (!(Test-Path -LiteralPath $requiredPath)) { throw "Required path is missing: $requiredPath" }
     }
-    if ([System.IO.Path]::GetExtension($driverModelPath) -ne ".joblib") {
-        throw "DriverModel must point to a .joblib artifact: $driverModelPath"
+    if ($driverModelPath) {
+        if (!(Test-Path -LiteralPath $driverModelPath)) {
+            throw "DriverModel does not exist: $driverModelPath"
+        }
+        if ([System.IO.Path]::GetExtension($driverModelPath) -ne ".joblib") {
+            throw "DriverModel must point to a .joblib artifact: $driverModelPath"
+        }
+        Write-Host "Driver model override: $driverModelPath"
     }
-    Write-Host "Driver model: $driverModelPath"
+    else {
+        Write-Host "Driver model: AI/configs/model_registry.yaml (production)"
+    }
     New-Item -ItemType Directory -Force -Path $logDir, $predictionDir, $eventDir | Out-Null
 
     if (!$SkipCarSkyPreflight) {
@@ -154,6 +196,9 @@ try {
 
     $backendHealth = "http://127.0.0.1:8000/health"
     if (Test-Http $backendHealth) {
+        if (!(Test-BackendSnapshotContract)) {
+            throw "A stale SE Backend is already running on port 8000 and does not support the current AI snapshot contract. Stop that backend process, then rerun this script."
+        }
         Write-Host "Backend already running; reusing it." -ForegroundColor Yellow
     }
     else {
@@ -221,7 +266,6 @@ try {
         $aiArguments = @(
             $fleetAiScript,
             "--data-dir", $dataPath,
-            "--driver-model", $driverModelPath,
             "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
             "--output-dir", (Join-Path $aiRoot "artifacts\fleet_demo\$runStamp")
         )
@@ -232,13 +276,13 @@ try {
             "--trip-dir", $tripPath,
             "--driver-source", "webcam",
             "--camera", "$Camera",
-            "--driver-model", $driverModelPath,
             "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
             "--output-csv", $outputCsv,
             "--events", $eventFile
         )
         if ($DriverId) { $aiArguments += @("--driver-id", $DriverId) }
     }
+    if ($driverModelPath) { $aiArguments += @("--driver-model", $driverModelPath) }
     if ($MaxFrames -gt 0) { $aiArguments += @("--max-frames", "$MaxFrames") }
     if ($NoDisplay) { $aiArguments += "--no-display" }
 
@@ -273,6 +317,7 @@ catch {
 }
 finally {
     Write-Step "Stop services started by this runner"
+    Clear-SavedDemoTrips
     if ($ownsFrontend -and $null -ne $frontendProcess -and !$frontendProcess.HasExited) {
         Stop-Process -Id $frontendProcess.Id -Force -ErrorAction SilentlyContinue
         Write-Host "Fleet Dashboard stopped."

@@ -320,6 +320,10 @@ class DemoInferenceEngine:
                     pass
                 self.driver_future = None
                 self.scheduler.driver.in_flight = False
+            # Dataset/BTC replay needs frame-exact Challenge 2 output that
+            # matches run_inference.py. Do not reuse a throttled YuNet ROI here;
+            # adaptive face-detection skipping is only for live webcam FPS.
+            self.driver.set_face_detector_interval_frames(1)
             start = time.perf_counter()
             self.cached_driver_out = self.driver.predict_frame(
                 frame_id,

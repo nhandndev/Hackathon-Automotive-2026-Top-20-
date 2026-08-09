@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-08-09T14:44:35.054658+00:00",
+  "challenge": "C1 (Road / TTC)",
+  "owner": "Hung/Tam",
+  "reproduce_command": "cd HACKATHON/AI && python scripts/eval_practice.py",
+  "reported_composite_score": {
+    "in_sample_6_practice_trips": 73.6,
+    "loto_cross_validated": 72.4,
+    "note": "in-sample = evaluated on the same 6 Practice trips the detector's val split is drawn from; LOTO = leave-one-trip-out cross-validation over configs/challenge1.yaml thresholds (scripts/loto_postprocess.py), the more honest generalization estimate."
+  },
+  "files": {
+    "HACKATHON/AI/configs/challenge1.yaml": "e999499bf970fb7721c98f6d2d4c79dcc5ef23508a33617978a569f3c29a6f98",
+    "HACKATHON/AI/yolov8s_finetuned_carla_v2.pt": "9ea7558512d45478d41b194ebbb83754b92c2b597ca0d5e59c890b2fff268060",
+    "HACKATHON/AI/scripts/eval_practice.py": "d73d0e77902261fb8e9bd43c2b872f646a889541b5467454486b639f5579d048",
+    "HACKATHON/AI/core/challenge1_road/predict_ttc.py": "31a6459f632e3e36d2f232227c4dd2896942a3ab6447856a91b98b01993c5549",
+    "HACKATHON/AI/core/challenge1_road/ttc_engine.py": "b3512fc65768db506acf0f63f6e2325121ee23ce3e4015dbdaed4e929f2f1ebb"
+  }
+}

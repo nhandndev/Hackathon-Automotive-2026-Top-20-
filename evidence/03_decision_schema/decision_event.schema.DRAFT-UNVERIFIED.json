@@ -1,0 +1,30 @@
+{
+  "_WARNING": "This schema is HALLUCINATED based on prompt requirements. DO NOT use in production. Needs owner verification.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DecisionEvent",
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique identifier for the event"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tripId": {
+      "type": "string"
+    },
+    "riskScore": {
+      "type": "number"
+    },
+    "actionTaken": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "eventId",
+    "timestamp",
+    "tripId"
+  ]
+}

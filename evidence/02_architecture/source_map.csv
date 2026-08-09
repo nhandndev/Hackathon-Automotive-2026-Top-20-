@@ -1,0 +1,134 @@
+Module,File,Functions/Classes
+AI,__init__.py,N/A (or not parsed)
+AI/core,btc_trip.py,"FrameRecord, TripDataset"
+AI/core,__init__.py,N/A (or not parsed)
+AI/core\challenge1_road,depth.py,StereoDepth
+AI/core\challenge1_road,detection.py,"Detection, _CentroidTracker, ObjectDetector"
+AI/core\challenge1_road,predict_ttc.py,"format_ttc, _resolve_tracker, predict_ttc, RoadTTCPredictor"
+AI/core\challenge1_road,ttc_engine.py,"lateral_from_pixels, in_collision_cone, ttc_1d, ttc_2d, _empty_features, Track, TTCEngine"
+AI/core\challenge1_road,__init__.py,N/A (or not parsed)
+AI/core\challenge2_driver,dms_core.py,"_distance, eye_aspect_ratio, mouth_aspect_ratio, _clamp, angle_delta, landmark_bbox, _Sample, DMSCore"
+AI/core\challenge2_driver,driver_enrollment.py,"_feature, _neutral_ear, _blink_drop, _closed_eye_drop, EnrollmentStep, EnrollmentStatus, EnrollmentAccumulator, GuidedEnrollment"
+AI/core\challenge2_driver,driver_profile.py,"validate_driver_id, _finite, DriverProfile, ProfileStore"
+AI/core\challenge2_driver,face_landmarker.py,"_resolve_model_path, _sigmoid, FaceLandmarkResult, _OnnxYuNetDetector, OnnxFaceLandmarker"
+AI/core\challenge2_driver,hand_landmarker.py,"HandLandmarkResult, OnnxHandLandmarker"
+AI/core\challenge2_driver,label_contract.py,normalize_driver_state
+AI/core\challenge2_driver,ml_features.py,"_number, feature_names, _quantile, _median, _row_values, rolling_feature_matrix, predict_latest, predict_states, fatigue_feature_names, distraction_feature_names, _extended_row_values, architect_v2_hand_feature_names, architect_v2_feature_names, _architect_v2_hand_row_values, CausalFeatureBuffer, FatigueFeatureBuffer, DistractionFeatureBuffer, ArchitectV2HandFeatureBuffer, ArchitectV2FeatureBuffer"
+AI/core\challenge2_driver,model_contract.py,"load_driver_artifact, validate_driver_artifact, validate_feature_contract, describe_driver_artifact"
+AI/core\challenge2_driver,predict_state.py,"choose_hierarchical_state, fuse_driver_state, state_adjusted_alertness, FusionResult, DriverStatePredictor"
+AI/core\challenge2_driver,safety_fusion.py,should_force_microsleep
+AI/core\challenge2_driver,__init__.py,N/A (or not parsed)
+AI/core\challenge3_fusion,risk_engine.py,"FleetScoreSnapshot, FleetSafeDrivingScorer"
+AI/core\challenge3_fusion,__init__.py,N/A (or not parsed)
+AI/core\decision_engine,engine.py,"_Desired, _Runtime, _HarshRuntime, DecisionEngine"
+AI/core\decision_engine,policy.py,"StrictModel, GeneralPolicy, TTCPolicy, MicrosleepPolicy, DistractionPolicy, DrowsinessPolicy, SpeedingPolicy, HarshBehaviorPolicy, RiskTierPolicy, SensorHealthPolicy, VigilanceLapsePolicy, DecisionPolicy"
+AI/core\decision_engine,schemas.py,"StrictModel, DriverMessage, DecisionSnapshot, DecisionEvent"
+AI/core\decision_engine,__init__.py,N/A (or not parsed)
+AI/core\runtime,adaptive_scheduler.py,"probe_torch_gpu, HardwareProfile, TaskRuntimeStats, AdaptiveRuntimePolicy, AdaptiveInferenceScheduler"
+AI/core\runtime,demo_engine.py,DemoInferenceEngine
+AI/core\runtime,input_sources.py,"WebcamDriverSource, DatasetDriverSource"
+AI/core\runtime,model_registry.py,resolve_driver_model
+AI/core\runtime,paths.py,"ensure_output_dir, ensure_output_file, resolve_json_output, resolve_csv_output"
+AI/integrations,se_client.py,SEApiClient
+AI/integrations,__init__.py,N/A (or not parsed)
+AI/scripts,dataset_fleet_demo.py,"parse_args, discover_trips, main"
+AI/scripts,end_to_end_demo.py,"parse_args, main"
+AI/scripts,eval_practice.py,"run_trip_ch1_only, main"
+AI/scripts,extract_features.py,"_load_config, extract_trip, main"
+AI/scripts,inspect_driver_model.py,main
+AI/scripts,loto_postprocess.py,"composite, postprocess, main"
+AI/scripts,preflight_ai.py,main
+AI/scripts,prepare_yolo_finetune.py,"project_3d_to_2d_bbox, convert_label_file, main"
+AI/scripts,run_inference.py,"load_yaml, run_trip, discover_trips, main"
+AI/scripts,send_decision_events.py,"iter_events, main"
+AI/scripts,serve_se_reference_api.py,main
+AI/scripts,train_driver_state_hierarchical.py,"normalize_driver_state_array, validate_canonical_labels, print_label_distribution, baseline_candidate, canonical_json, generate_candidates, _is_trip_dir, discover_trips, evaluate_like_official_c2, get_config_hash, get_trip_fingerprint, create_manifest, is_manifest_compatible, validate_trip_cache, save_trip_cache, extract_features_from_trip, prepare_split_features, prepare_training_data, eval_metrics, train_one_candidate, rank_candidates_and_save, validate_execution_provider, validate_training_dataset, main, TripFeatureData, ArchitectV2TrainingData"
+AI/scripts,train_ttc_model.py,"composite, u_to_ttc, main"
+AI/scripts,train_ttc_model2.py,"load_submitted_ttc, composite, u_to_ttc, build, main"
+AI/scripts,trip_visual_demo.py,"_poll_interventions, draw_intervention_overlay, install_starterkit, put_text, title_bar, risk_color, ttc_color, draw_road, draw_right, draw_face, draw_dashboard, project_kitti_labels, main, InterventionOverlayState"
+AI/scripts,tune_output_map.py,"composite, apply_map, load, main"
+AI/scripts,webcam_driver_demo.py,"overlay, _draw_mirrored_box, enrollment_overlay, enroll_driver, main"
+AI/services,se_reference_api.py,"health, receive_alert, recent_alerts, AckResponse"
+AI/services,__init__.py,N/A (or not parsed)
+AI/team_kit,baseline_ttc_predictor.py,"predict_trip, main, BaselineTTCPredictor"
+AI/team_kit,dataset_loader.py,"parse_kitti_calib, FrameRecord, TripDataset, HackathonDataset"
+AI/team_kit,evaluation.py,"_parse_ttc, _parse_float, load_predictions, load_ground_truth_from_trip, compute_trip_metrics, _composite_score, compute_challenge2_metrics, compute_challenge3_metrics, evaluate, print_report, main, TripMetrics, Challenge2Metrics, Challenge3Metrics, EvaluationReport, FramePrediction, TripGroundTruth"
+AI/team_kit,local_stream_server.py,"_get_trip, main, Handler"
+AI/team_kit,__init__.py,N/A (or not parsed)
+SE/BE\app,main.py,"dataset_is_readable, readiness_snapshot, create_app"
+SE/BE\app,__init__.py,N/A (or not parsed)
+SE/BE\app\adapters,csv_file_adapter.py,CSVFileAdapter
+SE/BE\app\adapters,__init__.py,N/A (or not parsed)
+SE/BE\app\core,config.py,"get_settings, Settings"
+SE/BE\app\core,errors.py,"request_id_for, error_response, register_exception_handlers, AppError, TripNotFoundError, DatasetUnavailableError"
+SE/BE\app\core,logger.py,setup_logger
+SE/BE\app\core,__init__.py,N/A (or not parsed)
+SE/BE\app\domain,__init__.py,N/A (or not parsed)
+SE/BE\app\domain\interfaces,base_data_adapter.py,BaseDataAdapter
+SE/BE\app\domain\interfaces,base_detector.py,BaseDetector
+SE/BE\app\domain\interfaces,base_risk_model.py,BaseRiskModel
+SE/BE\app\domain\interfaces,__init__.py,N/A (or not parsed)
+SE/BE\app\domain\schemas,ai_contract.py,"normalize_distance_time, AIContractModel, DriverState, TripMetadata, Geolocation, Ego, Driver, BehaviorFlags, AIRisk, AIFrame, AITrip, BackendEnrichment"
+SE/BE\app\domain\schemas,ai_vision.py,"DriverStateEnum, AIVisionSchema"
+SE/BE\app\domain\schemas,responses.py,"HealthResponse, ReadinessResponse, ErrorResponse, ReplayEnvelope, LeaderboardResponse, CompareResponse, EventsResponse, CoachingResponse"
+SE/BE\app\domain\schemas,risk.py,RiskFusionSchema
+SE/BE\app\domain\schemas,submission.py,SubmissionFrameRow
+SE/BE\app\domain\schemas,telemetry.py,TelemetrySchema
+SE/BE\app\domain\schemas,__init__.py,N/A (or not parsed)
+SE/BE\app\integrations,__init__.py,N/A (or not parsed)
+SE/BE\app\integrations\carsky,client.py,"CarSkyDeliveryError, CarSkyClient"
+SE/BE\app\integrations\carsky,mapper.py,"CarSkyHMIState, EventTransition, AIStatus, CarSkySignalMap, CarSkySignalMapper"
+SE/BE\app\integrations\carsky,service.py,"DeliveryKind, Delivery, CarSkyPublisher"
+SE/BE\app\integrations\carsky,__init__.py,N/A (or not parsed)
+SE/BE\app\modules,__init__.py,N/A (or not parsed)
+SE/BE\app\modules\ai_alerts,router.py,"_store, _trip_store, _ensure_trip, _public_session, _intervention_store, DecisionEventPayload, LiveSnapshotPayload, TripRegistration, TripRegistrationPayload, InterventionCommandPayload"
+SE/BE\app\modules\ai_alerts,__init__.py,N/A (or not parsed)
+SE/BE\app\modules\coaching,fallback_engine.py,FallbackRuleEngine
+SE/BE\app\modules\coaching,llm_service.py,LLMCoachingService
+SE/BE\app\modules\coaching,router.py,CoachingRequest
+SE/BE\app\modules\coaching,__init__.py,N/A (or not parsed)
+SE/BE\app\modules\event_detection,detector_registry.py,DetectorRegistry
+SE/BE\app\modules\event_detection,router.py,N/A (or not parsed)
+SE/BE\app\modules\event_detection,__init__.py,N/A (or not parsed)
+SE/BE\app\modules\event_detection\detectors,brake_detector.py,HarshBrakeDetector
+SE/BE\app\modules\event_detection\detectors,corner_detector.py,HarshCornerDetector
+SE/BE\app\modules\event_detection\detectors,driver_state_detector.py,DriverStateBaselineDetector
+SE/BE\app\modules\event_detection\detectors,smoke_detector.py,SmokeDetector
+SE/BE\app\modules\event_detection\detectors,speed_detector.py,SpeedingDetector
+SE/BE\app\modules\fleet,fleet_service.py,FleetService
+SE/BE\app\modules\fleet,router.py,N/A (or not parsed)
+SE/BE\app\modules\fleet,__init__.py,N/A (or not parsed)
+SE/BE\app\modules\insurance,insurance_service.py,InsuranceService
+SE/BE\app\modules\insurance,router.py,N/A (or not parsed)
+SE/BE\app\modules\insurance,__init__.py,N/A (or not parsed)
+SE/BE\app\modules\risk_fusion,risk_service.py,RiskService
+SE/BE\app\modules\risk_fusion,router.py,N/A (or not parsed)
+SE/BE\app\modules\risk_fusion,temporal_filter.py,EdgeCaseTemporalFilter
+SE/BE\app\modules\risk_fusion,ttc_baseline.py,calculate_btc_ttc_baseline
+SE/BE\app\modules\risk_fusion,__init__.py,N/A (or not parsed)
+SE/BE\app\modules\risk_fusion\algorithms,nhtsa_v1.py,NHTSARiskModelV1
+SE/BE\app\modules\streaming,replay_service.py,ReplayService
+SE/BE\app\modules\streaming,router.py,N/A (or not parsed)
+SE/BE\app\modules\streaming,ws_manager.py,ConnectionManager
+SE/BE\app\modules\streaming,__init__.py,N/A (or not parsed)
+SE/BE\scripts,carsky_phase05.py,"main, Phase05Operator"
+SE/BE\scripts,export_submission_csv.py,export_all_submissions
+SE/BE\scripts,generate_mock_dataset.py,generate_mock_dataset
+SE/BE\scripts,validate_submission.py,validate_submission_files
+SE/BE\scripts,verify_frame_image_alignment.py,verify_alignment
+SE/BE\scripts,verify_temporal_sync.py,inspect_temporal_sync
+SE/BE\tests,conftest.py,"sample_ai_payload, make_settings, app_factory, client"
+SE/BE\tests,test_ai_alerts.py,"test_ai_alert_is_idempotent, test_driver_alert_is_forwarded_to_carsky_once, test_live_trip_registry_keeps_completed_trip_history, FakePublisher"
+SE/BE\tests,test_carsky.py,"test_decision_event_maps_without_recomputing_ai_severity, make_metadata, make_frame, test_mapper_omits_infinite_ttc_and_preserves_ai_risk"
+SE/BE\tests,test_config.py,"test_environment_overrides_and_comma_separated_cors, test_wildcard_cors_is_rejected"
+SE/BE\tests,test_contract.py,"test_ai_payload_round_trip_preserves_source_fields, test_mismatched_trip_ids_are_rejected, test_invalid_ai_values_are_rejected"
+SE/BE\tests,test_health.py,"test_health_is_public_and_matches_contract, test_ready_returns_503_for_empty_cache, test_ready_returns_200_for_all_expected_trips, test_external_api_mode_requires_outbound_credentials, test_openapi_has_no_authentication_scheme, test_request_id_is_preserved_on_errors, test_invalid_query_uses_common_422_error_contract, test_missing_trip_uses_common_404_error_contract, test_cors_preflight_allows_local_frontend, test_cors_preflight_allows_product_dashboard"
+SE/BE\tests,__init__.py,N/A (or not parsed)
+SE/FE,benchmark_bedrock.ts,N/A (or not parsed)
+SE/FE,server.ts,N/A (or not parsed)
+SE/FE,vite.config.ts,default_export
+SE/FE\src,reportModel.ts,"buildCopilotInput, extractCanonicalSafetyEvents, resolveTripLabel, inferReportMode, buildVehicleReportModels"
+SE/FE\src,types.ts,N/A (or not parsed)
+SE/FE\src,vite-env.d.ts,N/A (or not parsed)
+SE/FE\src\data,btcTripData.ts,N/A (or not parsed)
+SE/FE\src\data,liveTripData.ts,sessionToTrip

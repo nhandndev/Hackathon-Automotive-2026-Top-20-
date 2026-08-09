@@ -1,0 +1,5 @@
+# EVIDENCE EXECUTION COMMAND LOG
+# Format: [UTC Timestamp] | [Commit/Hash] | [Exit Code] | [Command]
+# -----------------------------------------------------------------------------
+2026-08-09T14:44:35Z | - | 0 | python evidence/scripts/run_eval_bundle.py  (E-01, produced evaluation_bundle.zip + manifest.json)
+2026-08-09T~15:00Z   | - | 0 | python evidence/scripts/compute_drift_metrics.py  (E-42, produced psi_ks_metrics.csv)

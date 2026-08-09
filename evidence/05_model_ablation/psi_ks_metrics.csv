@@ -1,0 +1,4 @@
+feature,practice_n,practice_mean,practice_std,data_train_n,data_train_mean,data_train_std,psi_data_train_vs_practice,ks_statistic,ks_pvalue
+mean_luminance,400,79.9925,50.399,400,50.9627,17.8385,8.5608,0.5825,3.603552921783261e-63
+boxes_per_frame,18072,1.3352,0.7386,17272,3.6567,2.2151,1.817,0.6218,0.0
+box_height_norm,24129,0.1164,0.1005,63158,0.0667,0.0908,0.8322,0.3329,0.0

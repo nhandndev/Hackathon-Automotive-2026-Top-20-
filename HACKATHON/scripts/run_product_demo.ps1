@@ -289,7 +289,13 @@ try {
             $fleetAiScript,
             "--data-dir", $dataPath,
             "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
-            "--output-dir", (Join-Path $aiRoot "artifacts\fleet_demo\$runStamp")
+            "--output-dir", (Join-Path $aiRoot "artifacts\fleet_demo\$runStamp"),
+            "--runtime-mode", "fixed",
+            "--road-interval-ms", "200",
+            "--driver-interval-ms", "50",
+            "--target-fps", "10",
+            "--dashboard-stream-fps", "3",
+            "--speed", "0.5"
         )
     }
     else {
@@ -300,7 +306,13 @@ try {
             "--camera", "$Camera",
             "--se-endpoint", "http://127.0.0.1:8000/api/v1/alerts",
             "--output-csv", $outputCsv,
-            "--events", $eventFile
+            "--events", $eventFile,
+            "--runtime-mode", "fixed",
+            "--road-interval-ms", "200",
+            "--driver-interval-ms", "50",
+            "--target-fps", "10",
+            "--dashboard-stream-fps", "3",
+            "--speed", "0.5"
         )
         if ($DriverId) { $aiArguments += @("--driver-id", $DriverId) }
     }

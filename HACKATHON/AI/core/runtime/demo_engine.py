@@ -160,12 +160,12 @@ class DemoInferenceEngine:
 
     def _get_default_driver_output(self):
         return {
-            "state": "alert", "confidence": 0.0, "prediction_source": "startup",
+            "state": "unknown", "confidence": 0.0, "prediction_source": "startup",
             "quality_status": "warming_up", "face_detected": False, "left_eye_valid": False,
-            "right_eye_valid": False, "monitoring_available": False, "alertness_score": 1.0,
+            "right_eye_valid": False, "monitoring_available": False, "alertness_score": 0.0,
             "eye_state": "unknown", "mouth_state": "unknown", "head_pose": "unknown",
             "rule_state": "unknown", "valid_window_ratio": 0.0, "features": {},
-            "driver_state": "alert", "state_confidence": 0.0, "rule_driver_state": "unknown",
+            "driver_state": "unknown", "state_confidence": 0.0, "rule_driver_state": "unknown",
             "attention_state": "unknown", "fatigue_level": "unknown", "eye_event": "none",
             "mouth_event": "none", "head_state": "unknown", "observation": {}
         }
@@ -279,40 +279,21 @@ class DemoInferenceEngine:
         
         if live_timestamp_ms is None:
             live_timestamp_ms = (time.perf_counter_ns() - self.live_started_ns) // 1_000_000
-            
-        # Check Road Future
-        if self.road_future is not None and self.road_future.done():
-            try:
-                self.cached_ttc, self.cached_road_debug, _, latency = self.road_future.result()
-                self.road_confirmed = True
-                self.scheduler.on_road_complete(live_timestamp_ms, latency)
-            except Exception as exc:
-                logger.warning(f"Road inference warning: {exc}")
-            finally:
+
+        if self.runtime_mode == "full":
+            # Full-frame product demo mode: every presented frame must be the
+            # result of fresh C1/C2 inference.  This intentionally disables the
+            # async cache/scheduler path used by lightweight live previews.
+            # It is slower, but it preserves Challenge 2 temporal features and
+            # prevents stale driver-state labels from reaching the desktop app
+            # or Fleet Dashboard.
+            if self.road_future is not None:
+                try:
+                    self.road_future.result(timeout=1.0)
+                except Exception:
+                    pass
                 self.road_future = None
-                
-        # Submit Road Future
-        should_submit_c1 = False
-        if self.road_future is None and left_frame is not None and right_frame is not None:
-            if self.runtime_mode == "full":
-                should_submit_c1 = True
-            else:
-                should_submit_c1 = self.scheduler.should_submit_road(live_timestamp_ms)
-                
-        if should_submit_c1:
-            r_left = left_frame.copy()
-            r_right = right_frame.copy()
-            def infer_road(f=frame_id, t=timestamp, s=speed_kmh, l=r_left, r=r_right):
-                start = time.perf_counter()
-                val = self.road.predict_frame(f, t, l, r, s)
-                return val, copy.deepcopy(self.road.last_debug), f, (time.perf_counter()-start)*1000
-            self.road_future = self.road_executor.submit(infer_road)
-            self.scheduler.on_road_submit(live_timestamp_ms)
-            
-        # Check Driver Future. Dataset-fleet can force an exact C2 state per
-        # frame so persisted Fleet Dashboard JSON never stores startup/cache
-        # defaults such as "alert" for another trip.
-        if force_driver_sync and cabin_frame is not None:
+                self.scheduler.road.in_flight = False
             if self.driver_future is not None:
                 try:
                     self.driver_future.result(timeout=1.0)
@@ -320,52 +301,125 @@ class DemoInferenceEngine:
                     pass
                 self.driver_future = None
                 self.scheduler.driver.in_flight = False
-            # Dataset/BTC replay needs frame-exact Challenge 2 output that
-            # matches run_inference.py. Do not reuse a throttled YuNet ROI here;
-            # adaptive face-detection skipping is only for live webcam FPS.
-            self.driver.set_face_detector_interval_frames(1)
-            start = time.perf_counter()
-            self.cached_driver_out = self.driver.predict_frame(
-                frame_id,
-                live_timestamp_ms,
-                cabin_frame,
-            )
-            self.driver_confirmed = True
-            self.scheduler.on_driver_complete(
-                live_timestamp_ms,
-                (time.perf_counter() - start) * 1000,
-            )
-        elif self.driver_future is not None and self.driver_future.done():
-            try:
-                self.cached_driver_out, _, _, latency = self.driver_future.result()
-                self.driver_confirmed = True
-                self.scheduler.on_driver_complete(live_timestamp_ms, latency)
-            except Exception as exc:
-                logger.warning(f"Driver inference warning: {exc}")
-            finally:
-                self.driver_future = None
-                
-        # Submit Driver Future
-        should_submit_c2 = False
-        if (not force_driver_sync) and self.driver_future is None and cabin_frame is not None:
-            if self.runtime_mode == "full":
-                should_submit_c2 = True
-            else:
-                should_submit_c2 = self.scheduler.should_submit_driver(live_timestamp_ms)
-                
-        if should_submit_c2:
-            c_ai = cabin_frame.copy()
-            def infer_driver(f=frame_id, t=live_timestamp_ms, c=c_ai):
+
+            if left_frame is not None and right_frame is not None:
                 start = time.perf_counter()
-                val = self.driver.predict_frame(f, t, c)
-                return val, f, t, (time.perf_counter()-start)*1000
-            self.driver_future = self.driver_executor.submit(infer_driver)
-            self.scheduler.on_driver_submit(live_timestamp_ms)
-            
+                try:
+                    self.cached_ttc = self.road.predict_frame(
+                        frame_id,
+                        timestamp,
+                        left_frame,
+                        right_frame,
+                        speed_kmh,
+                    )
+                    self.cached_road_debug = copy.deepcopy(self.road.last_debug)
+                    self.road_confirmed = True
+                    self.scheduler.on_road_complete(
+                        live_timestamp_ms,
+                        (time.perf_counter() - start) * 1000,
+                    )
+                except Exception as exc:
+                    self.cached_ttc = float("inf")
+                    self.cached_road_debug = {}
+                    self.road_confirmed = False
+                    logger.warning(f"Road full-frame inference warning: {exc}")
+
+            if cabin_frame is not None:
+                self.driver.set_face_detector_interval_frames(1)
+                start = time.perf_counter()
+                self.cached_driver_out = self.driver.predict_frame(
+                    frame_id,
+                    live_timestamp_ms,
+                    cabin_frame,
+                )
+                self.driver_confirmed = True
+                self.scheduler.on_driver_complete(
+                    live_timestamp_ms,
+                    (time.perf_counter() - start) * 1000,
+                )
+
+        else:
+            # Check Road Future
+            if self.road_future is not None and self.road_future.done():
+                try:
+                    self.cached_ttc, self.cached_road_debug, _, latency = self.road_future.result()
+                    self.road_confirmed = True
+                    self.scheduler.on_road_complete(live_timestamp_ms, latency)
+                except Exception as exc:
+                    logger.warning(f"Road inference warning: {exc}")
+                finally:
+                    self.road_future = None
+
+            # Submit Road Future
+            should_submit_c1 = False
+            if self.road_future is None and left_frame is not None and right_frame is not None:
+                should_submit_c1 = self.scheduler.should_submit_road(live_timestamp_ms)
+
+            if should_submit_c1:
+                r_left = left_frame.copy()
+                r_right = right_frame.copy()
+                def infer_road(f=frame_id, t=timestamp, s=speed_kmh, l=r_left, r=r_right):
+                    start = time.perf_counter()
+                    val = self.road.predict_frame(f, t, l, r, s)
+                    return val, copy.deepcopy(self.road.last_debug), f, (time.perf_counter()-start)*1000
+                self.road_future = self.road_executor.submit(infer_road)
+                self.scheduler.on_road_submit(live_timestamp_ms)
+
+            # Check Driver Future. Dataset-fleet can force an exact C2 state per
+            # frame so persisted Fleet Dashboard JSON never stores startup/cache
+            # defaults such as "alert" for another trip.
+            if force_driver_sync and cabin_frame is not None:
+                if self.driver_future is not None:
+                    try:
+                        self.driver_future.result(timeout=1.0)
+                    except Exception:
+                        pass
+                    self.driver_future = None
+                    self.scheduler.driver.in_flight = False
+                # Dataset/BTC replay needs frame-exact Challenge 2 output that
+                # matches run_inference.py. Do not reuse a throttled YuNet ROI here;
+                # adaptive face-detection skipping is only for live webcam FPS.
+                self.driver.set_face_detector_interval_frames(1)
+                start = time.perf_counter()
+                self.cached_driver_out = self.driver.predict_frame(
+                    frame_id,
+                    live_timestamp_ms,
+                    cabin_frame,
+                )
+                self.driver_confirmed = True
+                self.scheduler.on_driver_complete(
+                    live_timestamp_ms,
+                    (time.perf_counter() - start) * 1000,
+                )
+            elif self.driver_future is not None and self.driver_future.done():
+                try:
+                    self.cached_driver_out, _, _, latency = self.driver_future.result()
+                    self.driver_confirmed = True
+                    self.scheduler.on_driver_complete(live_timestamp_ms, latency)
+                except Exception as exc:
+                    logger.warning(f"Driver inference warning: {exc}")
+                finally:
+                    self.driver_future = None
+
+            # Submit Driver Future
+            should_submit_c2 = False
+            if (not force_driver_sync) and self.driver_future is None and cabin_frame is not None:
+                should_submit_c2 = self.scheduler.should_submit_driver(live_timestamp_ms)
+
+            if should_submit_c2:
+                c_ai = cabin_frame.copy()
+                def infer_driver(f=frame_id, t=live_timestamp_ms, c=c_ai):
+                    start = time.perf_counter()
+                    val = self.driver.predict_frame(f, t, c)
+                    return val, f, t, (time.perf_counter()-start)*1000
+                self.driver_future = self.driver_executor.submit(infer_driver)
+                self.scheduler.on_driver_submit(live_timestamp_ms)
+
         # Dynamic YuNet interval
-        yunet_target_ms = self.rt_cfg.get("face_detector", {}).get("target_period_ms", 500)
-        desired_frames = max(1, round(yunet_target_ms / max(1, self.scheduler.driver.interval_ms)))
-        self.driver.set_face_detector_interval_frames(desired_frames)
+        if self.runtime_mode != "full":
+            yunet_target_ms = self.rt_cfg.get("face_detector", {}).get("target_period_ms", 500)
+            desired_frames = max(1, round(yunet_target_ms / max(1, self.scheduler.driver.interval_ms)))
+            self.driver.set_face_detector_interval_frames(desired_frames)
         
         # Adaptive Control update
         if self.runtime_mode == "auto":

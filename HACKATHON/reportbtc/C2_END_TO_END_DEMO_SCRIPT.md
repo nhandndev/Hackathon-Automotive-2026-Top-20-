@@ -99,7 +99,7 @@ cd ..\..
 Ba file sau bắt buộc phải có:
 
 ```powershell
-Test-Path AI\models\driver_state_current.joblib
+Test-Path AI\models\candidate_013.joblib
 Test-Path AI\models\face_landmark_468.onnx
 Test-Path AI\models\face_detection_yunet_2023mar.onnx
 ```
@@ -142,7 +142,8 @@ Nếu dùng personalization, enroll một lần:
 python AI\scripts\webcam_driver_demo.py `
   --camera 0 `
   --driver-id driver_001 `
-  --enroll
+  --enroll `
+  --model AI\models\candidate_013.joblib
 ```
 
 ## 2. Demo A — BTC road + webcam tài xế
@@ -171,6 +172,7 @@ Chỉ dùng lệnh này khi `SE\BE\.env` đã có CarSky external credential th�
   -Camera 0 `
   -DriverId driver_001 `
   -DriverModel AI\models\driver_state_current.joblib `
+  -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard
 ```
 
@@ -210,7 +212,25 @@ Chỉ dùng lệnh này khi `SE\BE\.env` đã có CarSky external credential th�
   -Mode dataset-fleet `
   -DataDir ..\Practice_Dataset `
   -DriverModel AI\models\driver_state_current.joblib `
+  -DataDir E:\automotive_cc\Practice_Dataset `
+  -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard
+```
+
+Mặc định lệnh trên chạy AI + SE Backend + Fleet Dashboard. Nếu `SE\BE\.env`
+đang để `CARSKY_ENABLED=false` / `CARSKY_MODE=offline`, runner chỉ cảnh báo và
+vẫn chạy dashboard local.
+
+Chỉ khi cần demo đầy đủ với CarSky cloud thì cấu hình credential trong
+`SE\BE\.env` rồi thêm flag:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir E:\automotive_cc\Practice_Dataset `
+  -DriverModel AI\models\candidate_013.joblib `
+  -OpenDashboard `
+  -RequireCarSky
 ```
 
 Mỗi thư mục con phải là trip BTC đầy đủ: `<trip_id>.json(.gz)`, `driver/`,
@@ -244,6 +264,7 @@ python AI\scripts\run_inference.py `
   --data-dir ..\Practice_Dataset `
   --samples-only `
   --driver-model AI\models\driver_state_current.joblib `
+  --driver-model AI\models\candidate_013.joblib `
   --out AI\artifacts\predictions_6_samples
 
 python AI\team_kit\evaluation.py `

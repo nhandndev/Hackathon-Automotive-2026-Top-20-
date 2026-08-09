@@ -141,6 +141,11 @@ class DemoInferenceEngine:
         self.last_snapshot = None
         self.live_started_ns = None
         self.last_present_time = None
+        self.microsleep_count = 0
+        self._microsleep_active = False
+        self.tailgating_frames = 0
+        self.finite_ttc_sum = 0.0
+        self.finite_ttc_count = 0
         
     def _apply_runtime_mode_intervals(self):
         if self.runtime_mode == "fixed":
@@ -202,8 +207,14 @@ class DemoInferenceEngine:
         self.road_confirmed = False
         self.driver_confirmed = False
         self.last_snapshot = None
+        self.microsleep_count = 0
+        self._microsleep_active = False
+        self.tailgating_frames = 0
+        self.finite_ttc_sum = 0.0
+        self.finite_ttc_count = 0
         
         self._apply_runtime_mode_intervals()
+        self.scheduler.reset_trip_state()
         
         if self.client:
             self.client.register_trips([{"trip_id": self.trip_id, "metadata": metadata}])
@@ -258,7 +269,8 @@ class DemoInferenceEngine:
         cabin_frame: np.ndarray,
         left_frame: np.ndarray = None,
         right_frame: np.ndarray = None,
-        live_timestamp_ms: int = None
+        live_timestamp_ms: int = None,
+        force_driver_sync: bool = False,
     ) -> dict:
         now_s = time.perf_counter()
         frame_duration_ms = (now_s - self.last_present_time) * 1000.0
@@ -297,8 +309,29 @@ class DemoInferenceEngine:
             self.road_future = self.road_executor.submit(infer_road)
             self.scheduler.on_road_submit(live_timestamp_ms)
             
-        # Check Driver Future
-        if self.driver_future is not None and self.driver_future.done():
+        # Check Driver Future. Dataset-fleet can force an exact C2 state per
+        # frame so persisted Fleet Dashboard JSON never stores startup/cache
+        # defaults such as "alert" for another trip.
+        if force_driver_sync and cabin_frame is not None:
+            if self.driver_future is not None:
+                try:
+                    self.driver_future.result(timeout=1.0)
+                except Exception:
+                    pass
+                self.driver_future = None
+                self.scheduler.driver.in_flight = False
+            start = time.perf_counter()
+            self.cached_driver_out = self.driver.predict_frame(
+                frame_id,
+                live_timestamp_ms,
+                cabin_frame,
+            )
+            self.driver_confirmed = True
+            self.scheduler.on_driver_complete(
+                live_timestamp_ms,
+                (time.perf_counter() - start) * 1000,
+            )
+        elif self.driver_future is not None and self.driver_future.done():
             try:
                 self.cached_driver_out, _, _, latency = self.driver_future.result()
                 self.driver_confirmed = True
@@ -310,7 +343,7 @@ class DemoInferenceEngine:
                 
         # Submit Driver Future
         should_submit_c2 = False
-        if self.driver_future is None and cabin_frame is not None:
+        if (not force_driver_sync) and self.driver_future is None and cabin_frame is not None:
             if self.runtime_mode == "full":
                 should_submit_c2 = True
             else:
@@ -342,9 +375,24 @@ class DemoInferenceEngine:
         harsh_corner = abs(lateral_accel) > HARSH_LATERAL_G * G_MS2
         speeding = speed_kmh > self.speed_limit + SPEEDING_TOLERANCE_KMH
         tailgating = np.isfinite(self.cached_ttc) and self.cached_ttc < 3.0
+        if tailgating:
+            self.tailgating_frames += 1
+        if np.isfinite(self.cached_ttc) and self.cached_ttc > 0:
+            self.finite_ttc_sum += float(self.cached_ttc)
+            self.finite_ttc_count += 1
         
         # Build Snapshot
         features = self.cached_driver_out.get("features", {})
+        is_microsleep = str(self.cached_driver_out.get("state", "")) == "microsleep"
+        if is_microsleep and not self._microsleep_active:
+            self.microsleep_count += 1
+        self._microsleep_active = is_microsleep
+        frames_seen = max(1, int(getattr(fleet_out, "frames_seen", 1)))
+        avg_headway_sec = (
+            self.finite_ttc_sum / self.finite_ttc_count
+            if self.finite_ttc_count
+            else 0.0
+        )
         self.last_snapshot = DecisionSnapshot(
             trip_id=self.trip_id, driver_id=self.driver_profile.driver_id if self.driver_profile else None,
             frame_id=frame_id, timestamp_ms=live_timestamp_ms,
@@ -360,6 +408,13 @@ class DemoInferenceEngine:
             continuous_eye_closure_ms=int(features.get("continuous_eye_closure_ms", 0) or 0),
             perclos_30s=float(features.get("perclos_30s", 0.0) or 0.0),
             off_road_duration_ms=int(features.get("off_road_duration_ms", 0) or 0),
+            eye_state=str(self.cached_driver_out.get("eye_state", "unknown")),
+            head_pose=str(
+                self.cached_driver_out.get(
+                    "head_pose",
+                    self.cached_driver_out.get("head_state", "unknown"),
+                )
+            ),
             mouth_state=str(self.cached_driver_out.get("mouth_state", "normal")),
             mouth_open_duration_ms=int(features.get("mouth_open_duration_ms", 0) or 0),
             c3_risk_score=fleet_out.risk_score, c3_safe_score=fleet_out.safe_driving_score,
@@ -373,9 +428,10 @@ class DemoInferenceEngine:
             harsh_accel_count=fleet_out.harsh_accel_count,
             harsh_corner_count=fleet_out.harsh_corner_count,
             near_miss_count=fleet_out.near_miss_count,
+            microsleep_count=self.microsleep_count,
             speeding_pct_time=fleet_out.speeding_pct_time,
-            tailgating_pct_time=0.0,
-            avg_headway_sec=float(self.cached_ttc) if np.isfinite(self.cached_ttc) else 0.0,
+            tailgating_pct_time=round(100.0 * self.tailgating_frames / frames_seen, 3),
+            avg_headway_sec=round(avg_headway_sec, 3),
         )
         
         # Decision Engine update

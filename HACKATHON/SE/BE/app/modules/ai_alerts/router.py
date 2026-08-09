@@ -54,6 +54,9 @@ class LiveSnapshotPayload(BaseModel):
     driver_state: str = Field(min_length=1)
     driver_confidence: float = Field(ge=0, le=1)
     alertness_score: float = Field(ge=0, le=1)
+    eye_state: str = "unknown"
+    head_pose: str = "unknown"
+    mouth_state: str = "normal"
     longitudinal_accel: float = 0.0
     lateral_accel: float = 0.0
     speed_limit_kmh: float = 0.0
@@ -68,6 +71,7 @@ class LiveSnapshotPayload(BaseModel):
     harsh_accel_count: int = Field(default=0, ge=0)
     harsh_corner_count: int = Field(default=0, ge=0)
     near_miss_count: int = Field(default=0, ge=0)
+    microsleep_count: int = Field(default=0, ge=0)
     speeding_pct_time: float = Field(default=0.0, ge=0, le=100)
     tailgating_pct_time: float = Field(default=0.0, ge=0, le=100)
     avg_headway_sec: float = Field(default=0.0, ge=0)

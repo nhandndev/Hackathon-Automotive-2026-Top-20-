@@ -166,7 +166,12 @@ def main() -> int:
                     lateral_accel=frame.lateral_accel,
                     cabin_frame=cabin,
                     left_frame=left_frame,
-                    right_frame=right_frame
+                    right_frame=right_frame,
+                    live_timestamp_ms=(
+                        round(frame.timestamp * 1000)
+                        if args.driver_source == "dataset"
+                        else None
+                    ),
                 )
                 
                 cached_ttc = res["cached_ttc"]

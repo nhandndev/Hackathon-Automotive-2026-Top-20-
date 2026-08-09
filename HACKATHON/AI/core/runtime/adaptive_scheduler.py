@@ -129,6 +129,17 @@ class AdaptiveInferenceScheduler:
         self.driver.interval_ms = float(best_d)
         logging.info(f"[Scheduler] Initial cadence -> C1: {best_r}ms, C2: {best_d}ms (cost: {best_cost:.2f})")
 
+    def reset_trip_state(self) -> None:
+        """Reset per-trip clocks/counters while preserving chosen intervals."""
+        road_interval = self.road.interval_ms
+        driver_interval = self.driver.interval_ms
+        self.road = TaskRuntimeStats(name="road", interval_ms=road_interval)
+        self.driver = TaskRuntimeStats(name="driver", interval_ms=driver_interval)
+        self.frame_durations_ms.clear()
+        self.last_control_ms = 0.0
+        self.overload_counter = 0
+        self.headroom_counter = 0
+
     def should_submit_road(self, now_ms: float) -> bool:
         if self.road.in_flight:
             return False

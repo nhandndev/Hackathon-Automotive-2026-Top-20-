@@ -20,12 +20,24 @@ const format = (value: unknown, digits = 1) =>
 const severityClass = (severity: 'HIGH' | 'MEDIUM' | 'LOW') =>
   severity === 'HIGH' ? 'text-red-300' : severity === 'MEDIUM' ? 'text-amber-300' : 'text-slate-500';
 
-export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = ({ vehicle, vehicles = [vehicle], liveAlerts = [], onOpenCopilot }) => {
+const tooltipFormatter = (value: number | string, name: string) => {
+  const numeric = Number(value);
+  const formatted = Number.isFinite(numeric) ? `${numeric.toFixed(1)}/100` : String(value);
+  return [formatted, name];
+};
+
+export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = ({
+  vehicle,
+  vehicles = [vehicle],
+  liveAlerts = [],
+  onOpenCopilot,
+}) => {
   const fleetTrips = vehicles.length > 0 ? vehicles : [vehicle];
   const rows = buildRankingRows(fleetTrips);
   const allFrames = fleetTrips.flatMap((trip) => trip.frames ?? []);
   const totalFrames = Math.max(allFrames.length, 1);
   const totalTrips = fleetTrips.length;
+
   const avgRankingScore = rows.length
     ? rows.reduce((sum, row) => sum + row.score, 0) / rows.length
     : 0;
@@ -33,14 +45,27 @@ export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = (
     ? rows.reduce((sum, row) => sum + row.avgRisk, 0) / rows.length
     : 0;
   const fleetMaxRisk = rows.length
-    ? Math.max(...rows.map((row) => row.maxRisk))
+    ? rows.reduce((max, row) => Math.max(max, row.maxRisk), 0)
     : 0;
+
   const highRiskFrames = allFrames.filter((frame) => finiteNumber(frame.risk?.final_risk_score) >= 80).length;
   const highRiskPct = (highRiskFrames / totalFrames) * 100;
   const distractedFrames = allFrames.filter((frame) => frame.driver?.state === 'distracted').length;
   const distractedPct = (distractedFrames / totalFrames) * 100;
   const fatigueFrames = allFrames.filter((frame) => ['drowsy', 'yawning', 'microsleep'].includes(frame.driver?.state ?? '')).length;
+  const microsleepCount = fleetTrips.reduce((sum, trip) => sum + finiteNumber(trip.driver_summary?.microsleep_count), 0);
   const nearMissFrames = allFrames.filter((frame) => Number.isFinite(frame.min_ttc) && Number(frame.min_ttc) > 0 && Number(frame.min_ttc) <= 2.5).length;
+  const validHeadways = allFrames
+    .map((frame) => frame.headway_sec)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
+  const avgHeadway = validHeadways.length
+    ? validHeadways.reduce((sum, value) => sum + value, 0) / validHeadways.length
+    : rows.length
+      ? rows.reduce((sum, row) => sum + finiteNumber(row.avgHeadway), 0) / rows.length
+      : 0;
+  const avgAlertness = fleetTrips.length
+    ? fleetTrips.reduce((sum, trip) => sum + finiteNumber(trip.driver_summary?.average_alertness_score, 1), 0) / fleetTrips.length
+    : 1;
   const harshEvents = rows.reduce((sum, row) => sum + row.harshEvents, 0);
   const criticalTrips = rows.filter((row) => row.riskLevel === 'CRITICAL').length;
   const coachingTrips = rows.filter((row) => row.score < 60 || row.riskLevel === 'CRITICAL').length;
@@ -50,44 +75,62 @@ export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = (
 
   const chartData = rows.map((row) => ({
     trip: row.trip_id.replace('-Sample', ''),
-    score: Number(row.score.toFixed(1)),
-    avgRisk: Number(row.avgRisk.toFixed(1)),
-    maxRisk: Number(row.maxRisk.toFixed(1)),
+    rankingScore: Number(row.score.toFixed(1)),
+    averageRiskScore: Number(row.avgRisk.toFixed(1)),
+    maximumRiskScore: Number(row.maxRisk.toFixed(1)),
   }));
 
   const factors = [
     {
-      label: 'Fleet average risk',
+      label: 'Average Risk Score',
       value: fleetAvgRisk,
       display: `${format(fleetAvgRisk)}/100`,
       severity: fleetAvgRisk >= 70 ? 'HIGH' : fleetAvgRisk >= 50 ? 'MEDIUM' : 'LOW',
     },
     {
-      label: 'High-risk frames',
+      label: 'High-Risk Frames',
       value: highRiskPct,
       display: `${highRiskFrames}/${allFrames.length}`,
       severity: highRiskFrames > 0 ? 'HIGH' : 'LOW',
     },
     {
-      label: 'Distracted driving',
+      label: 'Distracted Driving',
       value: distractedPct,
       display: `${format(distractedPct)}%`,
       severity: distractedPct >= 25 ? 'HIGH' : distractedPct > 0 ? 'MEDIUM' : 'LOW',
     },
     {
-      label: 'Harsh behavior',
+      label: 'Harsh Behavior',
       value: harshEvents,
       display: `${harshEvents} events`,
       severity: harshEvents > 0 ? 'MEDIUM' : 'LOW',
     },
     {
-      label: 'Fatigue frames',
+      label: 'Fatigue Frames',
       value: fatigueFrames,
       display: `${fatigueFrames} frames`,
       severity: fatigueFrames > 0 ? 'HIGH' : 'LOW',
     },
     {
-      label: 'Near miss / TTC',
+      label: 'Microsleep Count',
+      value: microsleepCount,
+      display: `${microsleepCount} events`,
+      severity: microsleepCount > 0 ? 'HIGH' : 'LOW',
+    },
+    {
+      label: 'Average Headway',
+      value: avgHeadway,
+      display: avgHeadway > 0 ? `${format(avgHeadway, 2)}s` : 'No TTC data',
+      severity: avgHeadway > 0 && avgHeadway < 1.5 ? 'HIGH' : avgHeadway > 0 && avgHeadway < 3.0 ? 'MEDIUM' : 'LOW',
+    },
+    {
+      label: 'Average Alertness',
+      value: avgAlertness,
+      display: `${Math.round(avgAlertness * 100)}%`,
+      severity: avgAlertness < 0.5 ? 'HIGH' : avgAlertness < 0.75 ? 'MEDIUM' : 'LOW',
+    },
+    {
+      label: 'Near Miss / TTC',
       value: nearMissFrames,
       display: `${nearMissFrames} frames`,
       severity: nearMissFrames > 0 ? 'HIGH' : 'LOW',
@@ -95,24 +138,27 @@ export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = (
   ] satisfies Array<{ label: string; value: number; display: string; severity: 'HIGH' | 'MEDIUM' | 'LOW' }>;
 
   const fleetInsights = [
-    `Fleet hiện có ${totalTrips} trip với ${allFrames.length} frame telemetry. Fleet Ranking Score trung bình là ${format(avgRankingScore)}/100, nên đây là overview toàn bộ trip, không phải insight riêng của ${vehicle.trip_id}.`,
-    `Có ${criticalTrips}/${totalTrips} trip ở mức CRITICAL và ${coachingTrips}/${totalTrips} trip cần coaching/đánh giá vận hành. Max risk toàn fleet đạt ${format(fleetMaxRisk)}/100.`,
+    `Fleet currently has ${totalTrips} trip(s) with ${allFrames.length} telemetry frames. Average Fleet Ranking Score is ${format(avgRankingScore)}/100, so this page is a fleet-wide overview, not only ${vehicle.trip_id}.`,
+    `There are ${criticalTrips}/${totalTrips} critical trip(s) and ${coachingTrips}/${totalTrips} trip(s) that need coaching or operational review. Fleet maximum risk reached ${format(fleetMaxRisk)}/100.`,
     bestTrip
-      ? `Trip tốt nhất theo ranking hiện tại là ${bestTrip.trip_id} (${format(bestTrip.score)}/100); trip rủi ro nhất là ${riskiestTrip?.trip_id ?? 'N/A'} (${format(riskiestTrip?.score)}/100).`
-      : 'Chưa đủ dữ liệu ranking để xác định trip tốt nhất hoặc rủi ro nhất.',
-    `Risk contributors toàn fleet: ${highRiskFrames} high-risk frames, ${distractedFrames} distracted frames, ${harshEvents} harsh events, ${nearMissFrames} near-miss/TTC frames và ${liveAlertCount} live alerts trong session hiện tại.`,
+      ? `Best current trip by ranking is ${bestTrip.trip_id} (${format(bestTrip.score)}/100); riskiest trip is ${riskiestTrip?.trip_id ?? 'N/A'} (${format(riskiestTrip?.score)}/100).`
+      : 'Not enough ranking data to identify best or riskiest trip.',
+    `Fleet risk contributors: ${highRiskFrames} high-risk frames, ${distractedFrames} distracted frames, ${fatigueFrames} fatigue frames, ${microsleepCount} microsleep event(s), ${harshEvents} harsh events, ${nearMissFrames} near-miss/TTC frames and ${liveAlertCount} live alerts in the current session.`,
   ];
 
   const actionItems = [
     coachingTrips > 0
-      ? `Ưu tiên coaching 24h cho ${coachingTrips} trip đang dưới ngưỡng an toàn hoặc CRITICAL.`
-      : 'Không có trip nào cần coaching khẩn theo ranking hiện tại.',
+      ? `Prioritize coaching within 24h for ${coachingTrips} trip(s) under the safety threshold or in CRITICAL status.`
+      : 'No trip currently requires urgent coaching from the ranking view.',
     highRiskFrames > 0
-      ? 'Audit các đoạn high-risk frame trước, vì đây là tín hiệu trực tiếp từ JSON/local AI risk model.'
-      : 'Không có high-risk frame trong dataset đang load.',
+      ? 'Audit high-risk frame segments first because these are direct evidence from local AI risk telemetry.'
+      : 'No high-risk frame is present in the currently loaded dataset.',
     distractedPct >= 25
-      ? 'Mất tập trung là contributor lớn ở cấp fleet; cần review cabin evidence theo từng trip.'
-      : 'Mất tập trung chưa vượt ngưỡng contributor chính ở cấp fleet.',
+      ? 'Distraction is a major fleet contributor; review cabin evidence per affected trip.'
+      : 'Distraction has not crossed the main fleet-contributor threshold.',
+    microsleepCount > 0
+      ? `Microsleep was detected ${microsleepCount} time(s); trigger rest policy and verify the corresponding cabin frames.`
+      : 'No microsleep event is currently stored in the loaded fleet session.',
   ];
 
   return (
@@ -123,24 +169,28 @@ export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = (
       </div>
 
       <section className="grid gap-3 lg:grid-cols-4">
-        <InsightMetric icon={Gauge} label="Fleet ranking score" value={`${format(avgRankingScore)}/100`} sub={`${totalTrips} trips analyzed`} />
-        <InsightMetric icon={AlertTriangle} label="Fleet risk" value={`${format(fleetAvgRisk)} avg`} sub={`Max ${format(fleetMaxRisk)}`} />
-        <InsightMetric icon={TrendingUp} label="High-risk frames" value={String(highRiskFrames)} sub={`${format(highRiskPct)}% of all frames`} />
-        <InsightMetric icon={Trophy} label="Lowest-risk trip" value={bestTrip?.trip_id ?? 'N/A'} sub={bestTrip ? `${format(bestTrip.score)}/100 ranking score` : 'No ranking data'} />
+        <InsightMetric icon={Gauge} label="Average Fleet Ranking Score" value={`${format(avgRankingScore)}/100`} sub={`${totalTrips} trips analyzed`} />
+        <InsightMetric icon={AlertTriangle} label="Average Risk Score" value={`${format(fleetAvgRisk)}/100`} sub={`Maximum Risk Score ${format(fleetMaxRisk)}/100`} />
+        <InsightMetric icon={TrendingUp} label="High-Risk Frames" value={String(highRiskFrames)} sub={`${format(highRiskPct)}% of all frames`} />
+        <InsightMetric icon={Trophy} label="Lowest-Risk Trip" value={bestTrip?.trip_id ?? 'N/A'} sub={bestTrip ? `${format(bestTrip.score)}/100 Fleet Ranking Score` : 'No ranking data'} />
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-xl border border-[#1E293B] bg-[#0B0F19] p-5">
-          <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Fleet Score vs Risk By Trip</h2>
+          <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Fleet Ranking Score vs Average Risk Score by Trip</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 18, left: -10, bottom: 0 }}>
                 <CartesianGrid stroke="#1E293B" />
                 <XAxis dataKey="trip" tick={{ fill: '#94A3B8', fontSize: 10 }} tickLine={false} axisLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fill: '#94A3B8', fontSize: 10 }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8, color: '#E2E8F0' }} cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }} />
-                <Bar dataKey="score" fill="#38BDF8" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="avgRisk" fill="#F43F5E" radius={[4, 4, 0, 0]} />
+                <Tooltip
+                  formatter={tooltipFormatter}
+                  contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8, color: '#E2E8F0' }}
+                  cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }}
+                />
+                <Bar dataKey="rankingScore" name="Fleet Ranking Score" fill="#38BDF8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="averageRiskScore" name="Average Risk Score" fill="#F43F5E" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -11,6 +11,7 @@ param(
     [switch]$NoDisplay,
     [switch]$OpenDashboard,
     [switch]$SkipFrontend,
+    [switch]$RequireCarSky,
     [switch]$SkipCarSkyPreflight
 )
 
@@ -170,25 +171,46 @@ try {
         Write-Host "Driver model: AI/configs/model_registry.yaml (production)"
     }
     New-Item -ItemType Directory -Force -Path $logDir, $predictionDir, $eventDir | Out-Null
+    Write-Step "Clear saved demo trips before starting this run"
+    Clear-SavedDemoTrips
 
     if (!$SkipCarSkyPreflight) {
         Write-Step "Preflight CarSky cloud deployment"
         $beEnv = Read-DotEnv $beEnvFile
-        if ($beEnv["CARSKY_ENABLED"] -ne "true" -or $beEnv["CARSKY_MODE"] -ne "external") {
-            throw "SE/BE/.env must set CARSKY_ENABLED=true and CARSKY_MODE=external."
+        $carskyExternal = (
+            $beEnv["CARSKY_ENABLED"] -eq "true" -and
+            $beEnv["CARSKY_MODE"] -eq "external"
+        )
+        if (!$carskyExternal) {
+            $message = "SE/BE/.env is not configured for CarSky external. Current: CARSKY_ENABLED=$($beEnv['CARSKY_ENABLED']), CARSKY_MODE=$($beEnv['CARSKY_MODE'])."
+            if ($RequireCarSky) {
+                throw "$message Set CARSKY_ENABLED=true and CARSKY_MODE=external, then fill CarSky credentials."
+            }
+            Write-Warning "$message Continue with local AI + SE Backend + Fleet Dashboard only. Add -RequireCarSky for full CarSky-gated demo."
         }
-        foreach ($key in @("CARSKY_BASE_URL", "CARSKY_API_KEY", "CARSKY_ROOM_ID", "CARSKY_NODE_KEY")) {
-            if (!$beEnv[$key]) { throw "SE/BE/.env is missing $key." }
+        else {
+            foreach ($key in @("CARSKY_BASE_URL", "CARSKY_API_KEY", "CARSKY_ROOM_ID", "CARSKY_NODE_KEY")) {
+                if (!$beEnv[$key]) {
+                    if ($RequireCarSky) {
+                        throw "SE/BE/.env is missing $key."
+                    }
+                    Write-Warning "SE/BE/.env is missing $key. Continue local dashboard demo without CarSky preflight."
+                    $carskyExternal = $false
+                    break
+                }
+            }
+            if ($carskyExternal) {
+                Push-Location $beRoot
+                try {
+                    & $pythonExe $carSkyScript status
+                    if ($LASTEXITCODE -ne 0) { throw "CarSky deployment status check failed." }
+                    & $pythonExe $carSkyScript nodes
+                    if ($LASTEXITCODE -ne 0) { throw "CarSky node check failed." }
+                    Write-Host "CarSky deployment and nodes: OK" -ForegroundColor Green
+                }
+                finally { Pop-Location }
+            }
         }
-        Push-Location $beRoot
-        try {
-            & $pythonExe $carSkyScript status
-            if ($LASTEXITCODE -ne 0) { throw "CarSky deployment status check failed." }
-            & $pythonExe $carSkyScript nodes
-            if ($LASTEXITCODE -ne 0) { throw "CarSky node check failed." }
-            Write-Host "CarSky deployment and nodes: OK" -ForegroundColor Green
-        }
-        finally { Pop-Location }
     }
     else {
         Write-Warning "CarSky preflight skipped. Publishing still follows SE/BE/.env."

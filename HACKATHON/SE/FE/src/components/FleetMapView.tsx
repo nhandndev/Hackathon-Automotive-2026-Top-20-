@@ -59,12 +59,12 @@ const statusFor = (trip: TripData) => {
 const riskExplanationFor = (row: ReturnType<typeof buildRankingRows>[number] | undefined) => {
   if (!row) return 'No ranking evidence available.';
   const reasons = [
-    row.avgRisk >= 60 ? `avg risk ${row.avgRisk.toFixed(1)}` : null,
-    row.maxRisk >= 80 ? `max risk ${row.maxRisk.toFixed(1)}` : null,
+    row.avgRisk >= 60 ? `Average Risk Score ${row.avgRisk.toFixed(1)}` : null,
+    row.maxRisk >= 80 ? `Maximum Risk Score ${row.maxRisk.toFixed(1)}` : null,
     row.criticalEvents > 0 ? `${row.criticalEvents} high-risk frames` : null,
     row.distractedPct > 0 ? `${row.distractedPct.toFixed(1)}% distracted` : null,
     row.harshEvents > 0 ? `${row.harshEvents} harsh behavior events` : null,
-    row.nearMissCount > 0 ? `${row.nearMissCount} near misses` : null,
+    row.nearMissCount > 0 ? `${row.nearMissCount} near miss events` : null,
   ].filter(Boolean);
   return reasons.length ? `Primary cause: ${reasons.slice(0, 3).join(' · ')}` : 'Primary cause: lowest relative risk in current fleet.';
 };
@@ -175,8 +175,8 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Metric label="Last speed" value={`${finite(lastFrame?.ego?.speed_kmh)} km/h`} />
             <Metric label="Last valid TTC" value={formatSeconds(lastTtc)} />
-            <Metric label="Ranking score" value={finite(selectedRanking?.score)} />
-            <Metric label="Max risk" value={finite(selected.trip_aggregate?.max_risk_score)} />
+            <Metric label="Fleet Ranking Score" value={finite(selectedRanking?.score)} />
+            <Metric label="Maximum Risk Score" value={finite(selected.trip_aggregate?.max_risk_score)} />
           </section>
 
           <section className="grid md:grid-cols-2 gap-4">
@@ -195,11 +195,11 @@ export const FleetMapView: React.FC<FleetMapViewProps> = ({
               <h2 className="font-bold flex items-center gap-2"><Gauge className="w-4 h-4 text-sky-400" />Recorded summary</h2>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <Info label="Frames" value={String(selected.frames?.length ?? 0)} />
-                <Info label="Near misses" value={String(nearMissCount ?? 'N/A')} />
-                <Info label="Avg. headway" value={formatSeconds(avgHeadway)} />
+                <Info label="Near Miss Count" value={String(nearMissCount ?? 'N/A')} />
+                <Info label="Average Headway" value={formatSeconds(avgHeadway)} />
                 <Info label="Driver state" value={lastFrame?.driver?.state ?? 'N/A'} />
-                <Info label="Avg. risk" value={finite(selectedRanking?.avgRisk)} />
-                <Info label="Risk class" value={selected.trip_aggregate?.risk_classification ?? 'N/A'} />
+                <Info label="Average Risk Score" value={finite(selectedRanking?.avgRisk)} />
+                <Info label="Risk Classification" value={selected.trip_aggregate?.risk_classification ?? 'N/A'} />
               </div>
             </div>
           </section>

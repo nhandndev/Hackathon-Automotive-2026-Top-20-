@@ -234,12 +234,12 @@ export const buildRankingRows = (vehicles: TripData[]): DriverRankingRow[] => (
       nearMissCount,
       coachingPriority: priorityFor(riskLevel),
       chartData: [
-        { label: 'Avg Risk', value: clamp(avgRisk), color: '#38BDF8' },
+        { label: 'Average Risk Score', value: clamp(avgRisk), color: '#38BDF8' },
         { label: 'Speeding', value: clamp(speedingPct), color: '#F59E0B' },
         { label: 'Tailgating', value: clamp(tailgatingPct), color: '#FB923C' },
         { label: 'Distraction', value: clamp(distractedPct), color: '#A78BFA' },
-        { label: 'Fatigue events', value: clamp(pct(fatigueEvents, total)), color: '#F43F5E' },
-        { label: 'Harsh behavior', value: clamp(harshEventPct), color: '#EF4444' },
+        { label: 'Fatigue Event Rate', value: clamp(pct(fatigueEvents, total)), color: '#F43F5E' },
+        { label: 'Harsh Behavior Rate', value: clamp(harshEventPct), color: '#EF4444' },
       ],
     };
   })
@@ -281,9 +281,9 @@ export const buildLocalAnalysis = (row: DriverRankingRow, fleetAverage: number):
   };
   const factors = [
     {
-      factor: 'Risk score',
+      factor: 'Risk Score',
       value: row.maxRisk,
-      evidence: `Max risk ${row.maxRisk.toFixed(1)}, average risk ${row.avgRisk.toFixed(1)}`,
+      evidence: `Maximum Risk Score ${row.maxRisk.toFixed(1)}, Average Risk Score ${row.avgRisk.toFixed(1)}`,
       business_impact: 'Rủi ro cao làm tăng khả năng cần can thiệp vận hành trong chuyến.',
       severity: row.maxRisk >= 80 ? 'critical' : row.maxRisk >= 60 ? 'high' : row.maxRisk >= 35 ? 'medium' : 'low',
     },
@@ -321,7 +321,7 @@ export const buildLocalAnalysis = (row: DriverRankingRow, fleetAverage: number):
 
   const reasonLines = [
     `Ranking formula bắt đầu từ 100 điểm và trừ ${totalPenalty.toFixed(1)} điểm đã normalize theo tỷ lệ frame/phần trăm. Ranking Score cuối là ${row.score.toFixed(1)}/100.`,
-    `1. Risk score penalty: -${(estimatedPenalties.avgRisk + estimatedPenalties.maxRisk).toFixed(1)} điểm. Mốc đại diện: ${frameText(firstHighRisk)}. Lý do: risk.final_risk_score cao cho thấy tình huống đã được AI đánh giá nguy hiểm hơn baseline.`,
+    `1. Risk Score penalty: -${(estimatedPenalties.avgRisk + estimatedPenalties.maxRisk).toFixed(1)} điểm. Mốc đại diện: ${frameText(firstHighRisk)}. Lý do: risk.final_risk_score cao cho thấy tình huống đã được AI đánh giá nguy hiểm hơn baseline.`,
     estimatedPenalties.distracted > 0 ? `2. Driver attention penalty: -${estimatedPenalties.distracted.toFixed(1)} điểm. Có ${distractedFrames.length}/${totalFrames} frames distracted (${row.distractedPct.toFixed(1)}%). Mốc đầu tiên: ${frameText(firstDistracted)}. Lý do: driver.state=distracted làm giảm khả năng phản ứng với tình huống rủi ro phía trước.` : null,
     estimatedPenalties.criticalEvents > 0 ? `3. Critical frame penalty: -${estimatedPenalties.criticalEvents.toFixed(1)} điểm. Critical frames=${row.criticalEvents}/${totalFrames} (${row.criticalEventPct.toFixed(1)}%). Mốc đại diện: ${frameText(firstHighRisk)}.` : null,
     estimatedPenalties.fatigue > 0 ? `4. Fatigue/microsleep penalty: -${estimatedPenalties.fatigue.toFixed(1)} điểm. Fatigue events=${row.fatigueEvents}. Mốc đại diện: ${frameText(firstFatigue)}.` : null,
@@ -339,8 +339,8 @@ export const buildLocalAnalysis = (row: DriverRankingRow, fleetAverage: number):
       severity: factor.severity as RankingAnalysis['top_risk_factors'][number]['severity'],
     })),
     fleet_comparison: {
-      score_vs_average: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} điểm so với fleet average ranking score ${fleetAverage.toFixed(1)}`,
-      risk_vs_average: `Average risk ${row.avgRisk.toFixed(1)}, max risk ${row.maxRisk.toFixed(1)}`,
+      score_vs_average: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} điểm so với Average Fleet Ranking Score ${fleetAverage.toFixed(1)}`,
+      risk_vs_average: `Average Risk Score ${row.avgRisk.toFixed(1)}, Maximum Risk Score ${row.maxRisk.toFixed(1)}`,
       behavior_vs_average: `Distracted ${row.distractedPct.toFixed(1)}%, speeding ${row.speedingPct.toFixed(1)}%, tailgating ${row.tailgatingPct.toFixed(1)}%`,
     },
     recommended_actions: [
@@ -430,7 +430,7 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
 
         <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
           <MetricCard icon={Trophy} label="Trips ranked" value={String(rows.length)} tone="sky" />
-          <MetricCard icon={Gauge} label="Fleet avg ranking score" value={fleetAverage.toFixed(1)} tone="emerald" />
+          <MetricCard icon={Gauge} label="Average Fleet Ranking Score" value={fleetAverage.toFixed(1)} tone="emerald" />
           <MetricCard icon={Target} label="Need coaching" value={String(criticalTrips)} tone="amber" />
           <MetricCard icon={AlertTriangle} label="High-risk frames/signals" value={String(criticalAlerts)} tone="red" />
         </div>
@@ -440,9 +440,9 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
             <div className="grid grid-cols-[70px_1fr_110px_120px_120px_120px_140px] border-b border-[#1E293B] px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               <span>Rank</span>
               <span>Trip / scenario</span>
-                <span>Ranking Score</span>
+                <span>Fleet Ranking Score</span>
               <span>Risk</span>
-              <span>Avg Risk</span>
+              <span>Average Risk Score</span>
               <span>High-Risk Frames</span>
               <span>Coaching</span>
             </div>
@@ -492,7 +492,7 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
                   <YAxis tick={{ fill: '#94A3B8', fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8, color: '#E2E8F0' }}
-                    formatter={(value: number, name: string) => [`${Number(value).toFixed(1)}`, name.includes('Harsh') ? 'Harsh behavior event rate' : name]}
+                    formatter={(value: number) => [`${Number(value).toFixed(1)}`, 'Metric Value']}
                     cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }}
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]}>
@@ -503,12 +503,12 @@ export const DriverRankingView: React.FC<DriverRankingViewProps> = ({
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <Info label="Avg risk" value={selectedRow.avgRisk.toFixed(1)} />
-              <Info label="Max risk" value={selectedRow.maxRisk.toFixed(1)} />
+              <Info label="Average Risk Score" value={selectedRow.avgRisk.toFixed(1)} />
+              <Info label="Maximum Risk Score" value={selectedRow.maxRisk.toFixed(1)} />
               <Info label="Distracted" value={`${selectedRow.distractedPct.toFixed(1)}%`} />
               <Info label="Tailgating" value={`${selectedRow.tailgatingPct.toFixed(1)}%`} />
-              <Info label="Fatigue events" value={String(selectedRow.fatigueEvents)} />
-              <Info label="Near misses" value={String(selectedRow.nearMissCount)} />
+              <Info label="Fatigue Event Count" value={String(selectedRow.fatigueEvents)} />
+              <Info label="Near Miss Count" value={String(selectedRow.nearMissCount)} />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">

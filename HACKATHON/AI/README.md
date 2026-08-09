@@ -63,18 +63,22 @@ AI/configs/model_registry.yaml -> challenge2.production.artifact
 Current production artifact:
 
 ```text
-AI/models/driver_state_current.joblib
+AI/models/candidate_013.joblib
 ```
 
-This is the current 84-feature `architect_v2` Random Forest artifact used by
-the main AI pipeline. It combines the legacy 59 driver-state features with 25
-compatibility hand-proxy features.
+This is the rollback production Challenge 2 model: a 5-class Random Forest
+using the legacy 59 causal driver-state features from face/eye/mouth/head-pose
+landmarks. It does not use the later 84-feature hand-proxy schema.
+
+`AI/models/driver_state_current.joblib` is kept as a byte-identical alias so
+older scripts still run, but demo/runbook commands should pass
+`AI\models\candidate_013.joblib` explicitly.
 
 For demos and handoff, pass the model path explicitly so every machine runs the
 same Random Forest artifact:
 
 ```text
-AI\models\driver_state_current.joblib
+AI\models\candidate_013.joblib
 ```
 
 ## Setup
@@ -111,7 +115,7 @@ Six BTC practice trips:
 python AI\scripts\run_inference.py `
   --data-dir ..\Practice_Dataset `
   --samples-only `
-  --driver-model AI\models\driver_state_current.joblib `
+  --driver-model AI\models\candidate_013.joblib `
   --out AI\artifacts\predictions_6_samples `
   --log-level INFO
 ```
@@ -121,7 +125,7 @@ Single trip:
 ```powershell
 python AI\scripts\run_inference.py `
   --trip-dir ..\Practice_Dataset\T01-Sample `
-  --driver-model AI\models\driver_state_current.joblib `
+  --driver-model AI\models\candidate_013.joblib `
   --output-csv AI\artifacts\predictions\T01-Sample.csv `
   --log-level INFO
 ```
@@ -132,7 +136,7 @@ Override Challenge 2 model only when testing a compatible artifact:
 python AI\scripts\run_inference.py `
   --data-dir ..\Practice_Dataset `
   --samples-only `
-  --driver-model AI\models\driver_state_current.joblib `
+  --driver-model AI\models\candidate_013.joblib `
   --out AI\artifacts\predictions_test_model
 ```
 
@@ -154,7 +158,7 @@ python AI\scripts\webcam_driver_demo.py `
   --camera 0 `
   --driver-id driver_001 `
   --enroll `
-  --model AI\models\driver_state_current.joblib
+  --model AI\models\candidate_013.joblib
 ```
 
 Run personalized:
@@ -163,7 +167,7 @@ Run personalized:
 python AI\scripts\webcam_driver_demo.py `
   --camera 0 `
   --driver-id driver_001 `
-  --model AI\models\driver_state_current.joblib
+  --model AI\models\candidate_013.joblib
 ```
 
 Run global:
@@ -171,7 +175,7 @@ Run global:
 ```powershell
 python AI\scripts\webcam_driver_demo.py `
   --camera 0 `
-  --model AI\models\driver_state_current.joblib
+  --model AI\models\candidate_013.joblib
 ```
 
 ## End-to-End Demo
@@ -194,6 +198,8 @@ BTC road cameras + live webcam driver camera:
   -DriverModel AI\models\driver_state_current.joblib `
   -OpenDashboard `
   -SkipCarSkyPreflight
+  -DriverModel AI\models\candidate_013.joblib `
+  -OpenDashboard
 ```
 
 Dataset fleet demo:
@@ -217,7 +223,13 @@ example:
   -DriverModel AI\models\modelv5-final.joblib `
   -OpenDashboard `
   -SkipCarSkyPreflight
+  -DriverModel AI\models\candidate_013.joblib `
+  -OpenDashboard
 ```
+
+By default, this runner continues with local AI + SE Backend + Fleet Dashboard
+when `SE\BE\.env` is in CarSky offline mode. Add `-RequireCarSky` only for a
+full CarSky-gated demo after external credentials are configured.
 
 Keep this runner terminal open while inspecting Fleet Dashboard. When the
 runner exits, it stops the local SE Backend, and the browser will show
@@ -258,7 +270,7 @@ After training, inspect the candidate:
 
 ```powershell
 python AI\scripts\inspect_driver_model.py `
-  --model ..\experiment\training_outputs\new_driver_state_model\best\best_model.joblib
+  ..\experiment\training_outputs\new_driver_state_model\best\best_model.joblib
 ```
 
 Only copy/promote a model into `AI/models/` after the feature schema,

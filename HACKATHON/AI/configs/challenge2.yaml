@@ -51,12 +51,15 @@ batch:
   distracted_median_mar_min: 0.205
 
 ml:
-  architecture: architect_v2
-  feature_schema: unified_84_legacy59_hand25
+  architecture: legacy_5class
+  feature_schema: legacy_59
 
 hand:
-  # Required by the current 84-feature Random Forest artifact.
-  enabled: true
+  # Disabled for the rollback production model.
+  # The current Challenge-2 artifact is a legacy Random Forest with 59
+  # face/eye/mouth/head-pose rolling features, so hand-derived features are
+  # intentionally not part of inference.
+  enabled: false
   palm_model: palm_detection_lite.onnx
   landmark_model: hand_landmark_lite.onnx
   inference_interval_frames: 3

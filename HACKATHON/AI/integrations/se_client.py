@@ -127,44 +127,57 @@ class SEApiClient:
         if predicted_ttc is not None and not math.isfinite(predicted_ttc):
             predicted_ttc = None
 
+        def float_field(name: str, default: float = 0.0) -> float:
+            value = snapshot.get(name, default)
+            if value is None:
+                return float(default)
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                return float(default)
+            return number if math.isfinite(number) else float(default)
+
+        def int_field(name: str, default: int = 0) -> int:
+            value = snapshot.get(name, default)
+            if value is None:
+                return int(default)
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return int(default)
+
         snapshot_payload = {
             "schema_version": "1.0",
             "trip_id": str(snapshot["trip_id"]),
             "frame_id": int(snapshot["frame_id"]),
             "trip_timestamp_ms": trip_timestamp_ms,
-            "speed_kmh": float(snapshot.get("speed_kmh", 0.0) or 0.0),
+            "speed_kmh": float_field("speed_kmh", 0.0),
             "predicted_ttc_sec": predicted_ttc,
-            "risk_score": float(
-                snapshot.get(
-                    "risk_score",
-                    snapshot.get("c3_risk_score", 0.0),
-                )
-                or 0.0
-            ),
+            "risk_score": float_field("risk_score", float_field("c3_risk_score", 0.0)),
             "driver_state": str(snapshot.get("driver_state", "alert")),
-            "driver_confidence": float(
-                snapshot.get("driver_confidence", 0.0) or 0.0
-            ),
-            "alertness_score": float(
-                snapshot.get("alertness_score", 1.0) or 1.0
-            ),
-            "longitudinal_accel": float(snapshot.get("longitudinal_accel", 0.0) or 0.0),
-            "lateral_accel": float(snapshot.get("lateral_accel", 0.0) or 0.0),
-            "speed_limit_kmh": float(snapshot.get("speed_limit_kmh", 0.0) or 0.0),
-            "safe_driving_score": float(snapshot.get("c3_safe_score", 100.0) or 100.0),
-            "penalty_points": float(snapshot.get("c3_penalty_points", 0.0) or 0.0),
+            "driver_confidence": float_field("driver_confidence", 0.0),
+            "alertness_score": float_field("alertness_score", 1.0),
+            "eye_state": str(snapshot.get("eye_state", "unknown")),
+            "head_pose": str(snapshot.get("head_pose", "unknown")),
+            "mouth_state": str(snapshot.get("mouth_state", "normal")),
+            "longitudinal_accel": float_field("longitudinal_accel", 0.0),
+            "lateral_accel": float_field("lateral_accel", 0.0),
+            "speed_limit_kmh": float_field("speed_limit_kmh", 0.0),
+            "safe_driving_score": float_field("safe_driving_score", float_field("c3_safe_score", 100.0)),
+            "penalty_points": float_field("penalty_points", float_field("c3_penalty_points", 0.0)),
             "harsh_brake": bool(snapshot.get("harsh_brake", False)),
             "harsh_accel": bool(snapshot.get("harsh_accel", False)),
             "harsh_corner": bool(snapshot.get("harsh_corner", False)),
             "speeding": bool(snapshot.get("speeding", False)),
             "tailgating": bool(snapshot.get("tailgating", False)),
-            "harsh_brake_count": int(snapshot.get("harsh_brake_count", 0) or 0),
-            "harsh_accel_count": int(snapshot.get("harsh_accel_count", 0) or 0),
-            "harsh_corner_count": int(snapshot.get("harsh_corner_count", 0) or 0),
-            "near_miss_count": int(snapshot.get("near_miss_count", 0) or 0),
-            "speeding_pct_time": float(snapshot.get("speeding_pct_time", 0.0) or 0.0),
-            "tailgating_pct_time": float(snapshot.get("tailgating_pct_time", 0.0) or 0.0),
-            "avg_headway_sec": float(snapshot.get("avg_headway_sec", 0.0) or 0.0),
+            "harsh_brake_count": int_field("harsh_brake_count", 0),
+            "harsh_accel_count": int_field("harsh_accel_count", 0),
+            "harsh_corner_count": int_field("harsh_corner_count", 0),
+            "near_miss_count": int_field("near_miss_count", 0),
+            "microsleep_count": int_field("microsleep_count", 0),
+            "speeding_pct_time": float_field("speeding_pct_time", 0.0),
+            "tailgating_pct_time": float_field("tailgating_pct_time", 0.0),
+            "avg_headway_sec": float_field("avg_headway_sec", 0.0),
         }
         results: dict[str, Any] = {}
         errors: list[str] = []

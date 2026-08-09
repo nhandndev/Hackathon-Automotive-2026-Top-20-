@@ -1,0 +1,21 @@
+Artifact: HACKATHON/AI/models/face_landmark_468.onnx
+Component: FaceMesh-compatible 468 landmark ONNX
+Purpose in Challenge 2: extract landmarks used for EAR, MAR, head pose and temporal Random Forest features.
+
+Upstream model recorded in repo:
+https://storage.googleapis.com/mediapipe-assets/face_landmark.tflite
+
+Converted artifact source recorded in repo:
+https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/791/face_5F00_landmark.onnx
+
+Upstream license recorded in repo:
+Apache-2.0
+
+Repo evidence source:
+HACKATHON/AI/models/face_landmark_models.manifest.yaml
+
+Important note:
+Review redistribution terms for the converted ONNX artifact before external release.
+
+Manual follow-up if needed:
+Capture a screenshot/PDF of the upstream source/license page and confirm redistribution permission.

@@ -1,0 +1,41 @@
+# E-01 reproducibility commands
+
+Run from `HACKATHON/`.
+
+## Batch inference, six practice trips
+
+```powershell
+python AI\scripts\run_inference.py `
+  --data-dir ..\Practice_Dataset `
+  --samples-only `
+  --driver-model AI\models\candidate_013.joblib `
+  --out AI\artifacts\predictions_6_samples `
+  --log-level INFO
+```
+
+## Evaluation
+
+```powershell
+python AI\team_kit\evaluation.py `
+  --predictions AI\artifacts\predictions_6_samples `
+  --data-dir ..\Practice_Dataset `
+  --output AI\artifacts\evaluation_6_samples.json
+```
+
+## Product demo, local dashboard
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\candidate_013.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+## Evidence source
+
+- `HACKATHON/AI/README.md`
+- `HACKATHON/reportbtc/C2_END_TO_END_DEMO_SCRIPT.md`
+- `HACKATHON/AI/scripts/run_inference.py`
+- `HACKATHON/AI/team_kit/evaluation.py`

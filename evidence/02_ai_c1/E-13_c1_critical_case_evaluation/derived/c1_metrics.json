@@ -1,0 +1,25 @@
+{
+  "evidence_id": "E-13",
+  "source": "HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json",
+  "scope": "Challenge 1 TTC critical cases on 6 Practice trips",
+  "overall": {
+    "n_trips": 6,
+    "overall_mae_critical": 1.028,
+    "overall_inv_ttc_mae": 0.1681,
+    "overall_f1": 0.731,
+    "overall_composite_score": 73.6
+  },
+  "ranking": [
+    {"trip_id": "T04-Sample", "score": 86.1},
+    {"trip_id": "T03-Sample", "score": 82.4},
+    {"trip_id": "T02-Sample", "score": 77.8},
+    {"trip_id": "T06-Sample", "score": 70.4},
+    {"trip_id": "T05-Sample", "score": 68.6},
+    {"trip_id": "T01-Sample", "score": 56.3}
+  ],
+  "notes": [
+    "This file summarizes the C1 root-level metrics from the final three-challenge evaluation artifact.",
+    "It is not a newly rerun evaluation.",
+    "Full per-trip C1 details remain at the root/per_trip fields in HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json."
+  ]
+}

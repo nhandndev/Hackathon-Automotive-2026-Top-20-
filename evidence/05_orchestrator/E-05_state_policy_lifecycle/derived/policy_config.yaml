@@ -1,0 +1,54 @@
+# Snapshot source: HACKATHON/AI/configs/decision_engine.yaml
+# Generated for E-05 evidence. Keep source config authoritative.
+
+version: decision_engine_v1
+enabled: true
+
+general:
+  moving_speed_kmh: 5.0
+  driver_warning_min_speed_kmh: 20.0
+  min_valid_window_ratio: 0.80
+  min_driver_confidence: 0.70
+  startup_warmup_ms: 5000
+  perclos_warmup_ms: 10000
+
+ttc:
+  watch_sec: 5.0
+  warning_sec: 3.0
+  critical_sec: 1.5
+  warning_persistence_ms: 500
+  recovery_sec: 4.0
+  recovery_ms: 2000
+  cooldown_ms: 5000
+
+microsleep:
+  reliable_closure_ms: 1000
+  ml_confidence: 0.80
+  ml_persistence_ms: 2000
+  recovery_ms: 3000
+  cooldown_ms: 30000
+
+distraction:
+  high_speed_kmh: 50.0
+  high_speed_duration_ms: 3500
+  medium_speed_kmh: 20.0
+  medium_speed_duration_ms: 6000
+  critical_duration_ms: 10000
+  recovery_ms: 2000
+  cooldown_ms: 30000
+
+drowsiness:
+  perclos_watch: 0.15
+  perclos_warning: 0.25
+  perclos_critical: 0.40
+  warning_confidence: 0.70
+  warning_alertness_max: 0.55
+  cooldown_ms: 60000
+
+harsh_behavior:
+  brake_g: 0.40
+  accel_g: 0.35
+  corner_g: 0.30
+  warning_count: 3
+  warning_window_ms: 60000
+  cooldown_ms: 60000

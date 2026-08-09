@@ -1,0 +1,3 @@
+{"evidence_id":"E-05","type":"source_trace","state":"configured","source":"HACKATHON/AI/configs/decision_engine.yaml","note":"Policy thresholds are loaded by HACKATHON/AI/core/decision_engine/policy.py"}
+{"evidence_id":"E-05","type":"lifecycle","state":"candidate_event","source":"HACKATHON/AI/core/decision_engine/engine.py","note":"DecisionEngine updates event lifecycle from DecisionSnapshot"}
+{"evidence_id":"E-05","type":"transport","state":"sent_to_se","source":"HACKATHON/AI/integrations/se_client.py","note":"Events are sent to SE endpoint when policy fires"}

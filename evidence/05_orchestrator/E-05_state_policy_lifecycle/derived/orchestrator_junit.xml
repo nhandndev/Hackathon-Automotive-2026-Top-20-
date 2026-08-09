@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="decision_engine_static_evidence" tests="4" failures="0">
+  <testcase classname="DecisionPolicy" name="policy_config_exists"/>
+  <testcase classname="DecisionPolicy" name="ttc_thresholds_declared"/>
+  <testcase classname="DecisionPolicy" name="driver_state_thresholds_declared"/>
+  <testcase classname="DecisionEngine" name="event_lifecycle_source_identified"/>
+</testsuite>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="c3_formula_static_checks" tests="5" failures="0">
+  <testcase classname="FleetSafeDrivingScorer" name="harsh_brake_threshold_-0.40g"/>
+  <testcase classname="FleetSafeDrivingScorer" name="harsh_accel_threshold_0.35g"/>
+  <testcase classname="FleetSafeDrivingScorer" name="harsh_corner_threshold_0.30g"/>
+  <testcase classname="FleetSafeDrivingScorer" name="near_miss_ttc_below_1.5s"/>
+  <testcase classname="FleetSafeDrivingScorer" name="speeding_limit_plus_5kmh"/>
+</testsuite>

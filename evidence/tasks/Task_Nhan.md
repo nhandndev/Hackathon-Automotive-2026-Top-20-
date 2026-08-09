@@ -75,12 +75,6 @@ Supporting: Tất cả technical owner
 - [ ] **Kết quả mong đợi:** `clean_room_run.log`, `environment.lock`, MP4
 - **Ghi chú của Owner:**
 
-## E-35: Evidence index (Nhân)
-Supporting: Thiện
-- [ ] **Hành động:** Build `evidence_index.md` tự động từ toàn bộ file đã có trong `evidence/`.
-- [ ] **Kết quả mong đợi:** `evidence_index.md`, `access_test.csv`
-- **Ghi chú của Owner:**
-
 ## E-36: Long-run load test (Nhân)
 - [ ] **Hành động:** Replay controlled stream 4-8h, log memory/drops/reconnect.
 - [ ] **Kết quả mong đợi:** Logs load test.

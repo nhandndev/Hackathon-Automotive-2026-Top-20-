@@ -159,23 +159,47 @@ type CopilotInsightPayload = {
 const reportInsightCache = new Map<string, { expiresAt: number; payload: CopilotInsightPayload }>();
 const reportInsightInflight = new Map<string, Promise<CopilotInsightPayload>>();
 const REPORT_INSIGHT_CACHE_TTL_MS = 5 * 60 * 1000;
-const REPORT_UNAVAILABLE_CACHE_TTL_MS = 30 * 1000;
+const REPORT_UNAVAILABLE_CACHE_TTL_MS = 5 * 1000;
 
 function compactTripForBedrock(trip: CopilotTripInput, mode?: string) {
+  const safety = trip.safety ?? {
+    score: 0,
+    riskLevel: "UNKNOWN",
+    action: "REVIEW",
+    avgRisk: 0,
+    maxRisk: 0,
+    highRiskFrames: 0,
+    nearMissCount: 0,
+    harshBrakeCount: 0,
+    distractedPct: 0,
+    speedingPct: 0,
+    tailgatingPct: 0,
+    fatigueEvents: 0,
+  };
+  const maintenance = trip.maintenance ?? {
+    brakeStress: 0,
+    tireStress: 0,
+    priority: "UNKNOWN",
+    dtcCode: "N/A",
+    estimatedCostVnd: 0,
+    estimatedDowntime: "N/A",
+    workOrderStatus: "Recommended - not created",
+  };
+  const eventSummary = trip.eventSummary ?? { total: 0, danger: 0, warning: 0, info: 0 };
   if (mode?.startsWith("safety")) {
     return {
       tripId: trip.tripId,
       tripLabel: trip.tripLabel || trip.tripId,
       rank: trip.rank,
-      safety: trip.safety,
-      eventSummary: trip.eventSummary,
+      safety,
+      eventSummary,
       forbiddenIfZero: {
-        harshBrake: trip.safety.harshBrakeCount === 0 ? "Do not mention harsh brake/phanh gap as a problem." : undefined,
-        nearMiss: trip.safety.nearMissCount === 0 ? "Do not mention near miss/TTC thấp as a problem." : undefined,
-        fatigue: trip.safety.fatigueEvents === 0 ? "Do not mention fatigue/microsleep/vi ngu as a problem." : undefined,
-        distracted: trip.safety.distractedPct === 0 ? "Do not mention distracted/xao nhang/phan tam as a problem." : undefined,
-        speeding: trip.safety.speedingPct === 0 ? "Do not mention speeding/qua toc as a problem." : undefined,
-        tailgating: trip.safety.tailgatingPct === 0 ? "Do not mention tailgating/bam duoi as a problem." : undefined,
+        harshBrake: safety.harshBrakeCount === 0 ? "Do not mention harsh brake/phanh gap as a problem." : undefined,
+        nearMiss: safety.nearMissCount === 0 ? "Do not mention near miss/TTC thấp as a problem." : undefined,
+        fatigue: safety.fatigueEvents === 0 ? "Do not mention fatigue/microsleep/vi ngu as a problem." : undefined,
+        distracted: safety.distractedPct === 0 ? "Do not mention distracted/xao nhang/phan tam as a problem." : undefined,
+        speeding: safety.speedingPct === 0 ? "Do not mention speeding/qua toc as a problem." : undefined,
+        tailgating: safety.tailgatingPct === 0 ? "Do not mention tailgating/bam duoi as a problem." : undefined,
       },
     };
   }
@@ -183,9 +207,9 @@ function compactTripForBedrock(trip: CopilotTripInput, mode?: string) {
     tripId: trip.tripId,
     tripLabel: trip.tripLabel || trip.tripId,
     rank: trip.rank,
-    safety: trip.safety,
-    eventSummary: trip.eventSummary,
-    maintenance: trip.maintenance,
+    safety,
+    eventSummary,
+    maintenance,
   };
 }
 
@@ -196,8 +220,107 @@ function textFromInsight(value: unknown): string {
   return "";
 }
 
+function sanitizeReportWording(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value
+      .replace(/chuyến xe/gi, "chuyến")
+      .replace(/người lái/gi, "trip")
+      .replace(/tài xế/gi, "trip")
+      .replace(/lái xe/gi, "vận hành trip");
+  }
+  if (Array.isArray(value)) return value.map(sanitizeReportWording);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, sanitizeReportWording(entry)]),
+    );
+  }
+  return value;
+}
+
+function reportPromptContract(reportMode?: string) {
+  const shared = [
+    "You are DMS Fleet Copilot. You are an explanation engine only.",
+    "The canonical JSON/local AI input supplied by the app is authoritative.",
+    "Never recalculate or replace scores, risk levels, event counts, TTC, DTC, maintenance priority, cost, downtime, or action orders.",
+    "If a metric is 0, do not describe it as a risk, problem, violation, or event. You may mention it only as clear absence evidence, for example 'không ghi nhận distracted'.",
+    "Write Vietnamese for operations users. Be specific, structured, and easy to scan. Do not answer as one long paragraph.",
+    "Use trip/chuyến wording for report subjects. Do not label a sample as xe, vehicle, driver, tài xế, or người lái in prose unless quoting a canonical field name such as driver.state.",
+    "Always format scores with exactly one decimal place like 42.9/100. Never output 43/100 or long floats like 42.93888888888889/100.",
+    "Return JSON only. No markdown fences. No extra text outside JSON.",
+  ];
+
+  if (reportMode === "safety_detail") {
+    return [
+      ...shared,
+      "REPORT TYPE: SAFETY DETAIL, for exactly one trip.",
+      "Purpose: explain this trip's safety status using only score, Trip Safety Risk, avgRisk, maxRisk, highRiskFrames, eventSummary, distractedPct, fatigueEvents, nearMissCount, harshBrakeCount, speedingPct, and tailgatingPct.",
+      "Do not mention maintenance, tires, DTC, cost, downtime, workshop, parts, INSPECT/WATCH/NORMAL, or repair actions.",
+      "Use the label Trip Safety Risk for risk level. If the trip is rank #1, explicitly state rank is relative and does not mean risk-free.",
+      "Recommended action must be safety review before next dispatch when risk/score requires it. Do not conclude suspension or confirmed misconduct unless canonical evidence directly supports it.",
+      "fleet_insight format: '### 1. Tóm tắt chuyến\\n- ...\\n### 2. Evidence chính từ JSON/local AI\\n- ...\\n### 3. Vì sao trip được phân loại như vậy\\n- ...\\n### 4. Quyết định vận hành\\n- ...'.",
+      "trip_insights[TRIP_ID].pros: 2-3 bullets, only supported positives.",
+      "trip_insights[TRIP_ID].concerns: 3-5 bullets with exact metrics and why each matters.",
+      "trip_insights[TRIP_ID].recommendation: 3-5 concise bullet lines covering priority, next action, evidence to review, and what NOT to conclude.",
+    ];
+  }
+
+  if (reportMode === "safety_overview") {
+    return [
+      ...shared,
+      "REPORT TYPE: SAFETY OVERVIEW, for fleet aggregate only.",
+      "Purpose: evaluate the overall fleet safety picture from fleet_summary. Do not analyze trips one by one.",
+      "Use trip_index only to name highest-ranked trip or review priority order already supplied. Do not create per-trip pros/concerns.",
+      "Do not mention maintenance, tires, DTC, cost, downtime, workshop, parts, INSPECT/WATCH/NORMAL, or repair actions.",
+      "Make clear that highest-ranked means relative within this batch, not automatically safe unless risk bucket/score supports it.",
+      "fleet_insight format: '### 1. Fleet summary\\n- ...\\n### 2. Safety distribution\\n- ...\\n### 3. Main risk contributors\\n- ...\\n### 4. Review priority logic\\n- ...\\n### 5. Operational recommendation\\n- ...'.",
+      "Return trip_insights as an empty object: {}.",
+    ];
+  }
+
+  if (reportMode === "maintenance_detail") {
+    return [
+      ...shared,
+      "REPORT TYPE: MAINTENANCE DETAIL, for exactly one trip.",
+      "Purpose: safety-based inspection triage. This is not confirmed mechanical diagnosis.",
+      "Use only maintenance.brakeStress, tireStress, priority, dtcCode, estimatedCostVnd, estimatedDowntime, workOrderStatus, plus safety metrics as context.",
+      "Never invent DTC, part availability, repair cost, downtime, odometer, engine-hours, brake wear, tire pressure, workshop result, or work order creation.",
+      "If DTC is N/A or cost is 0, explicitly say real vehicle-health/workshop data is unavailable and cost remains N/A until inspection.",
+      "fleet_insight format: '### 1. Inspection triage summary\\n- ...\\n### 2. Evidence kỹ thuật có sẵn\\n- ...\\n### 3. Giới hạn dữ liệu\\n- ...\\n### 4. Khuyến nghị kiểm tra\\n- ...'.",
+      "trip_insights[TRIP_ID].pros: 2-3 bullets about stable/available technical signals only.",
+      "trip_insights[TRIP_ID].concerns: 3-5 bullets about stress/priority/evidence gaps only.",
+      "trip_insights[TRIP_ID].recommendation: 3-5 concise bullet lines covering inspection priority, what to verify, and no fake work order/cost.",
+    ];
+  }
+
+  return [
+    ...shared,
+    "REPORT TYPE: MAINTENANCE OVERVIEW, for fleet aggregate only.",
+    "Purpose: summarize safety-based inspection triage across the fleet from fleet_summary. Do not analyze trips one by one.",
+    "This is not confirmed mechanical diagnosis. Never invent DTC, part availability, repair cost, downtime, odometer, workshop result, or work order creation.",
+    "Use trip_index only to name aggregate priority order if supplied. Do not create per-trip pros/concerns.",
+    "fleet_insight format: '### 1. Fleet inspection triage\\n- ...\\n### 2. Priority distribution\\n- ...\\n### 3. Data availability limits\\n- ...\\n### 4. Recommended operations plan\\n- ...'.",
+    "Return trip_insights as an empty object: {}.",
+  ];
+}
+
 function hasPositiveMention(text: string, pattern: RegExp, negativePattern?: RegExp) {
-  return pattern.test(text) && !(negativePattern && negativePattern.test(text));
+  if (!pattern.test(text)) return false;
+  const sentences = text
+    .split(/[.!?。！？\n]+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  const mentionSentences = sentences.filter((sentence) => pattern.test(sentence));
+  if (mentionSentences.length === 0) return false;
+
+  const negated = mentionSentences.every((sentence) => {
+    if (negativePattern?.test(sentence)) return true;
+    return /(không|khong|no|zero|0\.?0?%?|không có|khong co|không ghi nhận|khong ghi nhan|without|none)/i.test(sentence);
+  });
+  if (negated) return false;
+
+  return mentionSentences.some((sentence) =>
+    /(rủi ro|rui ro|nguy|vi phạm|vi pham|problem|issue|risk|concern|cảnh báo|canh bao|nghiêm trọng|nghiem trong|cao|high|gây|gay)/i.test(sentence),
+  );
 }
 
 function validateBedrockInsight(parsed: any, trips: CopilotTripInput[], mode?: string) {
@@ -210,6 +333,8 @@ function validateBedrockInsight(parsed: any, trips: CopilotTripInput[], mode?: s
       throw new Error("Bedrock safety insight mentioned maintenance-only fields");
     }
   }
+
+  if (mode === "safety_overview" || mode === "maintenance_overview") return;
 
   for (const trip of trips) {
     const tripText = textFromInsight(parsed?.trip_insights?.[trip.tripId]).toLowerCase();
@@ -275,11 +400,13 @@ function getBedrockBearerToken(): string {
   return cleanBearerToken(process.env.AWS_BEARER_TOKEN_BEDROCK || process.env.BEDROCK_API_KEY);
 }
 
-async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, timeoutMs = 3500): Promise<string> {
+async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, timeoutMs = 3500, externalSignal?: AbortSignal): Promise<string> {
   const token = getBedrockBearerToken();
   if (!token) throw new Error("AWS_BEARER_TOKEN_BEDROCK is not configured");
 
   const endpoint = `https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com/model/${encodeURIComponent(modelId)}/converse`;
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const signal = externalSignal ? AbortSignal.any([timeoutSignal, externalSignal]) : timeoutSignal;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -287,7 +414,7 @@ async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, t
       "Accept": "application/json",
       "Authorization": `Bearer ${token}`,
     },
-    signal: AbortSignal.timeout(timeoutMs),
+    signal,
     body: JSON.stringify({
       messages: [
         {
@@ -660,7 +787,10 @@ Trả lời tiếng Việt, 2-3 câu ngắn gọn, chuyên nghiệp.
 User request: ${message}
 `;
 
-      const aiReply = await callBedrockConverse(prompt);
+      // Report cards must open immediately from JSON/local AI. Bedrock is only
+      // used by the explicit report insight flow, not as a blocking gate here.
+      void prompt;
+      const aiReply = "";
       res.json({
         reply: "",
         cardType: "COMPARISON",
@@ -795,6 +925,7 @@ app.post("/api/copilot/report", async (req, res) => {
       request_id?: string;
       policy_version?: string;
       input_signature?: string;
+      fleet_summary?: unknown;
       trips?: CopilotTripInput[];
     };
     tripIds?: string[];
@@ -812,6 +943,18 @@ app.post("/api/copilot/report", async (req, res) => {
     });
     return;
   }
+
+  const clientAbortController = new AbortController();
+  let responseFinished = false;
+  res.on("finish", () => {
+    responseFinished = true;
+  });
+  req.on("aborted", () => {
+    clientAbortController.abort();
+  });
+  res.on("close", () => {
+    if (!responseFinished) clientAbortController.abort();
+  });
 
   const cacheKey = canonicalInput?.input_signature || `${reportMode || "unknown"}:${trips.map((trip) => trip.tripId).join(",")}`;
   const cached = reportInsightCache.get(cacheKey);
@@ -849,44 +992,62 @@ app.post("/api/copilot/report", async (req, res) => {
   }
 
   const requestPromise = (async (): Promise<CopilotInsightPayload> => {
+    const isOverviewReport = reportMode === "safety_overview" || reportMode === "maintenance_overview";
+    const bedrockInput = isOverviewReport
+      ? {
+        request_id: canonicalInput?.request_id,
+        policy_version: canonicalInput?.policy_version || "report-canonical-v1",
+        report_mode: reportMode,
+        fleet_summary: canonicalInput?.fleet_summary,
+        trip_index: trips.map((trip) => ({
+          tripId: trip.tripId,
+          rank: trip.rank,
+          score: trip.safety?.score,
+          riskLevel: trip.safety?.riskLevel,
+          priority: trip.maintenance?.priority,
+        })),
+      }
+      : {
+        request_id: canonicalInput?.request_id,
+        policy_version: canonicalInput?.policy_version || "report-canonical-v1",
+        report_mode: reportMode,
+        trips: trips.map((trip) => compactTripForBedrock(trip, reportMode)),
+      };
     const promptText = [
-      "You are DMS Fleet Copilot. You are an explanation engine only.",
-      "The canonical JSON/local AI input supplied by the app is authoritative.",
-      "Never recalculate or replace scores, risk levels, event counts, TTC, DTC, maintenance priority, cost, downtime, or action orders.",
-      "If a metric is 0, do not describe it as a risk, problem, violation, or event.",
-      "For safety reports, do not mention maintenance, tires, DTC, cost, downtime, workshop, parts, or INSPECT/WATCH/NORMAL maintenance priority.",
-      "Write detailed Vietnamese operational evaluation, but never invent metrics.",
-      "For every trip insight, include: 2-3 pros if supported by nonzero/zero metrics, 3-5 concerns with exact numbers, and a concrete recommendation with why/priority/action.",
-      "For safety reports, explain why the trip is risky using score, avgRisk, maxRisk, highRiskFrames, eventSummary, distractedPct, fatigueEvents, nearMissCount, harshBrakeCount, speedingPct, tailgatingPct.",
-      "Always format scores with exactly one decimal place like 42.9/100. Never output 43/100 or long floats like 42.93888888888889/100.",
-      "Use the label Trip Safety Risk for risk level. If a trip is rank #1 but CRITICAL, explicitly state rank is relative and does not mean safe.",
-      "For safety actions, prefer safety review before next dispatch. Do not conclude driver suspension, urgent suspension, or confirmed misconduct unless the canonical input includes direct evidence.",
-      "For maintenance reports, treat the output as safety-based inspection triage, not confirmed mechanical diagnosis. Explain brakeStress estimate, tireStress estimate, DTC availability, priority, estimatedCostVnd only if nonzero, estimatedDowntime, and workOrderStatus only. If DTC/vehicle-health telemetry is unavailable, say repair cost is N/A until workshop inspection.",
+      ...reportPromptContract(reportMode),
       "Return JSON only: {\"fleet_insight\":\"detailed string\",\"trip_insights\":{\"TRIP_ID\":{\"pros\":[\"detailed string\"],\"concerns\":[\"detailed string\"],\"recommendation\":\"detailed string\"}}}.",
       `Report mode: ${reportMode || "unknown"}`,
       `Request id: ${canonicalInput?.request_id || "N/A"}`,
       `Policy version: ${canonicalInput?.policy_version || "report-canonical-v1"}`,
       "Compact canonical JSON/local AI input:",
-      JSON.stringify({
-        request_id: canonicalInput?.request_id,
-        policy_version: canonicalInput?.policy_version || "report-canonical-v1",
-        report_mode: reportMode,
-        trips: trips.map((trip) => compactTripForBedrock(trip, reportMode)),
-      }),
+      JSON.stringify(bedrockInput),
     ].join("\n\n");
+    console.info("Bedrock report insight request:", {
+      mode: reportMode || "unknown",
+      tripCount: trips.length,
+      payloadKind: isOverviewReport ? "fleet_summary" : "single_trip_detail",
+      promptBytes: Buffer.byteLength(promptText, "utf8"),
+      tripIds: isOverviewReport ? "aggregate" : trips.map((trip) => trip.tripId).join(","),
+    });
 
     try {
-      const rawAiOutput = await callBedrockConverse(promptText, BEDROCK_MODEL_ID, 5000);
+      const rawAiOutput = await callBedrockConverse(promptText, BEDROCK_MODEL_ID, 45000, clientAbortController.signal);
       const cleanJson = rawAiOutput.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleanJson);
+      const parsed = sanitizeReportWording(JSON.parse(cleanJson)) as any;
       validateBedrockInsight(parsed, trips, reportMode);
       const fleetInsight = typeof parsed.fleet_insight === "string" ? parsed.fleet_insight : "";
       if (!fleetInsight.trim()) throw new Error("Bedrock returned no fleet_insight");
+      console.info("Bedrock report insight validated:", {
+        mode: reportMode || "unknown",
+        tripCount: trips.length,
+        durationMs: Date.now() - startedAt,
+        tripIds: isOverviewReport ? "aggregate" : trips.map((trip) => trip.tripId).join(","),
+      });
 
       return {
         insight: fleetInsight,
         fleet_insight: fleetInsight,
-        trip_insights: parsed.trip_insights && typeof parsed.trip_insights === "object" ? parsed.trip_insights : {},
+        trip_insights: isOverviewReport ? {} : parsed.trip_insights && typeof parsed.trip_insights === "object" ? parsed.trip_insights : {},
         policy_version: "report-canonical-v1",
         ai_status: "validated",
         diagnostics: {
@@ -917,6 +1078,7 @@ app.post("/api/copilot/report", async (req, res) => {
 
   reportInsightInflight.set(cacheKey, requestPromise);
   requestPromise.then((payload) => {
+    if (clientAbortController.signal.aborted) return;
     if (payload.ai_status === "validated" || payload.ai_status === "unavailable") {
       reportInsightCache.set(cacheKey, {
         expiresAt: Date.now() + (payload.ai_status === "validated" ? REPORT_INSIGHT_CACHE_TTL_MS : REPORT_UNAVAILABLE_CACHE_TTL_MS),
@@ -927,13 +1089,7 @@ app.post("/api/copilot/report", async (req, res) => {
     reportInsightInflight.delete(cacheKey);
   });
 
-  const foregroundResult = await Promise.race<CopilotInsightPayload>([
-    requestPromise,
-    new Promise((resolve) => setTimeout(() => resolve(buildPendingInsight({
-      cache: "miss",
-      durationMs: Date.now() - startedAt,
-    })), 1200)),
-  ]);
+  const foregroundResult = await requestPromise;
 
   if (foregroundResult.ai_status === "validated") {
     reportInsightCache.set(cacheKey, {

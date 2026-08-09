@@ -60,8 +60,8 @@ export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = (
     .filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
   const avgHeadway = validHeadways.length
     ? validHeadways.reduce((sum, value) => sum + value, 0) / validHeadways.length
-    : rows.length
-      ? rows.reduce((sum, row) => sum + finiteNumber(row.avgHeadway), 0) / rows.length
+    : fleetTrips.length
+      ? fleetTrips.reduce((sum, trip) => sum + finiteNumber(trip.trip_aggregate?.avg_headway_sec), 0) / fleetTrips.length
       : 0;
   const avgAlertness = fleetTrips.length
     ? fleetTrips.reduce((sum, trip) => sum + finiteNumber(trip.driver_summary?.average_alertness_score, 1), 0) / fleetTrips.length

@@ -136,8 +136,25 @@ const textFromInsightPayload = (value: any): string => {
   return '';
 };
 
-const hasPositiveAiMention = (text: string, pattern: RegExp, negativePattern?: RegExp) =>
-  pattern.test(text) && !(negativePattern && negativePattern.test(text));
+const hasPositiveAiMention = (text: string, pattern: RegExp, negativePattern?: RegExp) => {
+  if (!pattern.test(text)) return false;
+  const sentences = text
+    .split(/[.!?。！？\n]+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  const mentionSentences = sentences.filter((sentence) => pattern.test(sentence));
+  if (mentionSentences.length === 0) return false;
+
+  const negated = mentionSentences.every((sentence) => {
+    if (negativePattern?.test(sentence)) return true;
+    return /(không|khong|no|zero|0\.?0?%?|không có|khong co|không ghi nhận|khong ghi nhan|without|none)/i.test(sentence);
+  });
+  if (negated) return false;
+
+  return mentionSentences.some((sentence) =>
+    /(rủi ro|rui ro|nguy|vi phạm|vi pham|problem|issue|risk|concern|cảnh báo|canh bao|nghiêm trọng|nghiem trong|cao|high|gây|gay)/i.test(sentence),
+  );
+};
 
 const isValidBedrockPayloadForRows = (payload: any, rows: ReturnType<typeof buildRankingRows>, reportType: string | null) => {
   const allText = textFromInsightPayload(payload).toLowerCase();
@@ -179,10 +196,10 @@ type AiInsightStatus = 'loading' | 'pending' | 'validated' | 'unavailable';
 
 const aiStatusLabel = (status: AiInsightStatus) => (
   status === 'validated'
-    ? 'Bedrock insight đã xác thực'
+    ? 'Kết quả từ Bedrock đã được trả về'
     : status === 'loading' || status === 'pending'
-      ? 'Đánh giá JSON/local AI - Bedrock chạy nền'
-      : 'Đánh giá JSON/local AI - chờ Bedrock hợp lệ'
+      ? 'Đang chờ Bedrock phản hồi hợp lệ'
+      : 'Chờ Bedrock hợp lệ'
 );
 
 const aiStatusClass = (status: AiInsightStatus) => (
@@ -320,6 +337,8 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   const [isExporting, setIsExporting] = useState(false);
   const [expandedTrips, setExpandedTrips] = useState<Record<string, boolean>>({});
   const menuRef = useRef<HTMLDivElement>(null);
+  const validatedInsightRef = useRef<{ signature: string; payload: any } | null>(null);
+  const activeRequestSignatureRef = useRef<string | null>(null);
 
   const toggleTripExpand = (tripId: string) => {
     setExpandedTrips(prev => ({ ...prev, [tripId]: !prev[tripId] }));
@@ -398,6 +417,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   }, [vehicles, selectedTrips, reportType]);
 
   const reportMode = useMemo(() => inferReportMode(reportType, reportModels.length), [reportType, reportModels.length]);
+  const isSingleTripReport = reportModels.length === 1;
   const canRequestBedrockInsight = dataReady && reportModels.length > 0 && missingSelectedIds.length === 0;
   const localReportNarrative = useMemo(
     () => buildLocalReportNarrative(reportModels, reportMode),
@@ -407,6 +427,14 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     () => buildPendingReportNarrative(reportModels, reportMode),
     [reportModels, reportMode],
   );
+  const canonicalInput = useMemo(() => buildCopilotInput(reportModels, reportMode), [reportModels, reportMode]);
+  const inputSignature = useMemo(() => JSON.stringify({
+    validator: 'bedrock-contract-v5-preserve-valid-insight',
+    reportType,
+    reportMode,
+    tripIds: rows.map((row) => row.trip_id),
+    trips: canonicalInput.trips,
+  }), [canonicalInput.trips, reportMode, reportType, rows]);
   
   const reportTitle = reportType === 'maintenance'
     ? 'Safety-Based Inspection Priority Report'
@@ -436,11 +464,56 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   const highestRankedRow = [...rows].sort((a, b) => a.rank - b.rank)[0] ?? rows[0];
   const reviewPriorityPath = rows.map((row) => row.trip_id).join(' → ');
   const aiIsLoading = isLoadingInsight || aiInsightStatus === 'loading' || aiInsightStatus === 'pending';
+  const aiHasReturned = aiInsightStatus === 'validated';
+  const aiButtonLabel = aiHasReturned
+    ? 'AI Copilot đã trả về'
+    : aiIsLoading
+      ? 'Đang chờ Bedrock...'
+      : bedrockRequested
+        ? 'Chờ Bedrock hợp lệ'
+        : 'Gọi AI Copilot';
+  const aiButtonClass = aiHasReturned
+    ? 'border-emerald-500/40 bg-emerald-950/50 text-emerald-200 hover:bg-emerald-900/50'
+    : aiIsLoading
+      ? 'border-sky-500/40 bg-sky-950/40 text-sky-100 hover:bg-sky-900/40'
+      : 'text-slate-200 hover:bg-slate-800';
+
+  useEffect(() => {
+    setBedrockRequested(canRequestBedrockInsight);
+  }, [canRequestBedrockInsight, inputSignature]);
 
   useEffect(() => {
     let cancelled = false;
+    const abortController = new AbortController();
+    const applyValidatedPayload = (signature: string, payload: any) => {
+      validatedInsightRef.current = { signature, payload };
+      setAiInsightStatus('validated');
+      setCopilotInsight(payload.fleet_insight || payload.insight || 'AI Copilot chưa trả insight.');
+      setAiTripInsights(payload.trip_insights ?? {});
+      setIsLoadingInsight(false);
+      writeCachedCopilotInsight(signature, payload);
+    };
+    const restoreValidatedPayload = () => {
+      const validated = validatedInsightRef.current;
+      if (
+        validated?.signature === inputSignature
+        && isValidBedrockPayloadForRows(validated.payload, rows, reportType)
+      ) {
+        applyValidatedPayload(inputSignature, validated.payload);
+        return true;
+      }
+      return false;
+    };
+    const showLocalFallback = (status: AiInsightStatus = 'unavailable', message = localReportNarrative) => {
+      if (restoreValidatedPayload()) return;
+      setIsLoadingInsight(false);
+      setAiInsightStatus(status);
+      setAiTripInsights({});
+      setCopilotInsight(message);
+    };
     const loadInsight = async () => {
       if (!dataReady) {
+        if (restoreValidatedPayload()) return;
         setIsLoadingInsight(true);
         setAiInsightStatus('loading');
         setAiTripInsights({});
@@ -449,10 +522,8 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       }
 
       if (!canRequestBedrockInsight) {
-        setIsLoadingInsight(false);
-        setAiInsightStatus('unavailable');
-        setAiTripInsights({});
-        setCopilotInsight(
+        showLocalFallback(
+          'unavailable',
           missingSelectedIds.length > 0
             ? `Chưa tìm thấy dữ liệu JSON/local AI cho trip: ${missingSelectedIds.join(', ')}. Không gọi Bedrock khi thiếu canonical input.`
             : localReportNarrative,
@@ -461,93 +532,74 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       }
 
       if (!bedrockRequested) {
-        setIsLoadingInsight(false);
-        setAiInsightStatus('unavailable');
-        setAiTripInsights({});
-        setCopilotInsight(localReportNarrative);
+        const cachedPayload = readCachedCopilotInsight(inputSignature);
+        if (cachedPayload && isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) {
+          applyValidatedPayload(inputSignature, cachedPayload);
+          return;
+        }
+        showLocalFallback();
         return;
       }
 
       setIsLoadingInsight(true);
       setAiInsightStatus('loading');
-      setCopilotInsight(localReportNarrative);
+      if (!restoreValidatedPayload()) {
+        setCopilotInsight(localReportNarrative);
+      }
       try {
-        const canonicalInput = buildCopilotInput(reportModels, reportMode);
-        const inputSignature = JSON.stringify({
-          validator: 'bedrock-contract-v4-score-format-trip-risk',
-          reportType,
-          reportMode,
-          tripIds: rows.map((row) => row.trip_id),
-          trips: canonicalInput.trips,
-        });
         const cachedPayload = readCachedCopilotInsight(inputSignature);
         if (cachedPayload) {
           if (!cancelled && isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) {
-            setAiInsightStatus('validated');
-            setCopilotInsight(cachedPayload.fleet_insight || cachedPayload.insight || 'AI Copilot chưa trả insight.');
-            setAiTripInsights(cachedPayload.trip_insights ?? {});
-            setIsLoadingInsight(false);
+            applyValidatedPayload(inputSignature, cachedPayload);
           }
           if (isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) return;
         }
 
-        let lastPayload: any = null;
-        for (let attempt = 0; attempt < 4; attempt += 1) {
-          const response = await fetch('/api/copilot/report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              reportType,
-              reportMode,
-              canonicalInput: {
-                ...canonicalInput,
-                input_signature: inputSignature,
-              },
-              tripIds: rows.map((row) => row.trip_id),
-            }),
-          });
+        if (activeRequestSignatureRef.current === inputSignature) return;
+        activeRequestSignatureRef.current = inputSignature;
 
-          const payload = await response.json();
-          lastPayload = payload;
-          if (!response.ok) throw new Error(payload.error || `Copilot report HTTP ${response.status}`);
-          if (cancelled) return;
+        const response = await fetch('/api/copilot/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
+          body: JSON.stringify({
+            reportType,
+            reportMode,
+            canonicalInput: {
+              ...canonicalInput,
+              input_signature: inputSignature,
+            },
+            tripIds: rows.map((row) => row.trip_id),
+          }),
+        });
 
-          if (payload.ai_status === 'validated' && !payload.vehicle_diagnostics && !payload.action_orders && isValidBedrockPayloadForRows(payload, rows, reportType)) {
-            setAiInsightStatus('validated');
-            setCopilotInsight(payload.fleet_insight || payload.insight || 'AI Copilot chưa trả insight.');
-            setAiTripInsights(payload.trip_insights ?? {});
-            writeCachedCopilotInsight(inputSignature, payload);
-            return;
-          }
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || `Copilot report HTTP ${response.status}`);
+        if (cancelled) return;
 
-          setAiInsightStatus(payload.ai_status === 'pending' ? 'pending' : 'unavailable');
-          setCopilotInsight(localReportNarrative);
-          setAiTripInsights({});
-          if (attempt < 3 && payload.ai_status === 'pending') {
-            await new Promise(resolve => setTimeout(resolve, 2200));
-          } else {
-            break;
-          }
+        if (payload.ai_status === 'validated' && !payload.vehicle_diagnostics && !payload.action_orders && isValidBedrockPayloadForRows(payload, rows, reportType)) {
+          applyValidatedPayload(inputSignature, payload);
+          return;
         }
 
-        if (!cancelled && lastPayload?.ai_status !== 'validated') {
-          setAiInsightStatus('unavailable');
-          setCopilotInsight(localReportNarrative);
+        if (!cancelled && payload.ai_status !== 'validated') {
+          showLocalFallback();
         }
       } catch (err) {
         if (!cancelled) {
-          setAiInsightStatus('unavailable');
-          setCopilotInsight(localReportNarrative);
+          showLocalFallback();
         }
       } finally {
+        if (activeRequestSignatureRef.current === inputSignature) activeRequestSignatureRef.current = null;
         if (!cancelled) {
-          setIsLoadingInsight(false);
+          if (!restoreValidatedPayload()) setIsLoadingInsight(false);
         }
       }
     };
     void loadInsight();
     return () => {
       cancelled = true;
+      abortController.abort();
     };
   }, [
     dataReady,
@@ -555,6 +607,8 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     canRequestBedrockInsight,
     reportType,
     reportMode,
+    inputSignature,
+    canonicalInput,
     localReportNarrative,
     pendingReportNarrative,
     rows.map(r => r.trip_id).join(','),
@@ -983,12 +1037,18 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
             </div>
             <button
               onClick={() => setBedrockRequested(true)}
-              disabled={bedrockRequested || !canRequestBedrockInsight}
-              className={`${panel} flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60`}
-              title={canRequestBedrockInsight ? 'Call Bedrock AI Copilot for this selected report' : 'Canonical trip data is not ready yet'}
+              disabled={aiHasReturned || aiIsLoading || !canRequestBedrockInsight}
+              className={`${panel} ${aiButtonClass} flex items-center gap-2 px-4 py-2 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-80`}
+              title={
+                aiHasReturned
+                  ? 'Bedrock đã trả insight hợp lệ cho report này'
+                  : canRequestBedrockInsight
+                    ? 'Gọi Bedrock AI Copilot cho report đang chọn'
+                    : 'Canonical trip data is not ready yet'
+              }
             >
-              <FileText className="h-4 w-4 text-sky-400" />
-              {aiIsLoading ? 'Generating AI...' : bedrockRequested ? 'AI Requested' : 'Generate AI Insight'}
+              {aiHasReturned ? <Check className="h-4 w-4 text-emerald-300" /> : <FileText className="h-4 w-4 text-sky-400" />}
+              {aiButtonLabel}
             </button>
             <div className="relative" ref={menuRef}>
               <button 
@@ -1563,9 +1623,15 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           </div>
 
           <div className="rounded-lg bg-slate-950/80 p-4 border border-slate-800/80 leading-relaxed text-sm text-slate-200">
-            {aiInsightStatus !== 'validated' && (
+            {aiInsightStatus === 'validated' ? (
+              <div className="mb-3 rounded border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-xs font-bold text-emerald-200">
+                AI Copilot đã trả về insight hợp lệ từ Bedrock. Nội dung bên dưới là kết quả AI đã xác thực và sẽ không bị JSON/local fallback ghi đè.
+              </div>
+            ) : (
               <div className="mb-3 rounded border border-sky-500/20 bg-sky-950/20 px-3 py-2 text-xs font-semibold text-sky-200">
-                Đánh giá hiện tại lấy từ JSON/local AI. Bedrock đang chạy nền; nếu phản hồi hợp lệ, nhận xét AI sẽ được cập nhật sau.
+                {isSingleTripReport
+                  ? 'Đánh giá hiện tại lấy từ JSON/local AI. Đang chờ Bedrock phản hồi hợp lệ; chỉ khi AI thật trả về thì phần nhận xét mới được cập nhật.'
+                  : 'Đánh giá overview hiện lấy từ JSON/local AI. Bedrock chỉ nhận số liệu tổng hợp fleet, không xử lý lần lượt từng trip; nếu rời trang thì request đang chờ sẽ bị hủy.'}
               </div>
             )}
             <p className="whitespace-pre-line font-medium leading-relaxed">
@@ -1684,10 +1750,10 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
             ? (tripAi?.evaluation ?? tripAi?.recommendation ?? defaultEval)
             : defaultEval;
           const insightSourceLabel = aiInsightStatus === 'validated'
-            ? 'Bedrock insight đã xác thực'
+            ? 'Kết quả từ Bedrock đã được trả về'
             : aiInsightStatus === 'loading'
-              ? 'Đánh giá JSON/local AI - Bedrock chạy nền'
-              : 'Đánh giá JSON/local AI - chờ Bedrock hợp lệ';
+              ? 'Đang chờ Bedrock phản hồi hợp lệ'
+              : 'Chờ Bedrock hợp lệ';
 
           return (
             <section key={`insight-${tripId}`} className={`${panel} p-5 space-y-4 border-amber-500/40 bg-amber-950/10 shadow-2xl`}>

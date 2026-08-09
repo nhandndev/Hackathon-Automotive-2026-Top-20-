@@ -28,13 +28,14 @@ def test_decision_event_maps_without_recomputing_ai_severity():
             "c3_risk_score": 55.0,
         },
     })
-    values = {item["path"]: item["value"] for item in payload["signals"]}
-    assert values["Vehicle.ADAS.DisplaySeverity"] == "CRITICAL"
-    assert values["Vehicle.ADAS.EventTransition"] == "START"
-    assert values["Vehicle.ADAS.RecommendedActionCode"] == "BRAKE_SAFE"
-    assert values["Vehicle.ADAS.AlertReasonCode"] == "TTC_CRITICAL"
-    assert values["Vehicle.ADAS.MinTTC"] == 1.2
-    assert values["Vehicle.Driver.State"] == "drowsy"
+    values = [item["value"] for item in payload["signals"]]
+    assert {item["path"] for item in payload["signals"]} == {"Vehicle.Speed"}
+    assert 41.055 in values
+    assert 42.002 in values
+    assert 43.001 in values
+    assert 45.012 in values
+    assert 48.003 in values
+    assert 49.062 in values
 
 
 def make_metadata() -> TripMetadata:
@@ -94,10 +95,13 @@ def test_mapper_omits_infinite_ttc_and_preserves_ai_risk() -> None:
         transition=EventTransition.START,
     )
     mapped = {item["path"]: item["value"] for item in payload["signals"]}
-    assert "Vehicle.ADAS.MinTTC" not in mapped
-    assert "Vehicle.ADAS.Headway" not in mapped
-    assert mapped["Vehicle.ADAS.FinalRiskScore"] == 55
-    assert mapped["Vehicle.ADAS.DisplaySeverity"] == "WARNING"
+    assert set(mapped) == {"Vehicle.Speed"}
+    values = [item["value"] for item in payload["signals"]]
+    assert 41.055 in values
+    assert 42.001 in values
+    assert 43.003 in values
+    assert 44.045 in values
+    assert 49.075 in values
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,8 @@
 package vn.fpt.dms.hmi;
 
 import android.app.Activity;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,7 +35,19 @@ import java.util.Locale;
  */
 public final class MainActivity extends Activity implements TextToSpeech.OnInitListener {
     private static final String TAG = "DMS_HMI";
+    private static final String BUILD_TAG = "V2.2 SPEED MUX";
     private static final int PERF_VEHICLE_SPEED = 291504647; // 0x11600207
+    private static final int PROP_FINAL_RISK = 557843456; // 0x21400400
+    private static final int PROP_CRITICAL_ALERT = 555746305; // 0x21200401
+    private static final int PROP_ALERTNESS = 559940610; // 0x21600402
+    private static final int PROP_MIN_TTC = 559940611; // 0x21600403
+    private static final int PROP_AI_STATUS = 557843460; // 0x21400404
+    private static final int PROP_ACTION = 557843461; // 0x21400405
+    private static final int PROP_SEVERITY = 557843465; // 0x21400409
+    private static final int PROP_DRIVER_STATE = 557843466; // 0x2140040A
+    private static final int[] DMS_PROPS = new int[]{
+            PERF_VEHICLE_SPEED
+    };
     private static final int AREA_GLOBAL = 0;
     private static final float SENSOR_RATE_HZ = 10.0f;
     private static final long WATCHDOG_MS = 500;
@@ -59,6 +73,17 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
     private TextView action;
     private TextView evidence;
     private TextView telemetry;
+    private TextView aiPill;
+    private TextView driverValue;
+    private TextView alertnessValue;
+    private TextView ttcValue;
+    private TextView riskValue;
+    private TextView ecuValue;
+    private TextView speedValue;
+    private TextView limitValue;
+    private TextView reasonValue;
+    private TextView ageValue;
+    private Button voiceButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,36 +97,89 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
     private void buildUi() {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER);
-        root.setPadding(50, 35, 50, 35);
-        root.setBackgroundColor(0xff101826);
+        root.setPadding(44, 24, 44, 24);
+        root.setBackground(makeBackground(0xff081827));
 
-        status = text(18, Color.WHITE);
-        title = text(44, Color.WHITE);
-        action = text(28, Color.WHITE);
-        evidence = text(22, 0xffd8dce8);
-        telemetry = text(20, 0xffd8dce8);
+        LinearLayout topbar = new LinearLayout(this);
+        topbar.setOrientation(LinearLayout.HORIZONTAL);
+        topbar.setGravity(Gravity.CENTER_VERTICAL);
+        topbar.setPadding(0, 0, 0, 18);
+        root.addView(topbar, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 78));
 
-        Button voice = new Button(this);
-        voice.setText("VOICE ON");
-        voice.setOnClickListener(new View.OnClickListener() {
+        aiPill = pill("AI OFFLINE", 0xff64748b);
+        topbar.addView(aiPill, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        status = pill(BUILD_TAG, 0xff38bdf8);
+        topbar.addView(status, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.3f));
+
+        voiceButton = new Button(this);
+        voiceButton.setText("VOICE ON");
+        voiceButton.setTextColor(Color.WHITE);
+        voiceButton.setTextSize(15);
+        voiceButton.setTypeface(Typeface.DEFAULT_BOLD);
+        voiceButton.setBackground(cardBackground(0x66111827, 0x33ffffff, 999));
+        voiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 voiceEnabled = !voiceEnabled;
-                voice.setText(voiceEnabled ? "VOICE ON" : "VOICE MUTED");
+                voiceButton.setText(voiceEnabled ? "VOICE ON" : "VOICE MUTED");
                 if (!voiceEnabled && tts != null) tts.stop();
                 render();
             }
         });
+        topbar.addView(voiceButton, new LinearLayout.LayoutParams(0, 54, 0.8f));
 
-        root.addView(status);
-        root.addView(title);
-        root.addView(action);
-        root.addView(evidence);
-        root.addView(telemetry);
-        root.addView(voice);
+        LinearLayout main = new LinearLayout(this);
+        main.setOrientation(LinearLayout.HORIZONTAL);
+        main.setGravity(Gravity.CENTER);
+        root.addView(main, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        LinearLayout leftCard = card();
+        driverValue = addMetric(leftCard, "DRIVER", "Alert", 31);
+        alertnessValue = addMetric(leftCard, "ALERTNESS", "--", 31);
+        ttcValue = addMetric(leftCard, "TTC", "--", 31);
+        main.addView(leftCard, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setGravity(Gravity.CENTER);
+        hero.setPadding(28, 18, 28, 18);
+        title = text(58, Color.WHITE);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        action = text(34, Color.WHITE);
+        action.setTypeface(Typeface.DEFAULT_BOLD);
+        evidence = text(21, 0xdde5e7eb);
+        telemetry = text(19, 0xffcbd5e1);
+        hero.addView(title);
+        hero.addView(action);
+        hero.addView(evidence);
+        hero.addView(telemetry);
+        main.addView(hero, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.55f));
+
+        LinearLayout rightCard = card();
+        TextView riskLabel = label("RISK SCORE");
+        rightCard.addView(riskLabel);
+        riskValue = text(52, Color.WHITE);
+        riskValue.setTypeface(Typeface.DEFAULT_BOLD);
+        riskValue.setBackground(cardBackground(0x44111827, 0x26ffffff, 999));
+        rightCard.addView(riskValue, new LinearLayout.LayoutParams(154, 154));
+        ecuValue = addMetric(rightCard, "ECU REACTION", "STANDBY", 20);
+        main.addView(rightCard, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+
+        LinearLayout footer = new LinearLayout(this);
+        footer.setOrientation(LinearLayout.HORIZONTAL);
+        footer.setGravity(Gravity.CENTER);
+        footer.setPadding(0, 18, 0, 0);
+        root.addView(footer, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 86));
+        speedValue = footerCell(footer);
+        limitValue = footerCell(footer);
+        reasonValue = footerCell(footer);
+        ageValue = footerCell(footer);
+
         setContentView(root);
-        renderOffline("DANG CHO DU LIEU TU HMI BRIDGE");
+        renderOffline("WAITING FOR DATA FROM HMI BRIDGE");
     }
 
     private TextView text(int sp, int color) {
@@ -111,6 +189,81 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
         view.setGravity(Gravity.CENTER);
         view.setPadding(18, 10, 18, 10);
         return view;
+    }
+
+    private TextView label(String value) {
+        TextView view = text(14, 0xa6ffffff);
+        view.setGravity(Gravity.LEFT);
+        view.setTypeface(Typeface.DEFAULT_BOLD);
+        view.setAllCaps(false);
+        return viewWithText(view, value);
+    }
+
+    private TextView viewWithText(TextView view, String value) {
+        view.setText(value);
+        return view;
+    }
+
+    private TextView pill(String value, int accent) {
+        TextView view = text(16, Color.WHITE);
+        view.setTypeface(Typeface.DEFAULT_BOLD);
+        view.setText(value);
+        view.setBackground(cardBackground(0x66111827, accent, 999));
+        return view;
+    }
+
+    private LinearLayout card() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setPadding(24, 20, 24, 20);
+        layout.setBackground(cardBackground(0x66111827, 0x26ffffff, 24));
+        return layout;
+    }
+
+    private TextView addMetric(LinearLayout parent, String label, String value, int sp) {
+        parent.addView(label(label));
+        TextView metric = text(sp, Color.WHITE);
+        metric.setTypeface(Typeface.DEFAULT_BOLD);
+        metric.setText(value);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 2, 0, 14);
+        parent.addView(metric, lp);
+        return metric;
+    }
+
+    private TextView footerCell(LinearLayout parent) {
+        TextView view = text(20, Color.WHITE);
+        view.setTypeface(Typeface.DEFAULT_BOLD);
+        view.setBackground(cardBackground(0x99000000, 0x1affffff, 10));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        lp.setMargins(0, 0, 10, 0);
+        parent.addView(view, lp);
+        return view;
+    }
+
+    private GradientDrawable cardBackground(int color, int strokeColor, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(radius);
+        drawable.setStroke(1, strokeColor);
+        return drawable;
+    }
+
+    private GradientDrawable makeBackground(int color) {
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[]{adjustColor(color, 1.35f), color});
+        return drawable;
+    }
+
+    private int adjustColor(int color, float factor) {
+        int a = Color.alpha(color);
+        int r = Math.min(255, Math.round(Color.red(color) * factor));
+        int g = Math.min(255, Math.round(Color.green(color) * factor));
+        int b = Math.min(255, Math.round(Color.blue(color) * factor));
+        return Color.argb(a, r, g, b);
     }
 
     private void connectVehicleRuntime() {
@@ -127,10 +280,10 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
             propertyManager = carClass.getMethod("getCarManager", String.class).invoke(car, propertyService);
             registerVehicleCallback();
             handler.post(vehiclePoller);
-            Log.i(TAG, "Registered DMS multiplex transport on PERF_VEHICLE_SPEED with callback + polling fallback");
+            Log.i(TAG, "Registered DMS VHAL transport with speed-mux");
         } catch (Throwable error) {
             Log.e(TAG, "Cannot connect Android Car/VHAL runtime", error);
-            renderOffline("CAR SERVICE/VHAL CHUA SAN SANG");
+            renderOffline("CAR SERVICE / VHAL NOT READY");
         }
     }
 
@@ -145,15 +298,24 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
     private void pollVehicleValueOnce() {
         if (propertyManager == null) return;
         try {
-            Method getFloatProperty = propertyManager.getClass().getMethod("getFloatProperty", int.class, int.class);
-            Object raw = getFloatProperty.invoke(propertyManager, PERF_VEHICLE_SPEED, AREA_GLOBAL);
-            if (raw instanceof Number) {
-                float value = ((Number) raw).floatValue();
-                decodeMultiplex(value);
-                render();
+            Method getProperty = propertyManager.getClass().getMethod("getProperty", int.class, int.class);
+            boolean changed = false;
+            for (int propId : DMS_PROPS) {
+                try {
+                    Object propertyValue = getProperty.invoke(propertyManager, propId, AREA_GLOBAL);
+                    if (propertyValue == null) continue;
+                    Object raw = propertyValue.getClass().getMethod("getValue").invoke(propertyValue);
+                    if (raw != null) {
+                        decodeProperty(propId, raw);
+                        changed = true;
+                    }
+                } catch (Throwable propError) {
+                    Log.w(TAG, "VHAL property unavailable 0x" + Integer.toHexString(propId), propError);
+                }
             }
+            if (changed) render();
         } catch (Throwable error) {
-            Log.w(TAG, "VHAL polling fallback could not read PERF_VEHICLE_SPEED", error);
+            Log.w(TAG, "VHAL polling fallback could not read DMS properties", error);
         }
     }
 
@@ -164,8 +326,14 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
                 new Class<?>[]{callbackClass},
                 new VehicleCallbackHandler());
         Method register = propertyManager.getClass().getMethod("registerCallback", callbackClass, int.class, float.class);
-        Object ok = register.invoke(propertyManager, propertyCallback, PERF_VEHICLE_SPEED, SENSOR_RATE_HZ);
-        Log.i(TAG, "register 0x" + Integer.toHexString(PERF_VEHICLE_SPEED) + "=" + ok);
+        for (int propId : DMS_PROPS) {
+            try {
+                Object ok = register.invoke(propertyManager, propertyCallback, propId, SENSOR_RATE_HZ);
+                Log.i(TAG, "register 0x" + Integer.toHexString(propId) + "=" + ok);
+            } catch (Throwable propError) {
+                Log.w(TAG, "register failed 0x" + Integer.toHexString(propId), propError);
+            }
+        }
     }
 
     private final class VehicleCallbackHandler implements InvocationHandler {
@@ -196,8 +364,15 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
                 // Android AAOS CarPropertyManager callback already passes CarPropertyValue.
             }
             Object raw = propertyValue.getClass().getMethod("getValue").invoke(propertyValue);
-            if (raw instanceof Number) {
-                decodeMultiplex(((Number) raw).floatValue());
+            int propId = PERF_VEHICLE_SPEED;
+            try {
+                Object id = propertyValue.getClass().getMethod("getPropertyId").invoke(propertyValue);
+                if (id instanceof Number) propId = ((Number) id).intValue();
+            } catch (Throwable ignored) {
+                // Keep speed-mux fallback for older AAOS APIs.
+            }
+            if (raw != null) {
+                decodeProperty(propId, raw);
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -210,21 +385,89 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
         }
     }
 
-    private void decodeMultiplex(float raw) {
+    private void decodeProperty(int propId, Object raw) {
         state.lastUpdateAt = System.currentTimeMillis();
-        int code = Math.round(raw);
+        if (raw instanceof Number) {
+            float value = ((Number) raw).floatValue();
+            if (propId == PERF_VEHICLE_SPEED) {
+                decodeMultiplex(value);
+            } else if (propId == PROP_FINAL_RISK) {
+                state.risk = value;
+            } else if (propId == PROP_CRITICAL_ALERT) {
+                state.critical = Math.round(value) == 1;
+            } else if (propId == PROP_ALERTNESS) {
+                state.alertness = value > 1.0f ? value / 100.0f : value;
+            } else if (propId == PROP_MIN_TTC) {
+                state.ttc = value;
+            } else if (propId == PROP_AI_STATUS) {
+                state.aiStatus = aiFromCode(Math.round(value));
+            } else if (propId == PROP_ACTION) {
+                state.recommendedAction = actionFromCode(Math.round(value));
+            } else if (propId == PROP_SEVERITY) {
+                state.severity = severityFromCode(Math.round(value));
+            } else if (propId == PROP_DRIVER_STATE) {
+                state.driverState = driverFromCode(Math.round(value));
+            }
+            Log.i(TAG, "prop 0x" + Integer.toHexString(propId) + "=" + value);
+        } else {
+            Log.i(TAG, "prop 0x" + Integer.toHexString(propId) + "=" + raw);
+        }
+    }
+
+    private void decodeMultiplex(float raw) {
+        if (raw >= 41.0f && raw < 50.0f) {
+            int group = (int) Math.floor(raw);
+            int payload = Math.round((raw - group) * 1000.0f);
+            state.lastUpdateAt = System.currentTimeMillis();
+            switch (group) {
+                case 41:
+                    state.risk = payload;
+                    break;
+                case 42:
+                    state.severity = severityFromCode(payload);
+                    break;
+                case 43:
+                    state.driverState = driverFromCode(payload);
+                    break;
+                case 44:
+                    state.alertness = payload / 100.0f;
+                    break;
+                case 45:
+                    state.ttc = payload / 10.0f;
+                    break;
+                case 46:
+                    state.critical = payload == 1;
+                    break;
+                case 47:
+                    state.aiStatus = aiFromCode(payload);
+                    break;
+                case 48:
+                    state.recommendedAction = actionFromCode(payload);
+                    break;
+                case 49:
+                    state.speed = payload;
+                    break;
+                default:
+                    Log.w(TAG, "Unknown decimal DMS mux value=" + raw);
+            }
+            Log.i(TAG, "mux decimal raw=" + raw + " group=" + group + " payload=" + payload);
+            return;
+        }
 
         if (raw > 0.05f && raw < 1000.0f) {
+            state.lastUpdateAt = System.currentTimeMillis();
             state.speed = raw;
             Log.i(TAG, "mux speed=" + raw);
             return;
         }
         if (raw == 0.0f) {
-            // Background vehicle simulator continuously pushes 0.0. Keep speed 0 but DO NOT abort multiplex decoding!
-            state.speed = 0.0f;
+            // Background vehicle simulator continuously pushes 0.0. Do not let it
+            // overwrite the explicit 49.xxx display-speed mux value.
             return;
         }
 
+        state.lastUpdateAt = System.currentTimeMillis();
+        int code = Math.round(raw);
         int group = code / 1000;
         int payload = code % 1000;
         switch (group) {
@@ -263,7 +506,7 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
         public void run() {
             long age = state.lastUpdateAt == 0 ? Long.MAX_VALUE : System.currentTimeMillis() - state.lastUpdateAt;
             if (age > OFFLINE_AFTER_MS) {
-                renderOffline("DANG CHO DU LIEU TU HMI BRIDGE");
+                renderOffline("WAITING FOR DATA FROM HMI BRIDGE");
             } else {
                 render();
             }
@@ -274,24 +517,53 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
     private void render() {
         long age = state.lastUpdateAt == 0 ? 0 : Math.max(0, System.currentTimeMillis() - state.lastUpdateAt);
         int severity = severityCode(state.severity);
-        root.setBackgroundColor(severity == 2 ? 0xff8b111c : severity == 1 ? 0xff8a5a00 : severity == 3 ? 0xff123d58 : 0xff083529);
-        status.setText("AI " + state.aiStatus + (voiceEnabled ? "  •  VOICE ON" : "  •  VOICE MUTED") + "  •  VHAL " + age + "ms");
-        title.setText(severity == 2 ? "NGUY HIEM" : severity == 1 ? "CANH BAO" : severity == 3 ? "DA AN TOAN TRO LAI" : "LAI XE AN TOAN");
+        int bg = severity == 2 ? 0xff641523 : severity == 1 ? 0xff7c5209 : severity == 3 ? 0xff123d58 : 0xff081827;
+        int accent = severity == 2 ? 0xfffb7185 : severity == 1 ? 0xfffacc15 : severity == 3 ? 0xff38bdf8 : 0xff22c55e;
+        root.setBackground(makeBackground(bg));
+        aiPill.setText("●  AI " + state.aiStatus);
+        aiPill.setTextColor(accent);
+        status.setText(BUILD_TAG + "  •  VHAL " + age + "ms");
+        status.setTextColor(Color.WHITE);
+        voiceButton.setText(voiceEnabled ? "VOICE ON" : "VOICE MUTED");
+        title.setText(severity == 2 ? "CRITICAL RISK" : severity == 1 ? "WARNING" : severity == 3 ? "RECOVERY" : "SAFE DRIVING");
         String actionText = actionText(state.recommendedAction);
         action.setText(actionText);
-        evidence.setText("Tai xe: " + driverText(state.driverState) + (state.ttc > 0 ? String.format(Locale.US, "  •  TTC %.1fs", state.ttc) : ""));
-        telemetry.setText(String.format(Locale.US, "%.0f km/h     Risk %.0f     Alertness %.0f%%", state.speed, state.risk, state.alertness * 100));
+        evidence.setText(reasonText(state.severity));
+        telemetry.setText(String.format(Locale.US, "Driver: %s  •  TTC %.1fs", driverText(state.driverState), state.ttc));
+        driverValue.setText(driverText(state.driverState));
+        alertnessValue.setText(String.format(Locale.US, "%.0f%%", state.alertness * 100));
+        ttcValue.setText(String.format(Locale.US, "%.1fs", state.ttc));
+        riskValue.setText(String.format(Locale.US, "%.0f", state.risk));
+        riskValue.setTextColor(accent);
+        ecuValue.setText(ecuText(state.severity));
+        speedValue.setText(String.format(Locale.US, "%.0f km/h", state.speed));
+        limitValue.setText("Limit 80");
+        reasonValue.setText(reasonCode(state));
+        ageValue.setText(age + " ms");
         maybeSpeak(severity, actionText);
     }
 
     private void renderOffline(String reason) {
         if (root == null) return;
-        root.setBackgroundColor(0xff1f2937);
-        status.setText("AI OFFLINE" + (voiceEnabled ? "  •  VOICE ON" : "  •  VOICE MUTED"));
-        title.setText("KHONG CO DU LIEU");
+        root.setBackground(makeBackground(0xff1f2937));
+        aiPill.setText("●  AI OFFLINE");
+        aiPill.setTextColor(0xff94a3b8);
+        status.setText(BUILD_TAG + "  •  WAITING");
+        voiceButton.setText(voiceEnabled ? "VOICE ON" : "VOICE MUTED");
+        title.setText("NO DATA");
         action.setText(reason);
         evidence.setText("REST -> KUKSA -> HMI Bridge -> VHAL -> APK");
-        telemetry.setText("-- km/h     Risk --     Alertness --");
+        telemetry.setText("Waiting for mux frames");
+        driverValue.setText("--");
+        alertnessValue.setText("--");
+        ttcValue.setText("--");
+        riskValue.setText("--");
+        riskValue.setTextColor(Color.WHITE);
+        ecuValue.setText("STANDBY");
+        speedValue.setText("-- km/h");
+        limitValue.setText("Limit 80");
+        reasonValue.setText("NO DATA");
+        ageValue.setText("-- ms");
         lastSeverity = -1;
     }
 
@@ -316,19 +588,41 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
     }
 
     private static String actionText(String v) {
-        return "FOCUS_FORWARD".equals(v) ? "TAP TRUNG PHIA TRUOC"
-                : "TAKE_BREAK".equals(v) ? "HAY NGHI NGOI"
-                : "BRAKE_SAFE".equals(v) ? "PHANH AN TOAN"
-                : "REDUCE_SPEED".equals(v) ? "GIAM TOC DO"
-                : "TIEP TUC QUAN SAT";
+        return "FOCUS_FORWARD".equals(v) ? "FOCUS FORWARD"
+                : "TAKE_BREAK".equals(v) ? "TAKE A BREAK"
+                : "BRAKE_SAFE".equals(v) ? "BRAKE SAFELY"
+                : "REDUCE_SPEED".equals(v) ? "REDUCE SPEED"
+                : "KEEP MONITORING";
+    }
+
+    private static String reasonText(String severity) {
+        if ("CRITICAL".equals(severity)) return "High risk detected. Immediate driver response is required.";
+        if ("WARNING".equals(severity)) return "AI detected a behavior or traffic condition that needs attention.";
+        if ("RECOVERY".equals(severity)) return "Risk is decreasing. Continue monitoring the driver and road.";
+        return "No critical risk detected.";
+    }
+
+    private static String ecuText(String severity) {
+        if ("CRITICAL".equals(severity)) return "BRAKE ASSIST REQUESTED";
+        if ("WARNING".equals(severity)) return "WARNING BUZZER ON";
+        if ("RECOVERY".equals(severity)) return "RECOVERY MONITORING";
+        return "STANDBY";
+    }
+
+    private static String reasonCode(State state) {
+        if ("CRITICAL".equals(state.severity) && state.ttc > 0 && state.ttc <= 1.5f) return "TTC_CRITICAL";
+        if ("microsleep".equals(state.driverState)) return "MICROSLEEP";
+        if ("distracted".equals(state.driverState)) return "DRIVER_DISTRACTED";
+        if ("WARNING".equals(state.severity)) return "DRIVER_WARNING";
+        return "NONE";
     }
 
     private static String driverText(String v) {
-        return "drowsy".equals(v) ? "Buon ngu"
-                : "yawning".equals(v) ? "Ngap"
-                : "distracted".equals(v) ? "Mat tap trung"
-                : "microsleep".equals(v) ? "Vi ngu"
-                : "Tinh tao";
+        return "drowsy".equals(v) ? "Drowsy"
+                : "yawning".equals(v) ? "Yawning"
+                : "distracted".equals(v) ? "Distracted"
+                : "microsleep".equals(v) ? "Microsleep"
+                : "Alert";
     }
 
     private void maybeSpeak(int severity, String text) {

@@ -64,6 +64,16 @@ SCENARIOS: dict[str, dict[str, list[dict[str, Any]]]] = {
     ]},
 }
 
+SPEED_MUX_SCENARIOS: dict[str, list[float]] = {
+    # Decimal speed-mux contract decoded by APK V2.2:
+    # 41.xxx risk, 42.xxx severity, 43.xxx driver, 44.xxx alertness,
+    # 45.xxx TTC, 46.xxx critical, 47.xxx AI status, 48.xxx action,
+    # 49.xxx real display speed in km/h.
+    "normal": [43.000, 44.095, 45.100, 41.005, 46.000, 42.000, 48.000, 47.000, 49.045],
+    "warning": [43.003, 44.045, 45.030, 41.055, 46.000, 42.001, 48.001, 47.000, 49.035],
+    "critical": [43.004, 44.015, 45.012, 41.088, 46.001, 42.002, 48.003, 47.000, 49.029],
+}
+
 
 class Phase05Operator:
     def __init__(self) -> None:
@@ -128,11 +138,62 @@ class Phase05Operator:
             "GET", f"/api/v1/deployments/{self.room_id}/adb-tunnel"
         ).json()
 
-    def scenario(self, name: str) -> Any:
+    def actuate_signals(self, signals: list[dict[str, Any]]) -> Any:
         return self.request(
             "POST", f"/api/v1/signals/{self.room_id}/{self.signal_node}/actuate",
-            json=SCENARIOS[name],
+            json={"signals": signals},
         ).json()
+
+    def scenario(self, name: str) -> Any:
+        signals = SCENARIOS[name]["signals"]
+        sent = 0
+        responses: list[Any] = []
+        try:
+            for signal in signals:
+                responses.append(self.actuate_signals([signal]))
+                sent += 1
+                time.sleep(0.16)
+        except RuntimeError as exc:
+            if "Unknown signal path" not in str(exc):
+                raise
+            return self.scenario_speed_mux(name, fallback_reason=str(exc))
+
+        # Pulse the most visible HMI fields again. CarSky AAOS may only expose
+        # PERF_VEHICLE_SPEED reliably, so Android polling can miss a rapid
+        # multiplex burst if the final value is AIStatus/DataAge.
+        visible_paths = {
+            "Vehicle.ADAS.FinalRiskScore",
+            "Vehicle.ADAS.DisplaySeverity",
+            "Vehicle.ADAS.RecommendedActionCode",
+            "Vehicle.ADAS.CriticalAlert",
+        }
+        visible = [signal for signal in signals if signal["path"] in visible_paths]
+        for signal in visible:
+            responses.append(self.actuate_signals([signal]))
+            sent += 1
+            time.sleep(0.22)
+        return {"ok": True, "sent": sent, "responses": responses[-3:]}
+
+    def scenario_speed_mux(self, name: str, *, fallback_reason: str | None = None) -> Any:
+        sent = 0
+        responses: list[Any] = []
+        for value in SPEED_MUX_SCENARIOS[name]:
+            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+            sent += 1
+            time.sleep(0.22)
+        # Pulse visible fields again so Android polling catches the important values.
+        for value in [41.088 if name == "critical" else SPEED_MUX_SCENARIOS[name][3],
+                      46.001 if name == "critical" else SPEED_MUX_SCENARIOS[name][4],
+                      42.002 if name == "critical" else SPEED_MUX_SCENARIOS[name][5],
+                      48.003 if name == "critical" else SPEED_MUX_SCENARIOS[name][6],
+                      49.029 if name == "critical" else SPEED_MUX_SCENARIOS[name][8]]:
+            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+            sent += 1
+            time.sleep(0.28)
+        result = {"ok": True, "mode": "vehicle-speed-mux", "sent": sent, "responses": responses[-3:]}
+        if fallback_reason:
+            result["fallback_reason"] = fallback_reason[:300]
+        return result
 
     def adb(self, command: str, *, binary: bool = False) -> httpx.Response:
         if not self.android_node:

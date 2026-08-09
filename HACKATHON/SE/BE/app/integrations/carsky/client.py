@@ -50,6 +50,19 @@ class CarSkyClient:
         return response.json()
 
     async def actuate(self, payload: dict[str, Any]) -> Any:
+        signals = payload.get("signals")
+        if isinstance(signals, list) and self._needs_hmi_pulse(signals):
+            responses: list[Any] = []
+            for signal in signals:
+                responses.append(await self._post_actuate({"signals": [signal]}))
+                await asyncio.sleep(0.08)
+            for signal in self._visible_hmi_signals(signals):
+                responses.append(await self._post_actuate({"signals": [signal]}))
+                await asyncio.sleep(0.12)
+            return responses[-1] if responses else None
+        return await self._post_actuate(payload)
+
+    async def _post_actuate(self, payload: dict[str, Any]) -> Any:
         attempts = self.max_retries + 1
         for attempt in range(attempts):
             try:
@@ -68,3 +81,37 @@ class CarSkyClient:
                     raise CarSkyDeliveryError("CarSky delivery failed after bounded retries") from exc
                 await asyncio.sleep(0.25 * (2**attempt))
         raise CarSkyDeliveryError("CarSky delivery failed")
+
+    @staticmethod
+    def _needs_hmi_pulse(signals: list[Any]) -> bool:
+        paths = {signal.get("path") for signal in signals if isinstance(signal, dict)}
+        return (
+            "Vehicle.ADAS.DisplaySeverity" in paths
+            or "Vehicle.ADAS.RecommendedActionCode" in paths
+            or any(CarSkyClient._is_speed_mux_signal(signal) for signal in signals)
+        )
+
+    @staticmethod
+    def _visible_hmi_signals(signals: list[Any]) -> list[dict[str, Any]]:
+        visible_paths = {
+            "Vehicle.ADAS.FinalRiskScore",
+            "Vehicle.ADAS.DisplaySeverity",
+            "Vehicle.ADAS.RecommendedActionCode",
+            "Vehicle.ADAS.CriticalAlert",
+        }
+        return [
+            signal
+            for signal in signals
+            if isinstance(signal, dict)
+            and (signal.get("path") in visible_paths or CarSkyClient._is_speed_mux_signal(signal))
+        ]
+
+    @staticmethod
+    def _is_speed_mux_signal(signal: Any) -> bool:
+        if not isinstance(signal, dict) or signal.get("path") != "Vehicle.Speed":
+            return False
+        try:
+            value = float(signal.get("value"))
+        except (TypeError, ValueError):
+            return False
+        return 41.0 <= value < 50.0

@@ -75,8 +75,11 @@ def test_driver_alert_is_forwarded_to_carsky_once(client: TestClient):
         item["path"]: item["value"]
         for item in publisher.deliveries[0][0]["signals"]
     }
-    assert signals["Vehicle.ADAS.DisplaySeverity"] == "CRITICAL"
-    assert signals["Vehicle.ADAS.MinTTC"] == 1.0
+    assert set(signals) == {"Vehicle.Speed"}
+    values = [item["value"] for item in publisher.deliveries[0][0]["signals"]]
+    assert 42.002 in values
+    assert 45.01 in values
+    assert 49.06 in values
 
 
 def test_live_trip_registry_keeps_completed_trip_history(client: TestClient):
@@ -123,3 +126,29 @@ def test_live_trip_registry_keeps_completed_trip_history(client: TestClient):
     assert client.get(
         "/api/v1/alerts/snapshot?trip_id=T01-Sample"
     ).json()["frame_id"] == 1
+
+
+def test_live_snapshot_is_forwarded_to_carsky(client: TestClient):
+    publisher = FakePublisher()
+    client.app.state.carsky_publisher = publisher
+    payload = {
+        "schema_version": "1.0",
+        "trip_id": "T01-Sample",
+        "frame_id": 10,
+        "trip_timestamp_ms": 500,
+        "speed_kmh": 48,
+        "predicted_ttc_sec": 1.2,
+        "risk_score": 88,
+        "driver_state": "microsleep",
+        "driver_confidence": 0.9,
+        "alertness_score": 0.2,
+    }
+    response = client.post("/api/v1/alerts/snapshot", json=payload)
+    assert response.status_code == 202
+    assert len(publisher.deliveries) == 1
+    values = [item["value"] for item in publisher.deliveries[0][0]["signals"]]
+    assert 41.088 in values
+    assert 42.002 in values
+    assert 43.004 in values
+    assert 45.012 in values
+    assert 49.048 in values

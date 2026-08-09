@@ -5,7 +5,7 @@
     <uses-permission android:name="android.car.permission.CAR_INFO" />
     <application
         android:theme="@style/AppTheme"
-        android:label="DMS Safety HMI Realtime"
+        android:label="DMS Safety HMI Realtime V2"
         android:resizeableActivity="true">
         <activity
             android:name=".MainActivity"

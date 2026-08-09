@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-09T00:00:00.000Z",
+  "blueprint": {
+    "name": "DMS HMI VHAL V2 Minimal Import",
+    "description": "Minimal CarSky blueprint: Broker kuksa Server -> Bridge kuksa Client; Bridge vhal Server -> Android vhal Client.",
+    "nodes": [
+      {
+        "id": "node-dms-signal-broker",
+        "label": "DMS Signal Broker",
+        "nodeType": "kuksa-databroker",
+        "config": {
+          "kuksa": {
+            "vss": {
+              "artifactName": "dms-driver-safety-vss",
+              "version": "latest",
+              "sourceFileInRepo": "SE/BE/carsky/dms-vss-signals.json"
+            }
+          }
+        },
+        "positionX": 180,
+        "positionY": 520,
+        "pins": [
+          {
+            "id": "pin-dms-signal-broker-kuksa",
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "INPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          }
+        ]
+      },
+      {
+        "id": "node-dms-hmi-bridge",
+        "label": "DMS HMI Bridge",
+        "nodeType": "script-node",
+        "config": {
+          "script": "inline",
+          "scriptContent": "-- DMS KUKSA -> AAOS HMI bridge.\n--\n-- CarSky/BTC reference flow:\n-- Team Solution -> CarSky Platform/SOVD -> MQTT/Vehicle-HPC -> Android HMI.\n--\n-- Runtime finding from our CarSky AAOS deployment:\n-- Android CarService exposes PERF_VEHICLE_SPEED reliably, while custom DMS\n-- properties are not visible to the APK. Therefore this bridge multiplexes DMS\n-- state into PERF_VEHICLE_SPEED values. The APK decodes these values back into\n-- severity, driver state, risk, TTC, AI status and recommended action.\n\nlocal PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED\n\nlocal severity_code = { SAFE = 0, WARNING = 1, CRITICAL = 2, RECOVERY = 3 }\nlocal driver_code = { alert = 0, drowsy = 1, yawning = 2, distracted = 3, microsleep = 4 }\nlocal ai_code = { ONLINE = 0, DEGRADED = 1, OFFLINE = 2 }\nlocal action_code = { NONE = 0, FOCUS_FORWARD = 1, TAKE_BREAK = 2, BRAKE_SAFE = 3, REDUCE_SPEED = 4 }\n\nlocal mapping = {\n    [\"Vehicle.Speed\"] = {\n        encode = function(v)\n            return tonumber(v) or 0\n        end\n    },\n    [\"Vehicle.ADAS.FinalRiskScore\"] = {\n        encode = function(v)\n            return 10000 + math.floor((tonumber(v) or 0) + 0.5)\n        end\n    },\n    [\"Vehicle.ADAS.DisplaySeverity\"] = {\n        encode = function(v)\n            return 11000 + (severity_code[v] or 0)\n        end\n    },\n    [\"Vehicle.Driver.State\"] = {\n        encode = function(v)\n            return 12000 + (driver_code[v] or 0)\n        end\n    },\n    [\"Vehicle.Driver.AlertnessScore\"] = {\n        encode = function(v)\n            return 13000 + math.floor(((tonumber(v) or 0) * 100) + 0.5)\n        end\n    },\n    [\"Vehicle.ADAS.MinTTC\"] = {\n        encode = function(v)\n            return 14000 + math.floor(((tonumber(v) or 0) * 10) + 0.5)\n        end\n    },\n    [\"Vehicle.ADAS.CriticalAlert\"] = {\n        encode = function(v)\n            return 15000 + ((v == true or v == 1 or v == \"true\") and 1 or 0)\n        end\n    },\n    [\"Vehicle.ADAS.AIStatus\"] = {\n        encode = function(v)\n            return 16000 + (ai_code[v] or 2)\n        end\n    },\n    [\"Vehicle.ADAS.RecommendedActionCode\"] = {\n        encode = function(v)\n            return 17000 + (action_code[v] or 0)\n        end\n    },\n}\n\nlocal paths = {}\nfor path, _ in pairs(mapping) do paths[#paths + 1] = path end\n\npins.kuksa:on_change(function(ev)\n    local target = mapping[ev.path]\n    if not target or ev.value == nil then return end\n    local encoded = target.encode(ev.value)\n    pins.vhal:push(PROP_SPEED, 0, encoded)\n    log(string.format(\"DMS_HMI_MUX %s=%s -> %s on 0x%08X\", ev.path, tostring(ev.value), tostring(encoded), PROP_SPEED))\nend)\n\npins.kuksa:subscribe(paths)\nlog(string.format(\"DMS HMI multiplex bridge subscribed to %d paths\", #paths))\n"
+        },
+        "positionX": 520,
+        "positionY": 260,
+        "pins": [
+          {
+            "id": "pin-dms-hmi-bridge-kuksa",
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "OUTPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          },
+          {
+            "id": "pin-dms-hmi-bridge-vhal",
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "INPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          }
+        ]
+      },
+      {
+        "id": "node-dms-android-hmi",
+        "label": "DMS Android HMI",
+        "nodeType": "skycraft",
+        "config": {
+          "image": {
+            "arch": "aarch64",
+            "version": "0.0.1"
+          },
+          "prefix": "dms-hmi-v2",
+          "apkPackage": "vn.fpt.dms.hmi"
+        },
+        "positionX": 900,
+        "positionY": 520,
+        "pins": [
+          {
+            "id": "pin-dms-android-hmi-vhal",
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "OUTPUT",
+            "side": null,
+            "port": null,
+            "properties": [
+              {
+                "propId": 291504647,
+                "areaIds": [
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-kuksa-broker-to-bridge",
+        "sourcePinId": "pin-dms-hmi-bridge-kuksa",
+        "targetPinId": "pin-dms-signal-broker-kuksa"
+      },
+      {
+        "id": "edge-vhal-bridge-to-android",
+        "sourcePinId": "pin-dms-android-hmi-vhal",
+        "targetPinId": "pin-dms-hmi-bridge-vhal"
+      }
+    ]
+  }
+}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from datetime import datetime
+import time
 from typing import Any, Literal
 
 from fastapi import (
@@ -95,6 +96,7 @@ router = APIRouter(prefix="/alerts", tags=["AI Decision Alerts"])
 live_clients: set[WebSocket] = set()
 carsky_mapper = CarSkySignalMapper()
 MAX_CABIN_FRAME_BYTES = 2 * 1024 * 1024
+CARSKY_SNAPSHOT_MIN_INTERVAL_SEC = 0.75
 
 
 async def _broadcast(document: dict[str, Any]) -> None:
@@ -341,6 +343,16 @@ async def receive_live_snapshot(
     session["status"] = "running"
     session["latest_snapshot"] = document
     session["snapshot_history"].append(document)
+    publisher = getattr(request.app.state, "carsky_publisher", None)
+    now = time.monotonic()
+    last_carsky_at = float(session.get("last_carsky_snapshot_at") or 0.0)
+    if publisher is not None and now - last_carsky_at >= CARSKY_SNAPSHOT_MIN_INTERVAL_SEC:
+        session["last_carsky_snapshot_at"] = now
+        await publisher.enqueue(
+            carsky_mapper.map_live_snapshot(document),
+            dedup_key=f"snapshot:{payload.trip_id}:{payload.frame_id}",
+            kind=DeliveryKind.TELEMETRY,
+        )
     return {"accepted": True, "trip_id": payload.trip_id, "frame_id": payload.frame_id}
 
 

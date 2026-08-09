@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-09T00:00:00.000Z",
+  "blueprint": {
+    "name": "DMS Driver Safety HMI V2.2 - BTC Demo VHAL Fixed NO EDGES",
+    "description": "Import-ready 3-node blueprint fixed from BTC blueprint-Demo: Android vhal OUTPUT defines VHAL properties, Bridge vhal INPUT subscribes/pushes, Backend REST pushes into KUKSA Broker. Import nodes first, then connect edges manually.",
+    "zones": [],
+    "nodes": [
+      {
+        "id": "node-dms-signal-broker",
+        "label": "DMS Signal Broker",
+        "nodeType": "kuksa-databroker",
+        "config": {
+          "kuksa": {
+            "vss": {
+              "artifactName": "dms-driver-safety-vss",
+              "version": "latest",
+              "sourceFileInRepo": "SE/BE/carsky/dms-vss-signals.json"
+            }
+          }
+        },
+        "positionX": 180,
+        "positionY": 520,
+        "pins": [
+          {
+            "id": "pin-dms-signal-broker-kuksa",
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "INPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          }
+        ]
+      },
+      {
+        "id": "node-dms-hmi-bridge",
+        "label": "DMS HMI Bridge",
+        "nodeType": "script-node",
+        "config": {
+          "script": "inline",
+          "scriptContent": "-- DMS KUKSA -> AAOS HMI bridge, dual-push edition.\n--\n-- Pushes every DMS signal to:\n-- 1) Custom VHAL properties used by the current blueprint.\n-- 2) PERF_VEHICLE_SPEED as a decimal multiplex fallback used by APK V2.2.\n--\n-- Use this in CarSky Script Node: DMS HMI Bridge > Edit Script.\n\nlocal PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED fallback\n\nlocal PROPS = {\n    final_risk = 557843456,     -- 0x21400400\n    critical_alert = 555746305, -- 0x21200401\n    alertness = 555746306,      -- 0x21200402\n    min_ttc = 555746307,        -- 0x21200403\n    ai_status = 555746308,      -- 0x21200404\n    action = 555746309,         -- 0x21200405\n    severity = 559940617,       -- 0x21600409\n    driver_state = 559940618,   -- 0x2160040A\n}\n\nlocal severity_code = { SAFE = 0, WARNING = 1, CRITICAL = 2, RECOVERY = 3 }\nlocal driver_code = { alert = 0, drowsy = 1, yawning = 2, distracted = 3, microsleep = 4 }\nlocal ai_code = { ONLINE = 0, DEGRADED = 1, OFFLINE = 2 }\nlocal action_code = { NONE = 0, FOCUS_FORWARD = 1, TAKE_BREAK = 2, BRAKE_SAFE = 3, REDUCE_SPEED = 4 }\n\nlocal function bool_code(v)\n    return (v == true or v == 1 or v == \"1\" or v == \"true\" or v == \"TRUE\") and 1 or 0\nend\n\nlocal function round(v)\n    return math.floor((tonumber(v) or 0) + 0.5)\nend\n\nlocal mapping = {\n    [\"Vehicle.Speed\"] = {\n        prop = PROP_SPEED,\n        custom = function(v) return tonumber(v) or 0 end,\n        mux = function(v) return tonumber(v) or 0 end,\n    },\n    [\"Vehicle.ADAS.FinalRiskScore\"] = {\n        prop = PROPS.final_risk,\n        custom = function(v) return tonumber(v) or 0 end,\n        mux = function(v) return 41.000 + (round(v) / 1000.0) end,\n    },\n    [\"Vehicle.ADAS.DisplaySeverity\"] = {\n        prop = PROPS.severity,\n        custom = function(v) return severity_code[v] or 0 end,\n        mux = function(v) return 42.000 + ((severity_code[v] or 0) / 1000.0) end,\n    },\n    [\"Vehicle.Driver.State\"] = {\n        prop = PROPS.driver_state,\n        custom = function(v) return driver_code[v] or 0 end,\n        mux = function(v) return 43.000 + ((driver_code[v] or 0) / 1000.0) end,\n    },\n    [\"Vehicle.Driver.AlertnessScore\"] = {\n        prop = PROPS.alertness,\n        custom = function(v) return tonumber(v) or 0 end,\n        mux = function(v) return 44.000 + (round((tonumber(v) or 0) * 100) / 1000.0) end,\n    },\n    [\"Vehicle.ADAS.MinTTC\"] = {\n        prop = PROPS.min_ttc,\n        custom = function(v) return tonumber(v) or 0 end,\n        mux = function(v) return 45.000 + (round((tonumber(v) or 0) * 10) / 1000.0) end,\n    },\n    [\"Vehicle.ADAS.CriticalAlert\"] = {\n        prop = PROPS.critical_alert,\n        custom = bool_code,\n        mux = function(v) return 46.000 + (bool_code(v) / 1000.0) end,\n    },\n    [\"Vehicle.ADAS.AIStatus\"] = {\n        prop = PROPS.ai_status,\n        custom = function(v) return ai_code[v] or 2 end,\n        mux = function(v) return 47.000 + ((ai_code[v] or 2) / 1000.0) end,\n    },\n    [\"Vehicle.ADAS.RecommendedActionCode\"] = {\n        prop = PROPS.action,\n        custom = function(v) return action_code[v] or 0 end,\n        mux = function(v) return 48.000 + ((action_code[v] or 0) / 1000.0) end,\n    },\n}\n\nlocal paths = {}\nfor path, _ in pairs(mapping) do\n    paths[#paths + 1] = path\nend\n\npins.kuksa:on_change(function(ev)\n    local target = mapping[ev.path]\n    if not target or ev.value == nil then return end\n\n    local custom_value = target.custom(ev.value)\n    local mux_value = target.mux(ev.value)\n\n    pins.vhal:push(target.prop, 0, custom_value)\n\n    if target.prop ~= PROP_SPEED then\n        pins.vhal:push(PROP_SPEED, 0, mux_value)\n    end\n\n    log(string.format(\n        \"DMS_HMI_DUAL %s=%s -> custom 0x%08X=%s | mux 0x%08X=%s\",\n        ev.path,\n        tostring(ev.value),\n        target.prop,\n        tostring(custom_value),\n        PROP_SPEED,\n        tostring(mux_value)\n    ))\nend)\n\npins.kuksa:subscribe(paths)\nlog(string.format(\"DMS HMI dual-push bridge subscribed to %d paths\", #paths))\n",
+          "expectedLogs": [
+            "DMS HMI dual-push bridge subscribed to 9 paths",
+            "DMS_HMI_DUAL Vehicle.ADAS.FinalRiskScore=88 -> custom 0x21400400=88 | mux 0x11600207=41.088"
+          ]
+        },
+        "positionX": 520,
+        "positionY": 260,
+        "pins": [
+          {
+            "id": "pin-dms-hmi-bridge-kuksa",
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "OUTPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          },
+          {
+            "id": "pin-dms-hmi-bridge-vhal",
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "INPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          }
+        ]
+      },
+      {
+        "id": "node-dms-android-hmi",
+        "label": "DMS Android HMI",
+        "nodeType": "skycraft",
+        "config": {
+          "image": {
+            "arch": "aarch64",
+            "version": "0.0.1",
+            "versionId": "6KAlP82Ez-ELrv2LB224v",
+            "artifactId": "zAC90TkKqaA63rfuATj1m"
+          },
+          "prefix": "skycraft-1",
+          "gpuBackend": "virglrenderer",
+          "displayHeight": 1080,
+          "displayWidth": 1920,
+          "displayDpi": 320
+        },
+        "positionX": 900,
+        "positionY": 520,
+        "pins": [
+          {
+            "id": "pin-dms-android-hmi-vhal",
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "OUTPUT",
+            "side": null,
+            "port": null,
+            "properties": [
+              {
+                "propId": 557843456,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_FINAL_RISK_SCORE"
+              },
+              {
+                "propId": 559940617,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_DISPLAY_SEVERITY"
+              },
+              {
+                "propId": 559940618,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_DRIVER_STATE"
+              },
+              {
+                "propId": 555746306,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_ALERTNESS_SCORE"
+              },
+              {
+                "propId": 555746307,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_MIN_TTC"
+              },
+              {
+                "propId": 555746305,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_CRITICAL_ALERT"
+              },
+              {
+                "propId": 555746308,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_AI_STATUS"
+              },
+              {
+                "propId": 555746309,
+                "areaIds": [
+                  0
+                ],
+                "name": "DMS_RECOMMENDED_ACTION"
+              },
+              {
+                "propId": 557843463,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 557843464,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 392168201,
+                "areaIds": [
+                  1,
+                  2,
+                  4,
+                  8
+                ]
+              },
+              {
+                "propId": 354421634,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 291504647,
+                "areaIds": [
+                  0
+                ],
+                "name": "PERF_VEHICLE_SPEED_DMS_MUX"
+              },
+              {
+                "propId": 291504905,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 371198722,
+                "areaIds": [
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "edges": []
+  }
+}

@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-04T00:00:00.000Z",
-  "noteForBTC": "Support snapshot reconstructed from the current repository after successful KUKSA->HMI Bridge logs. If exact CarSky IDs are required, export the live blueprint from CarSky UI.",
+  "exportedAt": "2026-08-09T00:00:00.000Z",
+  "noteForBTC": "CarSky import-ready blueprint with explicit pin IDs. Bridge.kuksa Client -> Broker.kuksa Server; Bridge.vhal Client -> Android.vhal Server.",
   "blueprint": {
-    "name": "DMS Driver Safety HMI VHAL 1.0.7 - BTC Support Snapshot",
-    "description": "DMS topology for BTC debugging: Backend/REST actuates KUKSA; Script Node receives KUKSA events and multiplexes into PERF_VEHICLE_SPEED VHAL property for Android HMI. VHAL edge must run from DMS HMI Bridge.vhal to DMS Android HMI.vhal.",
+    "name": "DMS Driver Safety HMI VHAL V2 - Client Server Fixed",
+    "description": "Fixed VHAL pin roles for APK realtime updates: DMS HMI Bridge.vhal is Client and DMS Android HMI.vhal is Server. Backend/KUKSA -> Bridge -> Android VHAL.",
     "nodes": [
       {
         "id": "dms-signal-broker",
@@ -24,9 +24,15 @@
           {
             "name": "kuksa",
             "pinType": "KUKSA",
-            "direction": "INPUT"
+            "direction": "SERVER",
+            "id": "pin-signal-broker-kuksa",
+            "side": null,
+            "port": null,
+            "properties": null
           }
-        ]
+        ],
+        "positionX": 180,
+        "positionY": 520
       },
       {
         "id": "dms-hmi-bridge",
@@ -44,14 +50,24 @@
           {
             "name": "kuksa",
             "pinType": "KUKSA",
-            "direction": "OUTPUT"
+            "direction": "CLIENT",
+            "id": "pin-hmi-bridge-kuksa",
+            "side": null,
+            "port": null,
+            "properties": null
           },
           {
             "name": "vhal",
             "pinType": "VHAL",
-            "direction": "OUTPUT"
+            "direction": "CLIENT",
+            "id": "pin-hmi-bridge-vhal",
+            "side": null,
+            "port": null,
+            "properties": null
           }
-        ]
+        ],
+        "positionX": 520,
+        "positionY": 260
       },
       {
         "id": "dms-android-hmi",
@@ -64,13 +80,14 @@
           "architecture": "aarch64 (ARM)",
           "partPrefix": "dms-nodes-only-hmi-or-current-device-prefix",
           "apkPackage": "vn.fpt.dms.hmi",
-          "apkSourceInRepo": "SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java"
+          "apkSourceInRepo": "SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java",
+          "apkExpectedLabel": "DMS Safety HMI Realtime V2"
         },
         "pins": [
           {
             "name": "vhal",
             "pinType": "VHAL",
-            "direction": "INPUT",
+            "direction": "SERVER",
             "properties": [
               {
                 "propId": 291504647,
@@ -81,38 +98,25 @@
                 ],
                 "purpose": "DMS multiplex transport"
               }
-            ]
+            ],
+            "id": "pin-android-hmi-vhal",
+            "side": null,
+            "port": null
           }
-        ]
+        ],
+        "positionX": 900,
+        "positionY": 520
       }
     ],
     "edges": [
       {
-        "from": "DMS HMI Bridge.kuksa",
-        "to": "DMS Signal Broker.kuksa"
+        "sourcePinId": "pin-hmi-bridge-kuksa",
+        "targetPinId": "pin-signal-broker-kuksa"
       },
       {
-        "from": "DMS HMI Bridge.vhal",
-        "to": "DMS Android HMI.vhal"
+        "sourcePinId": "pin-hmi-bridge-vhal",
+        "targetPinId": "pin-android-hmi-vhal"
       }
-    ],
-    "runtimeEvidence": {
-      "confirmedWorking": [
-        "Backend/REST scenario critical updates KUKSA Signal Watch",
-        "DMS HMI Bridge receives KUKSA events",
-        "DMS HMI Bridge logs DMS_HMI_MUX and pushes encoded values to 0x11600207"
-      ],
-      "currentIssueForBTC": "If a running deployment still shows DMS_HMI_MUX logs but APK reads/defaults PERF_VEHICLE_SPEED as 0.0, redeploy with the corrected VHAL edge direction: DMS HMI Bridge.vhal -> DMS Android HMI.vhal.",
-      "expectedCriticalEncodedValues": {
-        "Vehicle.ADAS.FinalRiskScore": 10088,
-        "Vehicle.ADAS.DisplaySeverity": 11002,
-        "Vehicle.Driver.State": 12004,
-        "Vehicle.Driver.AlertnessScore": 13015,
-        "Vehicle.ADAS.MinTTC": 14012,
-        "Vehicle.ADAS.CriticalAlert": 15001,
-        "Vehicle.ADAS.AIStatus": 16000,
-        "Vehicle.ADAS.RecommendedActionCode": 17003
-      }
-    }
+    ]
   }
 }

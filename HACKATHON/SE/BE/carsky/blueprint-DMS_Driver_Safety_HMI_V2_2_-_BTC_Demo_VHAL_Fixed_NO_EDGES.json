@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-09T08:46:04.391Z",
+  "blueprint": {
+    "name": "DMS Driver Safety HMI V2.2 - BTC Demo VHAL Fixed NO EDGES",
+    "description": "Import-ready 3-node blueprint fixed from BTC blueprint-Demo: Android vhal OUTPUT defines VHAL properties, Bridge vhal INPUT subscribes/pushes, Backend REST pushes into KUKSA Broker. Import nodes first, then connect edges manually.",
+    "zones": [],
+    "nodes": [
+      {
+        "id": "TGG-3RtYFgbnLgD0t5gLU",
+        "label": "DMS HMI Bridge",
+        "nodeType": "script-node",
+        "config": {
+          "script": "inline",
+          "expectedLogs": [
+            "DMS HMI dual-push bridge subscribed to 9 paths",
+            "DMS_HMI_DUAL Vehicle.ADAS.FinalRiskScore=88 -> custom 0x21400400=88 | mux 0x11600207=41.088"
+          ],
+          "scriptContent": "-- DMS HMI Bridge - BTC default VSS passthrough.\n--\n-- Use this when the KUKSA broker does not include custom DMS VSS paths.\n-- Backend sends DMS multiplex values directly to Vehicle.Speed:\n--   41.088 = risk 88\n--   42.002 = CRITICAL\n--   43.004 = microsleep\n-- APK V2.2 decodes those decimal speed-mux values.\n\nlocal PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED\nlocal PATH_SPEED = \"Vehicle.Speed\"\n\npins.kuksa:on_change(function(ev)\n    if ev.path ~= PATH_SPEED or ev.value == nil then return end\n    local value = tonumber(ev.value) or 0\n    pins.vhal:push(PROP_SPEED, 0, value)\n    log(string.format(\"DMS_HMI_SPEED_MUX %s=%s -> 0x%08X=%s\", ev.path, tostring(ev.value), PROP_SPEED, tostring(value)))\nend)\n\npins.kuksa:subscribe({ PATH_SPEED })\nlog(\"DMS HMI speed-mux bridge subscribed to Vehicle.Speed\")\n"
+        },
+        "positionX": 520,
+        "positionY": 260,
+        "pins": [
+          {
+            "id": "H87Ild23I4hL-mR69Z3pQ",
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "OUTPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          },
+          {
+            "id": "g4Gz08iKqqpXlM1yOm_Fw",
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "INPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          }
+        ]
+      },
+      {
+        "id": "hL2PA8uEyJvgIPo7PVFVD",
+        "label": "DMS Android HMI",
+        "nodeType": "skycraft",
+        "config": {
+          "image": {
+            "arch": "aarch64",
+            "version": "0.0.1",
+            "versionId": "6KAlP82Ez-ELrv2LB224v",
+            "artifactId": "zAC90TkKqaA63rfuATj1m"
+          },
+          "prefix": "skycraft-1",
+          "displayDpi": 320,
+          "gpuBackend": "virglrenderer",
+          "displayWidth": 1920,
+          "displayHeight": 1080
+        },
+        "positionX": 900,
+        "positionY": 520,
+        "pins": [
+          {
+            "id": "uCLfdOH5JhfE6OTyRGiMK",
+            "name": "vhal",
+            "pinType": "VHAL",
+            "direction": "OUTPUT",
+            "side": null,
+            "port": null,
+            "properties": [
+              {
+                "name": "DMS_FINAL_RISK_SCORE",
+                "propId": 557843456,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "DMS_DISPLAY_SEVERITY",
+                "propId": 559940617,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "DMS_DRIVER_STATE",
+                "propId": 559940618,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "DMS_ALERTNESS_SCORE",
+                "propId": 555746306,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "DMS_MIN_TTC",
+                "propId": 555746307,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "DMS_CRITICAL_ALERT",
+                "propId": 555746305,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "DMS_AI_STATUS",
+                "propId": 555746308,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "DMS_RECOMMENDED_ACTION",
+                "propId": 555746309,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 557843463,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 557843464,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 392168201,
+                "areaIds": [
+                  1,
+                  2,
+                  4,
+                  8
+                ]
+              },
+              {
+                "propId": 354421634,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "name": "PERF_VEHICLE_SPEED_DMS_MUX",
+                "propId": 291504647,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 291504905,
+                "areaIds": [
+                  0
+                ]
+              },
+              {
+                "propId": 371198722,
+                "areaIds": [
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "x5B4uvT36OBCboZaWwyFr",
+        "label": "DMS Signal Broker",
+        "nodeType": "kuksa-databroker",
+        "config": {
+          "kuksa": {
+            "vss": {
+              "version": "latest",
+              "artifactName": "dms-driver-safety-vss",
+              "sourceFileInRepo": "SE/BE/carsky/dms-vss-signals.json"
+            }
+          }
+        },
+        "positionX": 180,
+        "positionY": 520,
+        "pins": [
+          {
+            "id": "xCB9iS2PbvRZxixlKJOzn",
+            "name": "kuksa",
+            "pinType": "KUKSA",
+            "direction": "INPUT",
+            "side": null,
+            "port": null,
+            "properties": null
+          }
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "sourcePinId": "H87Ild23I4hL-mR69Z3pQ",
+        "targetPinId": "xCB9iS2PbvRZxixlKJOzn"
+      },
+      {
+        "sourcePinId": "uCLfdOH5JhfE6OTyRGiMK",
+        "targetPinId": "g4Gz08iKqqpXlM1yOm_Fw"
+      }
+    ]
+  }
+}

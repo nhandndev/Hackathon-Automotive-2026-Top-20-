@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 APK="$ROOT_DIR/SE/HMI/demo-live/build/dist/dms-hmi-live-debug.apk"
-REMOTE_B64="/data/local/tmp/dms-hmi-vhal-mux.b64"
-REMOTE_APK="/data/local/tmp/dms-hmi-vhal-mux.apk"
+REMOTE_B64="/data/local/tmp/dms-hmi-realtime-v2.b64"
+REMOTE_APK="/data/local/tmp/dms-hmi-realtime-v2.apk"
 CHUNK_SIZE=4000
 
 if [[ ! -f "$APK" ]]; then

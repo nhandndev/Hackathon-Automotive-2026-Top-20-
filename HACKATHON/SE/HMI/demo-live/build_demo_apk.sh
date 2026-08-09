@@ -20,8 +20,8 @@ mkdir -p "$OUT_DIR/gen" "$OUT_DIR/classes" "$OUT_DIR/dex" "$OUT_DIR/dist"
 "$BT_DIR/aapt2" link -I "$ANDROID_JAR" \
   --manifest "$HMI_DIR/AndroidManifest.xml" \
   --java "$OUT_DIR/gen" \
-  --version-code 6 \
-  --version-name 0.0.6-vhal-mux \
+  --version-code 7 \
+  --version-name 2.0.0-vhal-mux \
   --min-sdk-version 29 \
   --target-sdk-version 35 \
   -o "$OUT_DIR/base-unsigned.apk" \

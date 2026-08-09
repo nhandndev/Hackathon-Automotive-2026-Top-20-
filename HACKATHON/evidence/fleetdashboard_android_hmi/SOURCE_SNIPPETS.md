@@ -1,0 +1,214 @@
+# Source Snippets
+
+## saved_trip_loading
+
+- `SE/FE/server.ts:28` `// Saved completed trips live in <project>/src/data/saved_trips/{trip_id}.json`
+- `SE/FE/server.ts:29` `const SAVED_TRIPS_DIR = path.join(process.cwd(), "src", "data", "saved_trips");`
+- `SE/FE/server.ts:30` `if (!fs.existsSync(SAVED_TRIPS_DIR)) {`
+- `SE/FE/server.ts:31` `fs.mkdirSync(SAVED_TRIPS_DIR, { recursive: true });`
+- `SE/FE/server.ts:35` `if (!fs.existsSync(SAVED_TRIPS_DIR)) return 0;`
+- `SE/FE/server.ts:36` `const files = fs.readdirSync(SAVED_TRIPS_DIR).filter((f) => f.endsWith(".json"));`
+- `SE/FE/server.ts:38` `fs.unlinkSync(path.join(SAVED_TRIPS_DIR, file));`
+- `SE/FE/server.ts:45` `runtime_status?: "pending" | "running" | "completed";`
+- `SE/FE/server.ts:61` `if (fs.existsSync(SAVED_TRIPS_DIR)) {`
+- `SE/FE/server.ts:62` `const files = fs.readdirSync(SAVED_TRIPS_DIR).filter((f) => f.endsWith(".json"));`
+- `SE/FE/server.ts:65` `const filePath = path.join(SAVED_TRIPS_DIR, file);`
+- `SE/FE/server.ts:95` `mergedMap.set(v.trip_id, { ...v, runtime_status: "completed" });`
+- `SE/FE/server.ts:99` `// Only include incoming vehicles if their runtime_status is explicitly 'completed'`
+- `SE/FE/server.ts:101` `if (v && v.trip_id && v.runtime_status === "completed") {`
+- `SE/FE/server.ts:490` `const value = finiteNumber(frame?.min_ttc, Number.POSITIVE_INFINITY);`
+- `SE/FE/server.ts:634` `* Saves to data/saved_trips/{trip_id}.json so future Copilot sessions`
+- `SE/FE/src/App.tsx:57` `// Ref: historical trips loaded from server disk (data/saved_trips/).`
+- `SE/FE/src/App.tsx:176` `? mergedTrips.find((trip) => trip.runtime_status === 'running')`
+- `SE/FE/src/App.tsx:236` `const liveOnly = vehicles.filter((trip) => trip.runtime_status !== 'completed');`
+- `SE/FE/src/data/btcTripData.ts:4` `* btcTripData holds completed trip records saved in `src/data/saved_trips/`.`
+- `SE/FE/src/data/btcTripData.ts:6` `* the frontend auto-persists the full TripData to `src/data/saved_trips/{trip_id}.json`.`
+- `SE/FE/src/data/btcTripData.ts:7` `* Both the Dashboard and AI Copilot read from `src/data/saved_trips/` to trace completed trips.`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:115` `detail: `risk=${finite(frame.risk?.final_risk_score)}, ttc=${Number.isFinite(frame.min_ttc) ? `${(frame.min_ttc as number).toFixed(2)}s` : 'Infinity'}, alertness=${finite(frame....`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:129` `detail: `risk=${finite(f.risk?.final_risk_score)}, ttc=${Number.isFinite(f.min_ttc) ? `${(f.min_ttc as number).toFixed(2)}s` : 'Infinity'}`,`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:386` `: vehicles.filter((vehicle) => vehicle.runtime_status === 'completed')`
+
+## bedrock_env_and_validation
+
+- `SE/FE/server.ts:12` `"AWS_BEARER_TOKEN_BEDROCK",`
+- `SE/FE/server.ts:13` `"BEDROCK_API_KEY",`
+- `SE/FE/server.ts:22` `const BE_ENV_PATH = path.resolve(process.cwd(), "../BE/.env");`
+- `SE/FE/server.ts:158` `ai_status: "validated" | "unavailable" | "pending";`
+- `SE/FE/server.ts:173` `const REPORT_UNAVAILABLE_CACHE_TTL_MS = 5 * 1000;`
+- `SE/FE/server.ts:298` `"If DTC is N/A or cost is 0, explicitly say real vehicle-health/workshop data is unavailable and cost remains N/A until inspection.",`
+- `SE/FE/server.ts:369` `function buildUnavailableInsight(reason: string, diagnostics?: Partial<CopilotInsightPayload["diagnostics"]>): CopilotInsightPayload {`
+- `SE/FE/server.ts:375` `ai_status: "unavailable",`
+- `SE/FE/server.ts:392` `ai_status: "pending",`
+- `SE/FE/server.ts:411` `return cleanBearerToken(process.env.AWS_BEARER_TOKEN_BEDROCK || process.env.BEDROCK_API_KEY);`
+- `SE/FE/server.ts:416` `if (!token) throw new Error("AWS_BEARER_TOKEN_BEDROCK is not configured");`
+- `SE/FE/server.ts:953` `ai_status: "unavailable",`
+- `SE/FE/server.ts:1001` `res.json(buildUnavailableInsight("missing-token", { durationMs: Date.now() - startedAt }));`
+- `SE/FE/server.ts:1051` `console.info("Bedrock report insight validated:", {`
+- `SE/FE/server.ts:1063` `ai_status: "validated",`
+- `SE/FE/server.ts:1082` `return buildUnavailableInsight(reason, {`
+- `SE/FE/src/App.tsx:182` `// Keep the last valid dashboard state while Backend is unavailable.`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:220` `type AiInsightStatus = 'loading' | 'pending' | 'validated' | 'unavailable';`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:223` `status === 'validated'`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:231` `status === 'validated'`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:365` `const validatedInsightRef = useRef<{ signature: string; payload: any } | null>(null);`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:500` `const aiHasReturned = aiInsightStatus === 'validated';`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:521` `const applyValidatedPayload = (signature: string, payload: any) => {`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:522` `validatedInsightRef.current = { signature, payload };`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:523` `setAiInsightStatus('validated');`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:529` `const restoreValidatedPayload = () => {`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:530` `const validated = validatedInsightRef.current;`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:532` `validated?.signature === inputSignature`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:533` `&& isValidBedrockPayloadForRows(validated.payload, rows, reportType)`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:535` `applyValidatedPayload(inputSignature, validated.payload);`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:540` `const showLocalFallback = (status: AiInsightStatus = 'unavailable', message = localReportNarrative) => {`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:541` `if (restoreValidatedPayload()) return;`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:549` `if (restoreValidatedPayload()) return;`
+- `SE/BE/app/integrations/carsky/mapper.py:45` `ai_status: str = "Vehicle.ADAS.AIStatus"`
+- `SE/BE/app/integrations/carsky/mapper.py:67` `ai_status: AIStatus = AIStatus.ONLINE,`
+- `SE/BE/app/integrations/carsky/mapper.py:83` `"ai_status": ai_status.value,`
+- `SE/BE/app/integrations/carsky/mapper.py:149` `"ai_status": AIStatus.ONLINE.value,`
+- `SE/BE/app/integrations/carsky/mapper.py:193` `self._mux(47, self._ai_status_code(str(snapshot.get("ai_status") or "ONLINE"))),`
+- `SE/BE/app/integrations/carsky/mapper.py:272` `def _ai_status_code(status: str) -> int:`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:16` `ai_status = 557843460,      -- 0x21400404`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:72` `prop = PROPS.ai_status,`
+- `SE/HMI/README.md:49` `Script này không đọc `SE/BE/.env` và không nhúng CarSky credential vào APK.`
+- `SE/HMI/README.md:92` `Backend `.env` cần đúng room và Android node. Từ `SE/BE`:`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:44` `private static final int PROP_AI_STATUS = 557843460; // 0x21400404`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:316` `Log.w(TAG, "VHAL property unavailable 0x" + Integer.toHexString(propId), propError);`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:405` `} else if (propId == PROP_AI_STATUS) {`
+- `SE/HMI/vhal-vsock-relay/README.md:32` `cd SE/BE`
+
+## word_doc_export
+
+- `SE/FE/server.ts:234` `function sanitizeReportWording(value: unknown): unknown {`
+- `SE/FE/server.ts:242` `if (Array.isArray(value)) return value.map(sanitizeReportWording);`
+- `SE/FE/server.ts:245` `Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, sanitizeReportWording(entry)]),`
+- `SE/FE/server.ts:258` `"Use trip/chuyến wording for report subjects. Do not label a sample as xe, vehicle, driver, tài xế, or người lái in prose unless quoting a canonical field name such as driver.st...`
+- `SE/FE/server.ts:1047` `const parsed = sanitizeReportWording(JSON.parse(cleanJson)) as any;`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:957` `"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>",`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1115` `const handleExportWord = () => {`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1123` `type: 'application/msword;charset=utf-8'`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1127` `const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.doc`;`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1137` `setDownloadSuccess(`Da tai xuong bao cao Word (${fileName}) thanh cong!`);`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1139` `console.error('Word export error:', err);`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1140` `setDownloadSuccess('Xuat Word bi loi. Hay bam Export Report va thu lai.');`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1210` `onClick={handleExportWord}`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1215` `<span>Tải báo cáo Word đầy đủ (.doc)</span>`
+
+## speed_mux_backend
+
+- `SE/FE/server.ts:414` `async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, timeoutMs = 3500, externalSignal?: AbortSignal): Promise<string> {`
+- `SE/FE/server.ts:652` `res.status(500).json({ error: "Failed to save trip" });`
+- `SE/FE/server.ts:687` `res.status(500).json({ error: "Failed to load trip" });`
+- `SE/FE/server.ts:701` `res.status(500).json({ error: "Failed to clear saved trips" });`
+- `SE/FE/server.ts:720` `res.status(500).json({ error: "Failed to delete trip" });`
+- `SE/FE/server.ts:1045` `const rawAiOutput = await callBedrockConverse(promptText, BEDROCK_MODEL_ID, 45000, clientAbortController.signal);`
+- `SE/FE/server.ts:1150` `res.status(503).json({`
+- `SE/FE/src/App.tsx:20` `<div className="w-10 h-10 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />`
+- `SE/FE/src/App.tsx:21` `<p className="text-sm font-mono text-slate-500">Đang chờ dữ liệu từ backend…</p>`
+- `SE/FE/src/App.tsx:362` `className="px-4 py-2 bg-sky-600 hover:bg-sky-500 rounded-lg text-xs font-bold transition-colors"`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:58` `if (level === 'CRITICAL') return 'border-red-500/50 bg-red-950/30 text-red-200';`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:59` `if (level === 'AT_RISK') return 'border-orange-500/50 bg-orange-950/30 text-orange-200';`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:60` `if (level === 'WATCH') return 'border-amber-500/50 bg-amber-950/30 text-amber-200';`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:61` `return 'border-emerald-500/50 bg-emerald-950/30 text-emerald-200';`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:79` `const isHighRisk = Number(frame.risk?.final_risk_score ?? 0) >= 50;`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:232` `? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30'`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:234` `? 'bg-sky-950/60 text-sky-300 border-sky-500/30'`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:509` `? 'border-emerald-500/40 bg-emerald-950/50 text-emerald-200 hover:bg-emerald-900/50'`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:511` `? 'border-sky-500/40 bg-sky-950/40 text-sky-100 hover:bg-sky-900/40'`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:740` `<span style="background-color: ${row.riskLevel === 'CRITICAL' ? '#fee2e2' : row.riskLevel === 'AT_RISK' ? '#ffedd5' : '#dcfce7'}; color: ${row.riskLevel === 'CRITICAL' ? '#991b1...`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:762` `<ul style="margin: 0 0 8px 0; padding-left: 18px; font-size: 12px; color: #334155;">`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:766` `<ul style="margin: 0 0 8px 0; padding-left: 18px; font-size: 12px; color: #334155;">`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:769` `<h5 style="margin: 0 0 4px 0; color: #9a3412; font-size: 12px; font-weight: bold;">💡 Đánh giá & Khuyến nghị:</h5>`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:773` `<h4 style="margin: 8px 0 6px 0; color: #334155; font-size: 14px;">Lịch sử Cảnh báo Gần nhất:</h4>`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:935` `<strong style="color: #9a3412;">⚠️ Technical Inspection Suggested:</strong> Kiểm tra cơ bản các trip WATCH/INSPECT theo DTC thật hoặc stress estimate. Chi phí sửa chữa để N/A ch...`
+- `SE/FE/src/components/CopilotFleetReportPage.tsx:1036` `doc.setTextColor(248, 250, 252);`
+- `SE/BE/app/integrations/carsky/mapper.py:35` `speed: str = "Vehicle.Speed"`
+- `SE/BE/app/integrations/carsky/mapper.py:36` `speed_limit: str = "Vehicle.SpeedLimit"`
+- `SE/BE/app/integrations/carsky/mapper.py:47` `speed_mux: str = "Vehicle.Speed"`
+- `SE/BE/app/integrations/carsky/mapper.py:168` `Current CarSky/AAOS only accepts standard Vehicle.Speed. The APK V2.2`
+- `SE/BE/app/integrations/carsky/mapper.py:169` `decodes decimal groups 41..50 from this one property.`
+- `SE/BE/app/integrations/carsky/mapper.py:190` `self._mux(42, self._severity_code(severity)),`
+- `SE/BE/app/integrations/carsky/mapper.py:191` `self._mux(43, self._driver_state_code(driver_state)),`
+- `SE/BE/app/integrations/carsky/mapper.py:192` `self._mux(46, 1 if severity == "CRITICAL" or bool(snapshot.get("critical_alert")) else 0),`
+- `SE/BE/app/integrations/carsky/mapper.py:193` `self._mux(47, self._ai_status_code(str(snapshot.get("ai_status") or "ONLINE"))),`
+- `SE/BE/app/integrations/carsky/mapper.py:194` `self._mux(48, self._action_code(action)),`
+- `SE/BE/app/integrations/carsky/mapper.py:197` `values.insert(0, self._mux(41, risk))`
+- `SE/BE/app/integrations/carsky/mapper.py:199` `values.append(self._mux(44, self._scale(alertness, 100)))`
+- `SE/BE/app/integrations/carsky/mapper.py:201` `values.append(self._mux(45, self._scale(ttc, 10)))`
+- `SE/BE/app/integrations/carsky/mapper.py:203` `values.append(self._mux(49, speed))`
+- `SE/BE/app/integrations/carsky/mapper.py:205` `values.append(self._mux(50, safe_score))`
+- `SE/BE/app/integrations/carsky/mapper.py:207` `signals = [{"path": self.paths.speed_mux, "value": value} for value in values]`
+- `SE/BE/app/integrations/carsky/client.py:56` `and payload.get("transport") == "vehicle-speed-mux"`
+- `SE/BE/app/integrations/carsky/client.py:82` `if response.status_code < 500 and response.status_code != 429:`
+- `SE/BE/app/integrations/carsky/client.py:101` `or any(CarSkyClient._is_speed_mux_signal(signal) for signal in signals)`
+- `SE/BE/app/integrations/carsky/client.py:116` `and (signal.get("path") in visible_paths or CarSkyClient._is_speed_mux_signal(signal))`
+- `SE/BE/app/integrations/carsky/client.py:120` `def _is_speed_mux_signal(signal: Any) -> bool:`
+- `SE/BE/app/integrations/carsky/client.py:121` `if not isinstance(signal, dict) or signal.get("path") != "Vehicle.Speed":`
+- `SE/BE/app/integrations/carsky/client.py:127` `return 41.0 <= value < 51.0`
+- `SE/BE/app/modules/ai_alerts/router.py:247` `raise HTTPException(status_code=415, detail="Cabin frame must be image/jpeg")`
+- `SE/BE/app/modules/ai_alerts/router.py:249` `raise HTTPException(status_code=413, detail="Cabin frame is empty or exceeds 2 MiB")`
+- `SE/BE/app/modules/ai_alerts/router.py:298` `raise HTTPException(status_code=415, detail="Road frame must be image/jpeg")`
+- `SE/BE/app/modules/ai_alerts/router.py:300` `raise HTTPException(status_code=413, detail="Road frame is empty or exceeds 2 MiB")`
+- `SE/BE/app/modules/ai_alerts/router.py:399` `request.app.state.intervention_commands = deque(maxlen=50)`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:4` `-- Backend sends DMS multiplex values directly to Vehicle.Speed:`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:5` `--   41.088 = risk 88`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:10` `local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:11` `local PATH_SPEED = "Vehicle.Speed"`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:17` `log(string.format("DMS_HMI_SPEED_MUX %s=%s -> 0x%08X=%s", ev.path, tostring(ev.value), PROP_SPEED, tostring(value)))`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:21` `log("DMS HMI speed-mux bridge subscribed to Vehicle.Speed")`
+- `SE/BE/carsky/dms_hmi_bridge.lua:7` `-- Android CarService exposes PERF_VEHICLE_SPEED reliably, while custom DMS`
+- `SE/BE/carsky/dms_hmi_bridge.lua:9` `-- state into PERF_VEHICLE_SPEED values. The APK decodes these values back into`
+- `SE/BE/carsky/dms_hmi_bridge.lua:12` `local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED`
+- `SE/BE/carsky/dms_hmi_bridge.lua:20` `["Vehicle.Speed"] = {`
+- `SE/BE/carsky/dms_hmi_bridge.lua:52` `return 15000 + ((v == true or v == 1 or v == "true") and 1 or 0)`
+- `SE/BE/carsky/dms_hmi_bridge.lua:75` `log(string.format("DMS_HMI_MUX %s=%s -> %s on 0x%08X", ev.path, tostring(ev.value), tostring(encoded), PROP_SPEED))`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:5` `-- 2) PERF_VEHICLE_SPEED as a decimal multiplex fallback used by APK V2.2.`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:9` `local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED fallback`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:36` `["Vehicle.Speed"] = {`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:44` `mux = function(v) return 41.000 + (round(v) / 1000.0) end,`
+- `SE/HMI/README.md:9` `AI DecisionEvent → Backend → CarSky/KUKSA → Lua bridge → VHAL PERF_VEHICLE_SPEED multiplex → Android HMI`
+- `SE/HMI/README.md:83` `DE9DB3A454006087D3E692733DB790C5C1119D9CA4EA401705FA2FA1B3429241`
+- `SE/HMI/README.md:88` `[`ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md`](ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md).`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:27` `* Backend/AI -> CarSky KUKSA -> dms_hmi_bridge.lua -> VHAL PERF_VEHICLE_SPEED`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:31` `* The CarSky AAOS image currently exposes PERF_VEHICLE_SPEED reliably, while`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:39` `private static final int PERF_VEHICLE_SPEED = 291504647; // 0x11600207`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:49` `PERF_VEHICLE_SPEED`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:53` `private static final long WATCHDOG_MS = 500;`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:54` `private static final long VHAL_POLL_MS = 250;`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:168` `riskValue.setBackground(cardBackground(0x44111827, 0x26ffffff, 999));`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:370` `int propId = PERF_VEHICLE_SPEED;`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:395` `if (propId == PERF_VEHICLE_SPEED) {`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:421` `if (raw >= 41.0f && raw < 51.0f) {`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:426` `case 41:`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:453` `case 50:`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:526` `int bg = severity == 2 ? 0xff641523 : severity == 1 ? 0xff7c5209 : severity == 3 ? 0xff123d58 : 0xff081827;`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:642` `if (severity == 1 && now - lastWarningVoiceAt >= 15000) {`
+- `SE/HMI/vhal-vsock-relay/README.md:39` `Bridge: DMS_HMI_DUAL ... mux 0x11600207=41.088`
+- `SE/HMI/vhal-vsock-relay/README.md:40` `Android logcat: DMS_HMI ... raw=41.088`
+
+## android_hmi_vhal
+
+- `SE/BE/app/integrations/carsky/mapper.py:168` `Current CarSky/AAOS only accepts standard Vehicle.Speed. The APK V2.2`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:8` `-- APK V2.2 decodes those decimal speed-mux values.`
+- `SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:10` `local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED`
+- `SE/BE/carsky/dms_hmi_bridge.lua:7` `-- Android CarService exposes PERF_VEHICLE_SPEED reliably, while custom DMS`
+- `SE/BE/carsky/dms_hmi_bridge.lua:9` `-- state into PERF_VEHICLE_SPEED values. The APK decodes these values back into`
+- `SE/BE/carsky/dms_hmi_bridge.lua:12` `local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:5` `-- 2) PERF_VEHICLE_SPEED as a decimal multiplex fallback used by APK V2.2.`
+- `SE/BE/carsky/dms_hmi_bridge_dual_push.lua:9` `local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED fallback`
+- `SE/HMI/README.md:9` `AI DecisionEvent → Backend → CarSky/KUKSA → Lua bridge → VHAL PERF_VEHICLE_SPEED multiplex → Android HMI`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:27` `* Backend/AI -> CarSky KUKSA -> dms_hmi_bridge.lua -> VHAL PERF_VEHICLE_SPEED`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:31` `* The CarSky AAOS image currently exposes PERF_VEHICLE_SPEED reliably, while`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:38` `private static final String BUILD_TAG = "V2.2 SPEED MUX";`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:39` `private static final int PERF_VEHICLE_SPEED = 291504647; // 0x11600207`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:49` `PERF_VEHICLE_SPEED`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:326` `Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:367` `// Android AAOS CarPropertyManager callback already passes CarPropertyValue.`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:370` `int propId = PERF_VEHICLE_SPEED;`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:395` `if (propId == PERF_VEHICLE_SPEED) {`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:396` `decodeMultiplex(value);`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:420` `private void decodeMultiplex(float raw) {`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:459` `Log.i(TAG, "mux decimal raw=" + raw + " group=" + group + " payload=" + payload);`
+- `SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:670` `Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");`
+

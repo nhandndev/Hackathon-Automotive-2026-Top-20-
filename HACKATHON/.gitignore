@@ -2,6 +2,7 @@
 
 # Local BTC datasets (large/private; keep outside Git)
 /Practice_Dataset/
+/Practice_dataset/
 /practice_dataset/
 /Hackathon_Dataset_Redacted/
 /*_Dataset_Redacted/

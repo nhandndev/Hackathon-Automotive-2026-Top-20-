@@ -37,7 +37,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   if (!isOpen) return null;
 
   const openCopilotReport = (type: CopilotReportType, tripIds?: string[]) => {
-    const fallbackCount = type === 'compare' ? 2 : type === 'maintenance' ? 3 : 4;
+    const fallbackCount = type === 'compare' ? 2 : vehicles.length;
     const selectedTripIds = tripIds?.length
       ? tripIds
       : vehicles.slice(0, Math.max(1, fallbackCount)).map((vehicle) => vehicle.trip_id);
@@ -125,7 +125,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
             <h2 className="text-sm font-bold text-white flex items-center gap-1.5">
               Fleet AI Copilot
             </h2>
-            <p className="text-[11px] text-slate-400">Đang phân tích dữ liệu đội xe của bạn</p>
+            <p className="text-[11px] text-slate-400">Đang phân tích dữ liệu trip của bạn</p>
           </div>
         </div>
 
@@ -160,7 +160,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
               </div>
 
               <div className="flex-1 min-w-0 space-y-3 overflow-hidden">
-                {/* 1. Driver Risk Card */}
+                {/* 1. Trip Risk Card */}
                 {msg.cardType === 'DRI_RISK' && msg.cardData && (
                   <div className="bg-[#111A2E] border border-sky-900/60 rounded-xl p-4 space-y-3 shadow-lg break-words overflow-hidden">
                     <div className="flex items-center gap-1.5 text-sky-400 text-[10px] font-bold uppercase tracking-wider">
@@ -169,7 +169,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                     </div>
 
                     <h3 className="text-sm font-extrabold text-white leading-snug break-words">
-                      {msg.cardData.driverName} đang có rủi ro cao nhất — Ranking Score <span className="text-amber-400 font-mono">{msg.cardData.score}/100</span>
+                      {msg.cardData.trip_id || 'Trip đang chọn'} đang có rủi ro cao nhất — Ranking Score <span className="text-amber-400 font-mono">{msg.cardData.score}/100</span>
                     </h3>
 
                     <div className="flex flex-wrap gap-1.5">
@@ -232,7 +232,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                       msg.cardData.reportType === 'maintenance' ? 'text-amber-400' : 'text-sky-400'
                     }`}>
                       {msg.cardData.reportType === 'maintenance' ? <Wrench className="w-3.5 h-3.5" /> : <BarChart3 className="w-3.5 h-3.5" />}
-                      <span>{msg.cardData.reportType === 'maintenance' ? 'BÁO CÁO ƯU TIÊN BẢO TRÌ TELEMETRY' : 'BẢNG XẾP HẠNG AN TOÀN FLEET'}</span>
+                      <span>{msg.cardData.reportType === 'maintenance' ? 'BÁO CÁO ƯU TIÊN KIỂM TRA TRIP' : 'BẢNG XẾP HẠNG AN TOÀN TRIP'}</span>
                     </div>
                     <h3 className="text-sm font-extrabold text-white leading-snug break-words">{msg.cardData.title}</h3>
                     <p className="text-slate-300 text-xs leading-relaxed break-words">{msg.cardData.details}</p>
@@ -241,7 +241,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                     {msg.cardData.rankedDrivers && msg.cardData.rankedDrivers.length > 0 && (
                       <div className="space-y-1.5 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 overflow-hidden">
                         <div className="flex items-center justify-between text-[10px] font-bold uppercase text-amber-400 border-b border-slate-900 pb-1.5 mb-1 gap-1">
-                          <span className="truncate">{msg.cardData.sortRule || (msg.cardData.reportType === 'maintenance' ? 'Sắp xếp: Ưu tiên bảo trì TỪ CAO ➔ THẤP' : 'Xếp hạng theo điểm an toàn Ranking Score TỪ CAO ➔ THẤP')}</span>
+                          <span className="truncate">{msg.cardData.sortRule || (msg.cardData.reportType === 'maintenance' ? 'Sắp xếp: Ưu tiên kiểm tra trip TỪ CAO ➔ THẤP' : 'Xếp hạng theo điểm an toàn Ranking Score TỪ CAO ➔ THẤP')}</span>
                           <span className="font-mono text-slate-400 shrink-0">({msg.cardData.rankedDrivers.length} trips)</span>
                         </div>
                         {msg.cardData.rankedDrivers.map((d: any, rankIdx: number) => (
@@ -261,7 +261,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                               <div className="truncate min-w-0">
                                 <span className="font-bold text-slate-100 group-hover:text-sky-300 block truncate">{d.trip_id}</span>
                                 <span className="text-[10px] font-mono text-slate-400 block truncate">
-                                  {d.riskLevel || d.driverName || 'N/A'}
+                                  {d.riskLevel || d.trip_id || 'N/A'}
                                   {typeof d.maxRisk === 'number' ? ` • Max risk ${d.maxRisk}/100` : ''}
                                   {d.dtcCode && d.dtcCode !== 'N/A' ? ` • DTC ${d.dtcCode}` : ''}
                                 </span>
@@ -270,7 +270,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                             <div className="flex items-center gap-2 shrink-0">
                               {msg.cardData.reportType === 'maintenance' ? (
                                 <span className={`font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
-                                  d.maintenancePriority === 'CRITICAL' ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-slate-800 text-slate-300'
+                                  d.maintenancePriority === 'INSPECT' ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-slate-800 text-slate-300'
                                 }`}>
                                   {d.maintenancePriority || 'ROUTINE'}
                                 </span>
@@ -323,16 +323,16 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       {/* Quick Suggestion Chips */}
       <div className="p-2 px-4 bg-[#0B0F19] border-t border-[#1E293B] flex items-center gap-2 overflow-x-auto text-[11px] no-scrollbar">
         <button
-          onClick={() => handleSendMessage(`So sánh 2 tài xế ${vehicles.slice(0, 2).map((vehicle) => vehicle.trip_id).join(' và ')}`)}
+          onClick={() => handleSendMessage(`So sánh 2 trip ${vehicles.slice(0, 2).map((vehicle) => vehicle.trip_id).join(' và ')}`)}
           className="px-2.5 py-1 bg-[#111827] hover:bg-[#1F2937] border border-[#1F2937] rounded-full text-slate-300 whitespace-nowrap transition-colors"
         >
-          So sánh 2 tài xế
+          So sánh 2 trip
         </button>
         <button
-          onClick={() => handleSendMessage('Xe nào cần bảo trì?')}
+          onClick={() => handleSendMessage('Trip nào cần kiểm tra?')}
           className="px-2.5 py-1 bg-[#111827] hover:bg-[#1F2937] border border-[#1F2937] rounded-full text-slate-300 whitespace-nowrap transition-colors"
         >
-          Xe nào cần bảo trì?
+          Báo cáo kiểm tra trip
         </button>
         <button
           onClick={() => handleSendMessage('Báo cáo an toàn tuần này')}
@@ -354,7 +354,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
           <input
             id="copilot-input-field"
             type="text"
-            placeholder="✨ Hỏi tiếp về đội xe của bạn..."
+            placeholder="✨ Hỏi tiếp về dữ liệu trip của bạn..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             className="w-full bg-[#111827] border border-[#1F2937] focus:border-sky-500 text-slate-200 text-xs rounded-xl pl-3 pr-10 py-2.5 outline-none transition-all placeholder-slate-500"

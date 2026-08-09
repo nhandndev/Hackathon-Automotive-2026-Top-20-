@@ -8,8 +8,19 @@ import dotenv from "dotenv";
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-dotenv.config({ path: ".env.local" });
-dotenv.config();
+const AI_ENV_KEYS = [
+  "AWS_BEARER_TOKEN_BEDROCK",
+  "BEDROCK_API_KEY",
+  "AWS_REGION",
+  "AWS_DEFAULT_REGION",
+  "BEDROCK_MODEL_ID",
+  "GEMINI_API_KEY",
+];
+for (const key of AI_ENV_KEYS) {
+  delete process.env[key];
+}
+const BE_ENV_PATH = path.resolve(process.cwd(), "../BE/.env");
+dotenv.config({ path: BE_ENV_PATH, override: true });
 
 app.use(express.json({ limit: "64mb" }));
 

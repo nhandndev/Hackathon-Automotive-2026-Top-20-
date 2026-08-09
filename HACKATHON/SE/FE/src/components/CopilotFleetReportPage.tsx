@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { CalendarDays, Download, FileText, Shield, UserRound, Wrench, FileDown, FileCode, Check, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { CalendarDays, Download, FileText, Shield, UserRound, Wrench, FileCode, Check, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { TripData } from '../types';
 import { buildRankingRows } from './DriverRankingView';
 import { buildCopilotInput, buildVehicleReportModels, inferReportMode, VehicleReportModel } from '../reportModel';
@@ -28,6 +28,31 @@ const normalizeScoreText = (text: string, canonicalScore: number) =>
 
 const normalizeLongScoreText = (text: string) =>
   text.replace(/\d+\.\d{2,}\/100/g, (match) => `${Number.parseFloat(match).toFixed(1)}/100`);
+
+const formatInsightText = (text: string) =>
+  normalizeLongScoreText(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\s*(#{2,4}\s+)/g, '\n\n$1')
+    .replace(/\s*((?:\d+|[IVX]+)[.)]\s+)/g, '\n$1')
+    .replace(/\s*([•*-]\s+)/g, '\n$1')
+    .replace(/\s*(🟢|🔴|💡|🛠️|⚠️|🛑|🏆)/g, '\n$1')
+    .replace(/\s*(Khuyến nghị|Kết luận|Recommended action|Conclusion|Main reason|Driver behavior evidence)\s*:/gi, '\n$1:')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const formatInsightHtml = (text: string) =>
+  escapeHtml(formatInsightText(text))
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br />');
 
 const severityClass = (level: string) => {
   if (level === 'CRITICAL') return 'border-red-500/50 bg-red-950/30 text-red-200';
@@ -339,6 +364,14 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   const menuRef = useRef<HTMLDivElement>(null);
   const validatedInsightRef = useRef<{ signature: string; payload: any } | null>(null);
   const activeRequestSignatureRef = useRef<string | null>(null);
+  const reportDateRange = useMemo(() => {
+    const today = new Date().toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    return `${today} ~ ${today}`;
+  }, []);
 
   const toggleTripExpand = (tripId: string) => {
     setExpandedTrips(prev => ({ ...prev, [tripId]: !prev[tripId] }));
@@ -689,13 +722,13 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
 
       const prosList = aiInsightStatus === 'validated'
         ? (tripAi?.pros ?? defaultPros)
-        : [aiLoadingCopy.pros, ...defaultPros];
+        : defaultPros;
       const consList = aiInsightStatus === 'validated'
         ? (tripAi?.cons ?? defaultCons)
-        : [aiLoadingCopy.cons, ...defaultCons];
+        : defaultCons;
       const evalText = aiInsightStatus === 'validated'
         ? (tripAi?.evaluation ?? defaultEval)
-        : `${aiLoadingCopy.evaluation}\n${defaultEval}`;
+        : defaultEval;
 
       return `
         <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #f8fafc;">
@@ -716,6 +749,12 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Risk Cao Nhất:</strong> ${row.maxRisk.toFixed(1)}</td>
               <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Khung rủi ro cao:</strong> ${row.criticalEvents}</td>
             </tr>
+            <tr>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Avg Risk:</strong> ${row.avgRisk.toFixed(1)}/100</td>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Distracted:</strong> ${row.distractedPct.toFixed(1)}%</td>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Near miss/TTC:</strong> ${row.nearMissCount}</td>
+              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Harsh events:</strong> ${row.harshEvents}</td>
+            </tr>
           </table>
 
           <div style="margin-bottom: 12px; background-color: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
@@ -728,7 +767,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               ${consList.map(c => `<li>${normalizeScoreText(String(c), safeScore)}</li>`).join('')}
             </ul>
             <h5 style="margin: 0 0 4px 0; color: #9a3412; font-size: 12px; font-weight: bold;">💡 Đánh giá & Khuyến nghị:</h5>
-            <p style="margin: 0; font-size: 12px; font-weight: bold; color: #1e293b;">${normalizeScoreText(String(evalText), safeScore)}</p>
+            <p style="margin: 0; font-size: 12px; font-weight: bold; color: #1e293b;">${formatInsightHtml(normalizeScoreText(String(evalText), safeScore))}</p>
           </div>
 
           <h4 style="margin: 8px 0 6px 0; color: #334155; font-size: 14px;">Lịch sử Cảnh báo Gần nhất:</h4>
@@ -781,7 +820,8 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           table.kpi-table th, table.kpi-table td { padding: 10px; border: 1px solid #cbd5e1; font-size: 13px; text-align: left; }
           table.kpi-table th { background-color: #0f172a; color: #ffffff; }
           .insight-box { background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-top: 20px; }
-          .insight-box p { margin: 0; font-size: 13px; color: #0369a1; white-space: pre-line; }
+          .insight-box p { margin: 0 0 8px 0; font-size: 13px; color: #0369a1; white-space: normal; }
+          .insight-box p:last-child { margin-bottom: 0; }
           .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px; }
         </style>
       </head>
@@ -789,7 +829,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
         <h1>${reportTitle}</h1>
         <div class="header-meta">
           <span><strong>DMS Safety AI Platform</strong> | Báo Cáo Phân Tích Trip</span>
-          <span>Thời gian xuất: ${nowStr}</span>
+          <span>Ngày báo cáo: ${reportDateRange} | Thời gian xuất: ${nowStr}</span>
         </div>
         <p class="subtitle">${subtitle}</p>
 
@@ -900,7 +940,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
 
         <div class="section-title">5. Khuyến Nghị & Insight Từ AI Copilot (Bedrock Engine)</div>
         <div class="insight-box">
-          <p>${normalizeLongScoreText(copilotInsight).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          <p>${formatInsightHtml(copilotInsight)}</p>
         </div>
 
         <div class="footer">
@@ -938,30 +978,134 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
     try {
-      const printWindow = window.open('', '_blank', 'width=1024,height=768');
-      if (!printWindow) {
-        setDownloadSuccess('Popup bi chan. Hay cho phep popup roi bam Export PDF lai.');
-        return;
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 12;
+      const contentWidth = pageWidth - margin * 2;
+      const exportComparisonRow = rows.length === 1 ? rows[0] : highestRankedRow;
+      let y = margin;
+
+      const ensureSpace = (height: number) => {
+        if (y + height > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+      };
+      const line = (text: string, size = 10, style: 'normal' | 'bold' = 'normal', color: [number, number, number] = [15, 23, 42]) => {
+        doc.setFont('helvetica', style);
+        doc.setFontSize(size);
+        doc.setTextColor(color[0], color[1], color[2]);
+        const wrapped = doc.splitTextToSize(text, contentWidth);
+        ensureSpace(wrapped.length * (size * 0.42) + 3);
+        doc.text(wrapped, margin, y);
+        y += wrapped.length * (size * 0.42) + 3;
+      };
+      const section = (text: string) => {
+        ensureSpace(14);
+        y += 2;
+        doc.setFillColor(2, 132, 199);
+        doc.rect(margin, y - 5, 2, 8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(15, 23, 42);
+        doc.text(text, margin + 5, y);
+        y += 8;
+      };
+      const kv = (label: string, value: string) => {
+        ensureSpace(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text(label, margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(15, 23, 42);
+        doc.text(doc.splitTextToSize(value, contentWidth * 0.55), margin + 70, y);
+        y += 7;
+      };
+      const bulletLines = (text: string, size = 9) => {
+        const paragraphs = formatInsightText(text).split(/\n+/).filter(Boolean);
+        for (const paragraph of paragraphs) {
+          line(paragraph, size);
+        }
+      };
+
+      doc.setFillColor(7, 10, 18);
+      doc.rect(0, 0, pageWidth, 20, 'F');
+      doc.setTextColor(248, 250, 252);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(reportTitle, margin, 13);
+      y = 28;
+      line(subtitle, 10, 'normal', [71, 85, 105]);
+      line(`Exported: ${new Date().toLocaleString()} | Source: JSON/local AI + validated Bedrock insight when available`, 8, 'normal', [100, 116, 139]);
+
+      if (isSafetyOverview) {
+        section('Fleet Summary');
+        kv('Fleet Status', fleetStatus);
+        kv('Trips analyzed', String(rows.length));
+        kv('Safe trips', String(safeTripCount));
+        kv('Fleet Avg Ranking Score', `${displayScore(selectedFleetAverage)}/100`);
+        kv('High-risk frames', String(selectedHighRiskFrames));
+        kv('Review Priority', reviewPriorityPath || 'N/A');
       }
 
-      printWindow.document.open();
-      printWindow.document.write(buildPrintableReportHTML());
-      printWindow.document.close();
-      printWindow.focus();
+      section('KPI Context');
+      kv(rows.length === 1 ? 'Trip Ranking Score' : 'Fleet Ranking Score', `${(rows.length === 1 ? rows[0].score : fleetAverage).toFixed(1)}/100`);
+      kv('Highest-ranked trip', exportComparisonRow ? `${exportComparisonRow.trip_id} - ${exportComparisonRow.score.toFixed(1)}/100 - ${exportComparisonRow.riskLevel}` : 'N/A');
+      kv('Near miss / TTC risk', `${rows.reduce((sum, row) => sum + row.nearMissCount, 0)} events`);
+      kv('Distracted average', `${(rows.reduce((sum, row) => sum + row.distractedPct, 0) / Math.max(rows.length, 1)).toFixed(1)}%`);
 
-      window.setTimeout(() => {
-        try {
-          printWindow.document.title = fileName;
-          printWindow.print();
-        } catch (err) {
-          console.error('PDF print export error:', err);
-        }
-      }, 250);
+      section(`Trip Detail (${rows.length} trip)`);
+      rows.forEach((row, index) => {
+        ensureSpace(35);
+        doc.setFillColor(index % 2 === 0 ? 239 : 248, 250, 252);
+        doc.roundedRect(margin, y - 4, contentWidth, 30, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(2, 132, 199);
+        doc.text(`TRIP ${String(index + 1).padStart(2, '0')} - ${row.trip_id}`, margin + 3, y + 3);
+        doc.setTextColor(row.riskLevel === 'CRITICAL' ? 220 : 15, row.riskLevel === 'CRITICAL' ? 38 : 23, row.riskLevel === 'CRITICAL' ? 38 : 42);
+        doc.text(`Risk: ${row.riskLevel}`, margin + 128, y + 3);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+        doc.text(`Ranking Score: ${displayScore(row.score)}/100`, margin + 3, y + 11);
+        doc.text(`Relative Rank: #${row.rank}/${allFleetRows.length || rows.length}`, margin + 70, y + 11);
+        doc.text(`Max Risk: ${row.maxRisk.toFixed(1)}`, margin + 128, y + 11);
+        doc.text(`High-risk frames: ${row.criticalEvents}`, margin + 3, y + 19);
+        doc.text(`Harsh events: ${row.harshEvents}`, margin + 70, y + 19);
+        doc.text(`Near miss: ${row.nearMissCount}`, margin + 128, y + 19);
+        y += 34;
+      });
 
-      setDownloadSuccess(`Da mo ban in PDF cho ${fileName}. Chon "Save as PDF" trong hop thoai in de luu file.`);
+      section('AI Copilot / Bedrock Insight');
+      bulletLines(copilotInsight || aiLoadingCopy.fleet, 9);
+
+      if (rows.length === 1) {
+        const row = rows[0];
+        const tripAi = aiTripInsights[row.trip_id];
+        const model = reportForRow(reportModels, row.trip_id);
+        const evalText = reportType === 'maintenance'
+          ? `Inspection triage: ${model?.maintenance.priority ?? 'NORMAL'}. Recommended - not created; workshop inspection is required before confirmed repair.`
+          : (tripAi?.evaluation ?? tripAi?.recommendation ?? `Safety review result: ${row.trip_id} ranking score ${displayScore(row.score)}/100, risk ${row.riskLevel}.`);
+        section('Final Recommendation');
+        bulletLines(evalText, 9);
+      }
+
+      const totalPages = doc.getNumberOfPages();
+      for (let page = 1; page <= totalPages; page += 1) {
+        doc.setPage(page);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`DMS Fleet Report - page ${page}/${totalPages}`, margin, pageHeight - 6);
+      }
+      doc.save(fileName);
+      setDownloadSuccess(`Da tai xuong bao cao PDF (${fileName}) thanh cong!`);
     } catch (err) {
       console.error('PDF document export error:', err);
-      setDownloadSuccess('Xuat PDF bi loi. Hay thu xuat Word truoc hoac bam Export PDF lai.');
+      setDownloadSuccess('Xuat PDF bi loi. Hay bam Export Report va thu lai.');
     } finally {
       window.setTimeout(() => setIsExporting(false), 500);
       window.setTimeout(() => setDownloadSuccess(null), 6000);
@@ -1033,7 +1177,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
           <div className="flex items-center gap-3">
             <div className={`${panel} flex items-center gap-3 px-4 py-2 text-sm text-slate-300`}>
               <CalendarDays className="h-4 w-4 text-slate-500" />
-              03/08/2026 ~ 03/08/2026
+              {reportDateRange}
             </div>
             <button
               onClick={() => setBedrockRequested(true)}
@@ -1063,20 +1207,12 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               {showExportMenu && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-[#1E293B] bg-[#0F172A] p-1 shadow-2xl backdrop-blur-md">
                   <button
-                    onClick={handleExportPDF}
-                    disabled={isExporting}
-                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400 disabled:cursor-wait disabled:opacity-60"
-                  >
-                    <FileDown className="h-4 w-4 text-red-400" />
-                    <span>Xuất báo cáo PDF (.pdf)</span>
-                  </button>
-                  <button
                     onClick={handleExportWord}
                     disabled={isExporting}
                     className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400 disabled:cursor-wait disabled:opacity-60"
                   >
                     <FileCode className="h-4 w-4 text-blue-400" />
-                    <span>Xuất báo cáo Word (.doc)</span>
+                    <span>Tải báo cáo Word đầy đủ (.doc)</span>
                   </button>
                 </div>
               )}
@@ -1635,7 +1771,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               </div>
             )}
             <p className="whitespace-pre-line font-medium leading-relaxed">
-              {normalizeLongScoreText(copilotInsight || aiLoadingCopy.fleet)}
+              {formatInsightText(copilotInsight || aiLoadingCopy.fleet)}
             </p>
           </div>
         </section>
@@ -1812,7 +1948,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
                 {/* 💡 Đánh giá / Khuyến nghị */}
                 <div className="border-t border-slate-800/80 pt-3 flex items-start gap-2 bg-amber-950/30 p-2.5 rounded border border-amber-900/30">
                   <span className="font-bold text-amber-300 shrink-0">{isMaint ? '🛠️ Inspection Triage Recommendation:' : '💡 Đánh giá:'}</span>
-                  <p className="text-slate-200 font-medium leading-relaxed">{normalizeScoreText(String(evaluationText), safeScore)}</p>
+                  <p className="whitespace-pre-line text-slate-200 font-medium leading-relaxed">{formatInsightText(normalizeScoreText(String(evaluationText), safeScore))}</p>
                 </div>
               </div>
             </section>

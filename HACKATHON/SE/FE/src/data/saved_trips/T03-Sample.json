@@ -28,24 +28,24 @@
     "condition_subset": "dataset replay",
     "state_distribution_pct": {
       "distracted": 0,
-      "alert": 1.5625
+      "alert": 1.3986013986013985
     },
     "longest_drowsy_episode_sec": 0,
     "microsleep_count": 4,
-    "average_alertness_score": 0.6639843750000013,
-    "fatigue_score": 33.60156249999987
+    "average_alertness_score": 0.6678321678321694,
+    "fatigue_score": 33.216783216783064
   },
   "trip_aggregate": {
     "safe_driving_score": 0,
-    "harsh_brake_count": 27,
-    "harsh_accel_count": 93,
-    "harsh_corner_count": 39,
+    "harsh_brake_count": 25,
+    "harsh_accel_count": 109,
+    "harsh_corner_count": 30,
     "near_miss_count": 0,
-    "speeding_pct_time": 11.833,
-    "tailgating_pct_time": 10.441,
-    "avg_headway_sec": 9.206,
+    "speeding_pct_time": 10.994,
+    "tailgating_pct_time": 7.4,
+    "avg_headway_sec": 14.12,
     "max_risk_score": 100,
-    "avg_risk_score": 71.5493671875,
+    "avg_risk_score": 78.46153846153847,
     "risk_classification": "high"
   },
   "events_log": [],
@@ -100,13 +100,13 @@
       }
     },
     {
-      "frame_id": 66,
-      "world_frame": 66,
-      "timestamp": 3.3,
+      "frame_id": 15,
+      "world_frame": 15,
+      "timestamp": 0.75,
       "ego": {
-        "speed_kmh": 29.14,
-        "longitudinal_accel": 0.122,
-        "lateral_accel": 0.007,
+        "speed_kmh": 10.55,
+        "longitudinal_accel": 7.324,
+        "lateral_accel": -0.001,
         "location": {
           "x": 0,
           "y": 0,
@@ -137,25 +137,25 @@
       "headway_sec": null,
       "behavior_flags": {
         "harsh_brake": false,
-        "harsh_accel": false,
+        "harsh_accel": true,
         "harsh_corner": false,
         "speeding": false,
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.4004207931639119,
-        "final_risk_score": 0
+        "base_risk": 2,
+        "driver_factor": 0.5500119855661072,
+        "final_risk_score": 2
       }
     },
     {
-      "frame_id": 73,
-      "world_frame": 73,
-      "timestamp": 3.65,
+      "frame_id": 19,
+      "world_frame": 19,
+      "timestamp": 0.95,
       "ego": {
-        "speed_kmh": 28.97,
-        "longitudinal_accel": -0.098,
-        "lateral_accel": -0.032,
+        "speed_kmh": 15.12,
+        "longitudinal_accel": 5.811,
+        "lateral_accel": 0,
         "location": {
           "x": 0,
           "y": 0,
@@ -182,8 +182,253 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": null,
-      "headway_sec": null,
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 10,
+        "driver_factor": 0.8979798873355651,
+        "final_risk_score": 10
+      }
+    },
+    {
+      "frame_id": 23,
+      "world_frame": 23,
+      "timestamp": 1.15,
+      "ego": {
+        "speed_kmh": 19.05,
+        "longitudinal_accel": 5.225,
+        "lateral_accel": 0,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 18,
+        "driver_factor": 0.925776345065828,
+        "final_risk_score": 18
+      }
+    },
+    {
+      "frame_id": 27,
+      "world_frame": 27,
+      "timestamp": 1.35,
+      "ego": {
+        "speed_kmh": 20.78,
+        "longitudinal_accel": 3.564,
+        "lateral_accel": -0.014,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 20,
+        "driver_factor": 0.929622442949196,
+        "final_risk_score": 20
+      }
+    },
+    {
+      "frame_id": 31,
+      "world_frame": 31,
+      "timestamp": 1.55,
+      "ego": {
+        "speed_kmh": 24.24,
+        "longitudinal_accel": 5.103,
+        "lateral_accel": 0,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 28,
+        "driver_factor": 0.9329753951025311,
+        "final_risk_score": 28
+      }
+    },
+    {
+      "frame_id": 35,
+      "world_frame": 35,
+      "timestamp": 1.75,
+      "ego": {
+        "speed_kmh": 28.19,
+        "longitudinal_accel": 5.469,
+        "lateral_accel": -0.007,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 36,
+        "driver_factor": 0.9467724843502056,
+        "final_risk_score": 36
+      }
+    },
+    {
+      "frame_id": 39,
+      "world_frame": 39,
+      "timestamp": 1.95,
+      "ego": {
+        "speed_kmh": 30.4,
+        "longitudinal_accel": 0.146,
+        "lateral_accel": -0.001,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -192,9 +437,450 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9846935002816772,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9540264092377452,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 43,
+      "world_frame": 43,
+      "timestamp": 2.15,
+      "ego": {
+        "speed_kmh": 29.08,
+        "longitudinal_accel": -2.246,
+        "lateral_accel": 0,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9649127910382103,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 47,
+      "world_frame": 47,
+      "timestamp": 2.35,
+      "ego": {
+        "speed_kmh": 28.42,
+        "longitudinal_accel": 0.171,
+        "lateral_accel": 0.001,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.967636988062293,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 51,
+      "world_frame": 51,
+      "timestamp": 2.55,
+      "ego": {
+        "speed_kmh": 29.26,
+        "longitudinal_accel": 1.05,
+        "lateral_accel": 0.001,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9746968246172749,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 55,
+      "world_frame": 55,
+      "timestamp": 2.75,
+      "ego": {
+        "speed_kmh": 29.22,
+        "longitudinal_accel": -0.684,
+        "lateral_accel": -0.003,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9776691373183932,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 59,
+      "world_frame": 59,
+      "timestamp": 2.95,
+      "ego": {
+        "speed_kmh": 28.84,
+        "longitudinal_accel": -0.318,
+        "lateral_accel": -0.029,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.982128198680146,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 63,
+      "world_frame": 63,
+      "timestamp": 3.15,
+      "ego": {
+        "speed_kmh": 29,
+        "longitudinal_accel": 0.317,
+        "lateral_accel": -0.002,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9755862425531656,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 67,
+      "world_frame": 67,
+      "timestamp": 3.35,
+      "ego": {
+        "speed_kmh": 29.13,
+        "longitudinal_accel": -0.049,
+        "lateral_accel": 0.004,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9906872687181507,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 71,
+      "world_frame": 71,
+      "timestamp": 3.55,
+      "ego": {
+        "speed_kmh": 29,
+        "longitudinal_accel": -0.269,
+        "lateral_accel": -0.069,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9988956568490245,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 75,
+      "world_frame": 75,
+      "timestamp": 3.75,
+      "ego": {
+        "speed_kmh": 29,
+        "longitudinal_accel": 0.049,
+        "lateral_accel": -0.019,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9987530342346186,
+        "final_risk_score": 40
       }
     },
     {
@@ -231,8 +917,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": null,
-      "headway_sec": null,
+      "min_ttc": 10,
+      "headway_sec": 10,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -241,9 +927,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9958647661116511,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9998573773855941,
+        "final_risk_score": 40
       }
     },
     {
@@ -290,19 +976,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9974181214406924,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 1,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 89,
-      "world_frame": 89,
-      "timestamp": 4.45,
+      "frame_id": 87,
+      "world_frame": 87,
+      "timestamp": 4.35,
       "ego": {
-        "speed_kmh": 29.02,
-        "longitudinal_accel": -0.049,
-        "lateral_accel": 0.008,
+        "speed_kmh": 29.01,
+        "longitudinal_accel": -0.098,
+        "lateral_accel": -0.015,
         "location": {
           "x": 0,
           "y": 0,
@@ -339,117 +1025,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9876237031863306,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9996345784677487,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 93,
-      "world_frame": 93,
-      "timestamp": 4.65,
-      "ego": {
-        "speed_kmh": 29.04,
-        "longitudinal_accel": -0.049,
-        "lateral_accel": 0,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9978004886425957,
-        "final_risk_score": 0
-      }
-    },
-    {
-      "frame_id": 97,
-      "world_frame": 97,
-      "timestamp": 4.85,
-      "ego": {
-        "speed_kmh": 29.03,
-        "longitudinal_accel": -0.073,
-        "lateral_accel": 0.004,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9885004424685069,
-        "final_risk_score": 0
-      }
-    },
-    {
-      "frame_id": 101,
-      "world_frame": 101,
-      "timestamp": 5.05,
+      "frame_id": 91,
+      "world_frame": 91,
+      "timestamp": 4.55,
       "ego": {
         "speed_kmh": 29.03,
         "longitudinal_accel": -0.049,
-        "lateral_accel": 0.004,
+        "lateral_accel": 0.001,
         "location": {
           "x": 0,
           "y": 0,
@@ -486,68 +1074,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9741494700793051,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9935766820466929,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 105,
-      "world_frame": 105,
-      "timestamp": 5.25,
-      "ego": {
-        "speed_kmh": 29.03,
-        "longitudinal_accel": -0.024,
-        "lateral_accel": -0.009,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.967702380868445,
-        "final_risk_score": 0
-      }
-    },
-    {
-      "frame_id": 109,
-      "world_frame": 109,
-      "timestamp": 5.45,
+      "frame_id": 95,
+      "world_frame": 95,
+      "timestamp": 4.75,
       "ego": {
         "speed_kmh": 29.03,
         "longitudinal_accel": -0.049,
-        "lateral_accel": -0.01,
+        "lateral_accel": -0.014,
         "location": {
           "x": 0,
           "y": 0,
@@ -584,15 +1123,15 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.971434763580422,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9946345784677487,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 113,
-      "world_frame": 113,
-      "timestamp": 5.65,
+      "frame_id": 99,
+      "world_frame": 99,
+      "timestamp": 4.95,
       "ego": {
         "speed_kmh": 29.03,
         "longitudinal_accel": -0.073,
@@ -633,19 +1172,68 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9417841381796993,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9901697407251914,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 117,
-      "world_frame": 117,
-      "timestamp": 5.85,
+      "frame_id": 103,
+      "world_frame": 103,
+      "timestamp": 5.15,
+      "ego": {
+        "speed_kmh": 29.03,
+        "longitudinal_accel": -0.073,
+        "lateral_accel": -0.02,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 5.186005773623128,
+      "headway_sec": 5.186005773623128,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9773033865263666,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 107,
+      "world_frame": 107,
+      "timestamp": 5.35,
       "ego": {
         "speed_kmh": 29.03,
         "longitudinal_accel": -0.049,
-        "lateral_accel": 0.007,
+        "lateral_accel": -0.011,
         "location": {
           "x": 0,
           "y": 0,
@@ -672,8 +1260,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 5.186005773623128,
+      "headway_sec": 5.186005773623128,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -682,19 +1270,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9366406983870508,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9782350853685357,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 121,
-      "world_frame": 121,
-      "timestamp": 6.05,
+      "frame_id": 111,
+      "world_frame": 111,
+      "timestamp": 5.55,
       "ego": {
         "speed_kmh": 29.03,
-        "longitudinal_accel": -0.024,
-        "lateral_accel": -0.001,
+        "longitudinal_accel": -0.073,
+        "lateral_accel": 0.005,
         "location": {
           "x": 0,
           "y": 0,
@@ -721,8 +1309,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 49.7353792807938,
+      "headway_sec": 49.7353792807938,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -731,15 +1319,64 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9136705652834216,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9755484247850859,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 125,
-      "world_frame": 125,
-      "timestamp": 6.25,
+      "frame_id": 115,
+      "world_frame": 115,
+      "timestamp": 5.75,
+      "ego": {
+        "speed_kmh": 29.03,
+        "longitudinal_accel": -0.073,
+        "lateral_accel": -0.017,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 49.7353792807938,
+      "headway_sec": 49.7353792807938,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9511693818885993,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 119,
+      "world_frame": 119,
+      "timestamp": 5.95,
       "ego": {
         "speed_kmh": 29.03,
         "longitudinal_accel": -0.049,
@@ -770,8 +1407,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 49.2853792807938,
+      "headway_sec": 49.2853792807938,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -780,113 +1417,15 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.8752085962896977,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9500895207704039,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 129,
-      "world_frame": 129,
-      "timestamp": 6.45,
-      "ego": {
-        "speed_kmh": 29.03,
-        "longitudinal_accel": -0.049,
-        "lateral_accel": 0,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.8516059928168535,
-        "final_risk_score": 0
-      }
-    },
-    {
-      "frame_id": 133,
-      "world_frame": 133,
-      "timestamp": 6.65,
-      "ego": {
-        "speed_kmh": 29.03,
-        "longitudinal_accel": -0.024,
-        "lateral_accel": 0.014,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.8486806137106551,
-        "final_risk_score": 0
-      }
-    },
-    {
-      "frame_id": 137,
-      "world_frame": 137,
-      "timestamp": 6.85,
+      "frame_id": 123,
+      "world_frame": 123,
+      "timestamp": 6.15,
       "ego": {
         "speed_kmh": 29.03,
         "longitudinal_accel": -0.049,
@@ -917,8 +1456,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 49.2853792807938,
+      "headway_sec": 49.2853792807938,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -927,67 +1466,18 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.8452537273615064,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9444286555034224,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 142,
-      "world_frame": 142,
-      "timestamp": 7.1,
-      "ego": {
-        "speed_kmh": 29.04,
-        "longitudinal_accel": 0.049,
-        "lateral_accel": 0,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.8656394641099391,
-        "final_risk_score": 0
-      }
-    },
-    {
-      "frame_id": 147,
-      "world_frame": 147,
-      "timestamp": 7.35,
+      "frame_id": 127,
+      "world_frame": 127,
+      "timestamp": 6.35,
       "ego": {
         "speed_kmh": 29.03,
-        "longitudinal_accel": -0.049,
+        "longitudinal_accel": -0.073,
         "lateral_accel": -0.001,
         "location": {
           "x": 0,
@@ -1009,14 +1499,14 @@
       "driver": {
         "state": "yawning",
         "alertness_score": 0.7,
-        "eye_state": "closed",
+        "eye_state": "open",
         "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 48.9853792807938,
+      "headway_sec": 48.9853792807938,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -1025,15 +1515,162 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9136502822246076,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.8988312777960707,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 151,
-      "world_frame": 151,
-      "timestamp": 7.55,
+      "frame_id": 131,
+      "world_frame": 131,
+      "timestamp": 6.55,
+      "ego": {
+        "speed_kmh": 29.03,
+        "longitudinal_accel": -0.073,
+        "lateral_accel": -0.001,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "right",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 48.9853792807938,
+      "headway_sec": 48.9853792807938,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.8752150376131904,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 135,
+      "world_frame": 135,
+      "timestamp": 6.75,
+      "ego": {
+        "speed_kmh": 29.03,
+        "longitudinal_accel": -0.049,
+        "lateral_accel": -0.004,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 48.5353792807938,
+      "headway_sec": 48.5353792807938,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.8926523635323342,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 139,
+      "world_frame": 139,
+      "timestamp": 6.95,
+      "ego": {
+        "speed_kmh": 29.03,
+        "longitudinal_accel": -0.073,
+        "lateral_accel": 0,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 48.5353792807938,
+      "headway_sec": 48.5353792807938,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9292996279881928,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 143,
+      "world_frame": 143,
+      "timestamp": 7.15,
       "ego": {
         "speed_kmh": 29.03,
         "longitudinal_accel": -0.073,
@@ -1064,6 +1701,55 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
+      "min_ttc": 48.2353792807938,
+      "headway_sec": 48.2353792807938,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9286064629204366,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 148,
+      "world_frame": 148,
+      "timestamp": 7.4,
+      "ego": {
+        "speed_kmh": 29.04,
+        "longitudinal_accel": 0.049,
+        "lateral_accel": 0.001,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
       "min_ttc": 10,
       "headway_sec": 10,
       "behavior_flags": {
@@ -1074,9 +1760,58 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.917777995482669,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9466164139653778,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 152,
+      "world_frame": 152,
+      "timestamp": 7.6,
+      "ego": {
+        "speed_kmh": 29.04,
+        "longitudinal_accel": 0.073,
+        "lateral_accel": 0,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9554167371926526,
+        "final_risk_score": 40
       }
     },
     {
@@ -1123,9 +1858,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9261270381709562,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9557110337490186,
+        "final_risk_score": 40
       }
     },
     {
@@ -1172,9 +1907,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
+        "base_risk": 40,
         "driver_factor": 0.95,
-        "final_risk_score": 0
+        "final_risk_score": 40
       }
     },
     {
@@ -1221,9 +1956,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
+        "base_risk": 40,
         "driver_factor": 0.95,
-        "final_risk_score": 0
+        "final_risk_score": 40
       }
     },
     {
@@ -1270,9 +2005,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9186423907790652,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9457705088244128,
+        "final_risk_score": 40
       }
     },
     {
@@ -1319,67 +2054,18 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9200484173510246,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.947049279573132,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 177,
-      "world_frame": 177,
-      "timestamp": 8.85,
+      "frame_id": 176,
+      "world_frame": 176,
+      "timestamp": 8.8,
       "ego": {
-        "speed_kmh": 29.03,
-        "longitudinal_accel": -0.061,
-        "lateral_accel": -0.001,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9116248068146057,
-        "final_risk_score": 0
-      }
-    },
-    {
-      "frame_id": 181,
-      "world_frame": 181,
-      "timestamp": 9.05,
-      "ego": {
-        "speed_kmh": 29.03,
-        "longitudinal_accel": -0.061,
+        "speed_kmh": 29.04,
+        "longitudinal_accel": 0.061,
         "lateral_accel": 0,
         "location": {
           "x": 0,
@@ -1417,19 +2103,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9238251702342416,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9457988396220415,
+        "final_risk_score": 40
       }
     },
     {
-      "frame_id": 185,
-      "world_frame": 185,
-      "timestamp": 9.25,
+      "frame_id": 180,
+      "world_frame": 180,
+      "timestamp": 9,
       "ego": {
-        "speed_kmh": 29.47,
-        "longitudinal_accel": 1.709,
-        "lateral_accel": -0.001,
+        "speed_kmh": 29.04,
+        "longitudinal_accel": 0.061,
+        "lateral_accel": 0,
         "location": {
           "x": 0,
           "y": 0,
@@ -1450,7 +2136,7 @@
       "driver": {
         "state": "yawning",
         "alertness_score": 0.7,
-        "eye_state": "closed",
+        "eye_state": "open",
         "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
@@ -1466,9 +2152,58 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 0,
-        "driver_factor": 0.9505003122077873,
-        "final_risk_score": 0
+        "base_risk": 40,
+        "driver_factor": 0.9642466791457681,
+        "final_risk_score": 40
+      }
+    },
+    {
+      "frame_id": 184,
+      "world_frame": 184,
+      "timestamp": 9.2,
+      "ego": {
+        "speed_kmh": 29.17,
+        "longitudinal_accel": 0.708,
+        "lateral_accel": 0,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 40,
+        "driver_factor": 0.9657878133807121,
+        "final_risk_score": 40
       }
     },
     {
@@ -1515,19 +2250,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 6,
-        "driver_factor": 0.9554142083383229,
-        "final_risk_score": 6
+        "base_risk": 44,
+        "driver_factor": 0.9726342082921073,
+        "final_risk_score": 44
       }
     },
     {
-      "frame_id": 194,
-      "world_frame": 194,
-      "timestamp": 9.7,
+      "frame_id": 193,
+      "world_frame": 193,
+      "timestamp": 9.65,
       "ego": {
-        "speed_kmh": 36.84,
-        "longitudinal_accel": 5.469,
-        "lateral_accel": 0.001,
+        "speed_kmh": 35.85,
+        "longitudinal_accel": 5.237,
+        "lateral_accel": 0,
         "location": {
           "x": 0,
           "y": 0,
@@ -1564,9 +2299,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 12,
-        "driver_factor": 0.9769337885706384,
-        "final_risk_score": 12
+        "base_risk": 50,
+        "driver_factor": 0.9811857012551889,
+        "final_risk_score": 50
       }
     },
     {
@@ -1613,9 +2348,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 20,
-        "driver_factor": 0.9713720254985827,
-        "final_risk_score": 20
+        "base_risk": 58,
+        "driver_factor": 0.9782047370123302,
+        "final_risk_score": 58
       }
     },
     {
@@ -1662,9 +2397,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 26,
-        "driver_factor": 0.9711577041920808,
-        "final_risk_score": 26
+        "base_risk": 64,
+        "driver_factor": 0.976854077671581,
+        "final_risk_score": 64
       }
     },
     {
@@ -1711,9 +2446,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 32,
-        "driver_factor": 0.9750758043062114,
-        "final_risk_score": 32
+        "base_risk": 70,
+        "driver_factor": 0.9773863217893619,
+        "final_risk_score": 70
       }
     },
     {
@@ -1760,9 +2495,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 38,
-        "driver_factor": 0.977109543222473,
-        "final_risk_score": 38
+        "base_risk": 76,
+        "driver_factor": 0.9771816740878431,
+        "final_risk_score": 76
       }
     },
     {
@@ -1809,9 +2544,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 44,
-        "driver_factor": 0.9760916003739886,
-        "final_risk_score": 44
+        "base_risk": 82,
+        "driver_factor": 0.9765203115816273,
+        "final_risk_score": 82
       }
     },
     {
@@ -1858,9 +2593,9 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 50,
-        "driver_factor": 0.9731895456432068,
-        "final_risk_score": 50
+        "base_risk": 88,
+        "driver_factor": 0.9823863217893618,
+        "final_risk_score": 88
       }
     },
     {
@@ -1907,19 +2642,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 56,
-        "driver_factor": 0.9641073161039485,
-        "final_risk_score": 56
+        "base_risk": 94,
+        "driver_factor": 0.979709428502532,
+        "final_risk_score": 94
       }
     },
     {
-      "frame_id": 226,
-      "world_frame": 226,
-      "timestamp": 11.3,
+      "frame_id": 227,
+      "world_frame": 227,
+      "timestamp": 11.35,
       "ego": {
-        "speed_kmh": 62.91,
-        "longitudinal_accel": 4.053,
-        "lateral_accel": -0.006,
+        "speed_kmh": 63.64,
+        "longitudinal_accel": 4.077,
+        "lateral_accel": -0.004,
         "location": {
           "x": 0,
           "y": 0,
@@ -1956,19 +2691,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 64,
-        "driver_factor": 0.9572174734209185,
-        "final_risk_score": 64
+        "base_risk": 100,
+        "driver_factor": 0.9789638939630825,
+        "final_risk_score": 100
       }
     },
     {
-      "frame_id": 230,
-      "world_frame": 230,
-      "timestamp": 11.5,
+      "frame_id": 231,
+      "world_frame": 231,
+      "timestamp": 11.55,
       "ego": {
-        "speed_kmh": 65.8,
-        "longitudinal_accel": 3.992,
-        "lateral_accel": -0.003,
+        "speed_kmh": 66.51,
+        "longitudinal_accel": 3.967,
+        "lateral_accel": -0.002,
         "location": {
           "x": 0,
           "y": 0,
@@ -2005,18 +2740,18 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 70,
-        "driver_factor": 0.9625571765244095,
-        "final_risk_score": 70
+        "base_risk": 100,
+        "driver_factor": 0.9766772841310026,
+        "final_risk_score": 100
       }
     },
     {
-      "frame_id": 234,
-      "world_frame": 234,
-      "timestamp": 11.7,
+      "frame_id": 235,
+      "world_frame": 235,
+      "timestamp": 11.75,
       "ego": {
-        "speed_kmh": 68.63,
-        "longitudinal_accel": 3.906,
+        "speed_kmh": 69.33,
+        "longitudinal_accel": 3.894,
         "lateral_accel": 0,
         "location": {
           "x": 0,
@@ -2054,19 +2789,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 76,
-        "driver_factor": 0.9516027893217143,
-        "final_risk_score": 76
+        "base_risk": 100,
+        "driver_factor": 0.97614932077604,
+        "final_risk_score": 100
       }
     },
     {
-      "frame_id": 238,
-      "world_frame": 238,
-      "timestamp": 11.9,
+      "frame_id": 239,
+      "world_frame": 239,
+      "timestamp": 11.95,
       "ego": {
-        "speed_kmh": 71.4,
-        "longitudinal_accel": 3.821,
-        "lateral_accel": 0.014,
+        "speed_kmh": 72.08,
+        "longitudinal_accel": 3.784,
+        "lateral_accel": 0.002,
         "location": {
           "x": 0,
           "y": 0,
@@ -2103,19 +2838,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 82,
-        "driver_factor": 0.9402997497897779,
-        "final_risk_score": 82
+        "base_risk": 100,
+        "driver_factor": 0.9674788306960947,
+        "final_risk_score": 100
       }
     },
     {
-      "frame_id": 242,
-      "world_frame": 242,
-      "timestamp": 12.1,
+      "frame_id": 243,
+      "world_frame": 243,
+      "timestamp": 12.15,
       "ego": {
-        "speed_kmh": 74.11,
-        "longitudinal_accel": 3.735,
-        "lateral_accel": 0.006,
+        "speed_kmh": 74.77,
+        "longitudinal_accel": 3.699,
+        "lateral_accel": 0.007,
         "location": {
           "x": 0,
           "y": 0,
@@ -2152,68 +2887,19 @@
         "tailgating": false
       },
       "risk": {
-        "base_risk": 88,
-        "driver_factor": 0.9465994022047929,
-        "final_risk_score": 88
+        "base_risk": 100,
+        "driver_factor": 0.9611069785156466,
+        "final_risk_score": 100
       }
     },
     {
-      "frame_id": 246,
-      "world_frame": 246,
-      "timestamp": 12.3,
+      "frame_id": 248,
+      "world_frame": 248,
+      "timestamp": 12.4,
       "ego": {
-        "speed_kmh": 76.76,
-        "longitudinal_accel": 3.638,
-        "lateral_accel": 0.006,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": true,
-        "harsh_corner": false,
-        "speeding": true,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 94.319,
-        "driver_factor": 0.9314111874302484,
-        "final_risk_score": 94.319
-      }
-    },
-    {
-      "frame_id": 250,
-      "world_frame": 250,
-      "timestamp": 12.5,
-      "ego": {
-        "speed_kmh": 79.36,
-        "longitudinal_accel": 3.577,
-        "lateral_accel": -0.065,
+        "speed_kmh": 78.07,
+        "longitudinal_accel": 3.601,
+        "lateral_accel": -0.051,
         "location": {
           "x": 0,
           "y": 0,
@@ -2251,18 +2937,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9168979565870622,
+        "driver_factor": 0.9377484017555059,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 254,
-      "world_frame": 254,
-      "timestamp": 12.7,
+      "frame_id": 252,
+      "world_frame": 252,
+      "timestamp": 12.6,
       "ego": {
-        "speed_kmh": 81.91,
-        "longitudinal_accel": 3.516,
-        "lateral_accel": -0.149,
+        "speed_kmh": 80.65,
+        "longitudinal_accel": 3.589,
+        "lateral_accel": -0.089,
         "location": {
           "x": 0,
           "y": 0,
@@ -2300,18 +2986,67 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9098942682665273,
+        "driver_factor": 0.9323778681177199,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 258,
-      "world_frame": 258,
-      "timestamp": 12.9,
+      "frame_id": 256,
+      "world_frame": 256,
+      "timestamp": 12.8,
       "ego": {
-        "speed_kmh": 84.4,
+        "speed_kmh": 83.16,
+        "longitudinal_accel": 3.479,
+        "lateral_accel": -0.161,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": true,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9263314457627386,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 260,
+      "world_frame": 260,
+      "timestamp": 13,
+      "ego": {
+        "speed_kmh": 85.63,
         "longitudinal_accel": 3.418,
-        "lateral_accel": -0.183,
+        "lateral_accel": -0.178,
         "location": {
           "x": 0,
           "y": 0,
@@ -2349,18 +3084,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8771798718983966,
+        "driver_factor": 0.8792234091048949,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 263,
-      "world_frame": 263,
-      "timestamp": 13.15,
+      "frame_id": 264,
+      "world_frame": 264,
+      "timestamp": 13.2,
       "ego": {
-        "speed_kmh": 87.37,
-        "longitudinal_accel": 2.967,
-        "lateral_accel": -0.155,
+        "speed_kmh": 87.76,
+        "longitudinal_accel": 2.198,
+        "lateral_accel": -0.15,
         "location": {
           "x": 0,
           "y": 0,
@@ -2398,18 +3133,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8672031080385222,
+        "driver_factor": 0.8684759455880504,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 267,
-      "world_frame": 267,
-      "timestamp": 13.35,
+      "frame_id": 268,
+      "world_frame": 268,
+      "timestamp": 13.4,
       "ego": {
-        "speed_kmh": 87.81,
-        "longitudinal_accel": -0.878,
-        "lateral_accel": -0.109,
+        "speed_kmh": 87.55,
+        "longitudinal_accel": -1.44,
+        "lateral_accel": -0.087,
         "location": {
           "x": 0,
           "y": 0,
@@ -2447,18 +3182,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8627564661469788,
+        "driver_factor": 0.8830697532237989,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 271,
-      "world_frame": 271,
-      "timestamp": 13.55,
+      "frame_id": 272,
+      "world_frame": 272,
+      "timestamp": 13.6,
       "ego": {
-        "speed_kmh": 86.78,
-        "longitudinal_accel": -1.159,
-        "lateral_accel": -0.053,
+        "speed_kmh": 86.65,
+        "longitudinal_accel": -0.683,
+        "lateral_accel": -0.03,
         "location": {
           "x": 0,
           "y": 0,
@@ -2496,18 +3231,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.875324235552506,
+        "driver_factor": 0.9142629050189467,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 275,
-      "world_frame": 275,
-      "timestamp": 13.75,
+      "frame_id": 276,
+      "world_frame": 276,
+      "timestamp": 13.8,
       "ego": {
-        "speed_kmh": 86.82,
-        "longitudinal_accel": 0.659,
-        "lateral_accel": 0.004,
+        "speed_kmh": 86.96,
+        "longitudinal_accel": 0.793,
+        "lateral_accel": 0.009,
         "location": {
           "x": 0,
           "y": 0,
@@ -2545,18 +3280,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9126483901481638,
+        "driver_factor": 0.944281522456494,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 280,
-      "world_frame": 280,
-      "timestamp": 14,
+      "frame_id": 281,
+      "world_frame": 281,
+      "timestamp": 14.05,
       "ego": {
-        "speed_kmh": 87.29,
-        "longitudinal_accel": 0.061,
-        "lateral_accel": 0.023,
+        "speed_kmh": 87.27,
+        "longitudinal_accel": -0.122,
+        "lateral_accel": 0.021,
         "location": {
           "x": 0,
           "y": 0,
@@ -2594,165 +3329,165 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9242972328513958,
+        "driver_factor": 0.948109665007611,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 284,
-      "world_frame": 284,
-      "timestamp": 14.2,
+      "frame_id": 285,
+      "world_frame": 285,
+      "timestamp": 14.25,
+      "ego": {
+        "speed_kmh": 87.01,
+        "longitudinal_accel": -0.342,
+        "lateral_accel": 0.037,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": true,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.955909592373972,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 289,
+      "world_frame": 289,
+      "timestamp": 14.45,
+      "ego": {
+        "speed_kmh": 87,
+        "longitudinal_accel": 0.11,
+        "lateral_accel": 0.016,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": true,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.955553957420125,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 293,
+      "world_frame": 293,
+      "timestamp": 14.65,
+      "ego": {
+        "speed_kmh": 87.12,
+        "longitudinal_accel": 0.11,
+        "lateral_accel": 0.01,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "microsleep",
+        "alertness_score": 0.05,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": true,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.95,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 298,
+      "world_frame": 298,
+      "timestamp": 14.9,
       "ego": {
         "speed_kmh": 87.08,
-        "longitudinal_accel": -0.391,
-        "lateral_accel": 0.029,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": true,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9129743267246755,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 288,
-      "world_frame": 288,
-      "timestamp": 14.4,
-      "ego": {
-        "speed_kmh": 86.98,
-        "longitudinal_accel": 0.073,
-        "lateral_accel": 0.019,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": true,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9129076877556719,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 292,
-      "world_frame": 292,
-      "timestamp": 14.6,
-      "ego": {
-        "speed_kmh": 87.1,
-        "longitudinal_accel": 0.146,
-        "lateral_accel": 0.02,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.694,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": true,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9017695598440728,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 296,
-      "world_frame": 296,
-      "timestamp": 14.8,
-      "ego": {
-        "speed_kmh": 87.11,
-        "longitudinal_accel": -0.037,
-        "lateral_accel": 0.003,
+        "longitudinal_accel": -0.085,
+        "lateral_accel": 0,
         "location": {
           "x": 0,
           "y": 0,
@@ -2795,12 +3530,12 @@
       }
     },
     {
-      "frame_id": 300,
-      "world_frame": 300,
-      "timestamp": 15,
+      "frame_id": 302,
+      "world_frame": 302,
+      "timestamp": 15.1,
       "ego": {
-        "speed_kmh": 87.05,
-        "longitudinal_accel": -0.061,
+        "speed_kmh": 87.01,
+        "longitudinal_accel": -0.208,
         "lateral_accel": -0.001,
         "location": {
           "x": 0,
@@ -2820,9 +3555,9 @@
       },
       "targets": [],
       "driver": {
-        "state": "microsleep",
-        "alertness_score": 0.05,
-        "eye_state": "closed",
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
         "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
@@ -2839,17 +3574,17 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.95,
+        "driver_factor": 0.9346728365136291,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 304,
-      "world_frame": 304,
-      "timestamp": 15.2,
+      "frame_id": 306,
+      "world_frame": 306,
+      "timestamp": 15.3,
       "ego": {
-        "speed_kmh": 85.76,
-        "longitudinal_accel": -4.797,
+        "speed_kmh": 83.16,
+        "longitudinal_accel": -7.8,
         "lateral_accel": 0,
         "location": {
           "x": 0,
@@ -2888,18 +3623,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9149089589680505,
+        "driver_factor": 0.9363525578806643,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 308,
-      "world_frame": 308,
-      "timestamp": 15.4,
+      "frame_id": 310,
+      "world_frame": 310,
+      "timestamp": 15.5,
       "ego": {
-        "speed_kmh": 79.99,
-        "longitudinal_accel": -9.045,
-        "lateral_accel": 0,
+        "speed_kmh": 76.58,
+        "longitudinal_accel": -9.57,
+        "lateral_accel": -0.002,
         "location": {
           "x": 0,
           "y": 0,
@@ -2937,17 +3672,17 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9141631177880468,
+        "driver_factor": 0.9430437824800936,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 312,
-      "world_frame": 312,
-      "timestamp": 15.6,
+      "frame_id": 314,
+      "world_frame": 314,
+      "timestamp": 15.7,
       "ego": {
-        "speed_kmh": 73.1,
-        "longitudinal_accel": -9.656,
+        "speed_kmh": 69.62,
+        "longitudinal_accel": -9.619,
         "lateral_accel": -0.001,
         "location": {
           "x": 0,
@@ -2986,213 +3721,17 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.936371372313787,
+        "driver_factor": 0.9535374448462918,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 316,
-      "world_frame": 316,
-      "timestamp": 15.8,
+      "frame_id": 318,
+      "world_frame": 318,
+      "timestamp": 15.9,
       "ego": {
-        "speed_kmh": 66.21,
-        "longitudinal_accel": -9.436,
-        "lateral_accel": 0,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": true,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9501799326428781,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 320,
-      "world_frame": 320,
-      "timestamp": 16,
-      "ego": {
-        "speed_kmh": 59.67,
-        "longitudinal_accel": -8.887,
-        "lateral_accel": 0,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": true,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9576868792219435,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 324,
-      "world_frame": 324,
-      "timestamp": 16.2,
-      "ego": {
-        "speed_kmh": 53.55,
-        "longitudinal_accel": -8.301,
-        "lateral_accel": -0.018,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": true,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.965400117147019,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 328,
-      "world_frame": 328,
-      "timestamp": 16.4,
-      "ego": {
-        "speed_kmh": 47.86,
-        "longitudinal_accel": -7.715,
-        "lateral_accel": -0.003,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 2.5,
-      "headway_sec": 2.5,
-      "behavior_flags": {
-        "harsh_brake": true,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": true
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9654473011003752,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 332,
-      "world_frame": 332,
-      "timestamp": 16.6,
-      "ego": {
-        "speed_kmh": 42.43,
-        "longitudinal_accel": -7.825,
+        "speed_kmh": 62.89,
+        "longitudinal_accel": -9.155,
         "lateral_accel": -0.001,
         "location": {
           "x": 0,
@@ -3231,18 +3770,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9666757009601963,
+        "driver_factor": 0.9603707143813902,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 336,
-      "world_frame": 336,
-      "timestamp": 16.8,
+      "frame_id": 322,
+      "world_frame": 322,
+      "timestamp": 16.1,
       "ego": {
-        "speed_kmh": 5.47,
-        "longitudinal_accel": -182.161,
-        "lateral_accel": -4.863,
+        "speed_kmh": 56.56,
+        "longitudinal_accel": -8.582,
+        "lateral_accel": -0.019,
         "location": {
           "x": 0,
           "y": 0,
@@ -3274,24 +3813,171 @@
       "behavior_flags": {
         "harsh_brake": true,
         "harsh_accel": false,
-        "harsh_corner": true,
+        "harsh_corner": false,
         "speeding": false,
         "tailgating": true
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9667680660575594,
+        "driver_factor": 0.9650534699205678,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 341,
-      "world_frame": 341,
-      "timestamp": 17.05,
+      "frame_id": 326,
+      "world_frame": 326,
+      "timestamp": 16.3,
       "ego": {
-        "speed_kmh": 0.37,
-        "longitudinal_accel": 0.813,
-        "lateral_accel": 0.187,
+        "speed_kmh": 50.66,
+        "longitudinal_accel": -7.947,
+        "lateral_accel": -0.001,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
+      "behavior_flags": {
+        "harsh_brake": true,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": true
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9746972172688797,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 330,
+      "world_frame": 330,
+      "timestamp": 16.5,
+      "ego": {
+        "speed_kmh": 45.17,
+        "longitudinal_accel": -7.41,
+        "lateral_accel": -0.002,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
+      "behavior_flags": {
+        "harsh_brake": true,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": true
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9707870934564435,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 334,
+      "world_frame": 334,
+      "timestamp": 16.7,
+      "ego": {
+        "speed_kmh": 39.64,
+        "longitudinal_accel": -7.69,
+        "lateral_accel": 0,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
+      "behavior_flags": {
+        "harsh_brake": true,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": true
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9702548493386628,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 338,
+      "world_frame": 338,
+      "timestamp": 16.9,
+      "ego": {
+        "speed_kmh": 0.87,
+        "longitudinal_accel": 2.489,
+        "lateral_accel": 0.885,
         "location": {
           "x": 0,
           "y": 0,
@@ -3329,7 +4015,56 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9700562531317536,
+        "driver_factor": 0.9704806139846511,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 342,
+      "world_frame": 342,
+      "timestamp": 17.1,
+      "ego": {
+        "speed_kmh": 0.19,
+        "longitudinal_accel": 0.353,
+        "lateral_accel": 0.027,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": true
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9700840800698112,
         "final_risk_score": 100
       }
     },
@@ -3367,127 +4102,29 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
         "harsh_corner": false,
         "speeding": false,
-        "tailgating": false
+        "tailgating": true
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9686882688569766,
+        "driver_factor": 0.9704806139846511,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 351,
-      "world_frame": 351,
-      "timestamp": 17.55,
+      "frame_id": 350,
+      "world_frame": 350,
+      "timestamp": 17.5,
       "ego": {
         "speed_kmh": 0.02,
-        "longitudinal_accel": 0.037,
-        "lateral_accel": 0.001,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9731812205449646,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 355,
-      "world_frame": 355,
-      "timestamp": 17.75,
-      "ego": {
-        "speed_kmh": 0,
-        "longitudinal_accel": 0,
-        "lateral_accel": 0.001,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9667441163037194,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 359,
-      "world_frame": 359,
-      "timestamp": 17.95,
-      "ego": {
-        "speed_kmh": 0,
         "longitudinal_accel": 0.012,
-        "lateral_accel": 0.001,
+        "lateral_accel": 0,
         "location": {
           "x": 0,
           "y": 0,
@@ -3514,29 +4151,29 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
         "harsh_corner": false,
         "speeding": false,
-        "tailgating": false
+        "tailgating": true
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9686080777886562,
+        "driver_factor": 0.9702759662831322,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 363,
-      "world_frame": 363,
-      "timestamp": 18.15,
+      "frame_id": 354,
+      "world_frame": 354,
+      "timestamp": 17.7,
       "ego": {
         "speed_kmh": 0,
-        "longitudinal_accel": 0.024,
-        "lateral_accel": 0.001,
+        "longitudinal_accel": 0,
+        "lateral_accel": -0.001,
         "location": {
           "x": 0,
           "y": 0,
@@ -3574,14 +4211,14 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9696832892015941,
+        "driver_factor": 0.9745859539309534,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 367,
-      "world_frame": 367,
-      "timestamp": 18.35,
+      "frame_id": 358,
+      "world_frame": 358,
+      "timestamp": 17.9,
       "ego": {
         "speed_kmh": 0,
         "longitudinal_accel": 0,
@@ -3623,14 +4260,63 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.960024378902844,
+        "driver_factor": 0.9735280575098977,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 371,
-      "world_frame": 371,
-      "timestamp": 18.55,
+      "frame_id": 362,
+      "world_frame": 362,
+      "timestamp": 18.1,
+      "ego": {
+        "speed_kmh": 0,
+        "longitudinal_accel": -0.024,
+        "lateral_accel": -0.001,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9743744992037542,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 366,
+      "world_frame": 366,
+      "timestamp": 18.3,
       "ego": {
         "speed_kmh": 0,
         "longitudinal_accel": 0,
@@ -3672,14 +4358,14 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9492608151916474,
+        "driver_factor": 0.9671685124132986,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 375,
-      "world_frame": 375,
-      "timestamp": 18.75,
+      "frame_id": 370,
+      "world_frame": 370,
+      "timestamp": 18.5,
       "ego": {
         "speed_kmh": 0,
         "longitudinal_accel": 0,
@@ -3721,14 +4407,14 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.953878932408329,
+        "driver_factor": 0.9548640249970805,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 379,
-      "world_frame": 379,
-      "timestamp": 18.95,
+      "frame_id": 374,
+      "world_frame": 374,
+      "timestamp": 18.7,
       "ego": {
         "speed_kmh": 0,
         "longitudinal_accel": 0,
@@ -3770,14 +4456,14 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9298448993897155,
+        "driver_factor": 0.9555177262796627,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 383,
-      "world_frame": 383,
-      "timestamp": 19.15,
+      "frame_id": 378,
+      "world_frame": 378,
+      "timestamp": 18.9,
       "ego": {
         "speed_kmh": 0,
         "longitudinal_accel": 0,
@@ -3819,14 +4505,14 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9257260724224617,
+        "driver_factor": 0.9609749801224067,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 388,
-      "world_frame": 388,
-      "timestamp": 19.4,
+      "frame_id": 382,
+      "world_frame": 382,
+      "timestamp": 19.1,
       "ego": {
         "speed_kmh": 0,
         "longitudinal_accel": 0,
@@ -3868,18 +4554,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.911266265267891,
+        "driver_factor": 0.9345865495298054,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 393,
-      "world_frame": 393,
-      "timestamp": 19.65,
+      "frame_id": 387,
+      "world_frame": 387,
+      "timestamp": 19.35,
       "ego": {
-        "speed_kmh": 1.28,
-        "longitudinal_accel": 3.637,
-        "lateral_accel": 0.083,
+        "speed_kmh": 0,
+        "longitudinal_accel": 0,
+        "lateral_accel": 0,
         "location": {
           "x": 0,
           "y": 0,
@@ -3901,7 +4587,105 @@
         "state": "yawning",
         "alertness_score": 0.7,
         "eye_state": "open",
-        "head_pose": "right",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9237182574017274,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 391,
+      "world_frame": 391,
+      "timestamp": 19.55,
+      "ego": {
+        "speed_kmh": 0.2,
+        "longitudinal_accel": 1.135,
+        "lateral_accel": 0.02,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9139502878225967,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 395,
+      "world_frame": 395,
+      "timestamp": 19.75,
+      "ego": {
+        "speed_kmh": 3.09,
+        "longitudinal_accel": 5.052,
+        "lateral_accel": 0.119,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
       },
@@ -3917,67 +4701,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8743602298595505,
+        "driver_factor": 0.8923466757286505,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 397,
-      "world_frame": 397,
-      "timestamp": 19.85,
+      "frame_id": 399,
+      "world_frame": 399,
+      "timestamp": 19.95,
       "ego": {
-        "speed_kmh": 5.08,
-        "longitudinal_accel": 5.479,
-        "lateral_accel": 0.129,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "right",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": true,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.8581479965408367,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 402,
-      "world_frame": 402,
-      "timestamp": 20.1,
-      "ego": {
-        "speed_kmh": 10.35,
-        "longitudinal_accel": 6.117,
-        "lateral_accel": -0.008,
+        "speed_kmh": 7.15,
+        "longitudinal_accel": 5.797,
+        "lateral_accel": 0.11,
         "location": {
           "x": 0,
           "y": 0,
@@ -4015,18 +4750,67 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.87290834876182,
+        "driver_factor": 0.8843257060061437,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 406,
-      "world_frame": 406,
-      "timestamp": 20.3,
+      "frame_id": 403,
+      "world_frame": 403,
+      "timestamp": 20.15,
       "ego": {
-        "speed_kmh": 14.73,
-        "longitudinal_accel": 5.798,
-        "lateral_accel": 0.075,
+        "speed_kmh": 11.46,
+        "longitudinal_accel": 6.164,
+        "lateral_accel": 0.056,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9140341266521372,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 407,
+      "world_frame": 407,
+      "timestamp": 20.35,
+      "ego": {
+        "speed_kmh": 15.73,
+        "longitudinal_accel": 5.603,
+        "lateral_accel": 0.072,
         "location": {
           "x": 0,
           "y": 0,
@@ -4064,18 +4848,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8855338409346899,
+        "driver_factor": 0.9331119112804869,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 410,
-      "world_frame": 410,
-      "timestamp": 20.5,
+      "frame_id": 411,
+      "world_frame": 411,
+      "timestamp": 20.55,
       "ego": {
-        "speed_kmh": 18.67,
-        "longitudinal_accel": 5.383,
-        "lateral_accel": 0.062,
+        "speed_kmh": 19.31,
+        "longitudinal_accel": 3.552,
+        "lateral_accel": 0.051,
         "location": {
           "x": 0,
           "y": 0,
@@ -4113,17 +4897,17 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9350121917258241,
+        "driver_factor": 0.952776097675425,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 414,
-      "world_frame": 414,
-      "timestamp": 20.7,
+      "frame_id": 416,
+      "world_frame": 416,
+      "timestamp": 20.8,
       "ego": {
-        "speed_kmh": 20.49,
-        "longitudinal_accel": 3.21,
+        "speed_kmh": 22.07,
+        "longitudinal_accel": 4.626,
         "lateral_accel": 0.039,
         "location": {
           "x": 0,
@@ -4155,6 +4939,104 @@
       "headway_sec": 10,
       "behavior_flags": {
         "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9500132829996837,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 420,
+      "world_frame": 420,
+      "timestamp": 21,
+      "ego": {
+        "speed_kmh": 25.92,
+        "longitudinal_accel": 5.017,
+        "lateral_accel": 0.035,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.950745598534862,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 424,
+      "world_frame": 424,
+      "timestamp": 21.2,
+      "ego": {
+        "speed_kmh": 29.09,
+        "longitudinal_accel": 2.698,
+        "lateral_accel": 0.057,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
         "harsh_accel": false,
         "harsh_corner": false,
         "speeding": false,
@@ -4162,116 +5044,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9241484821996897,
+        "driver_factor": 0.9448011779033112,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 419,
-      "world_frame": 419,
-      "timestamp": 20.95,
+      "frame_id": 428,
+      "world_frame": 428,
+      "timestamp": 21.4,
       "ego": {
-        "speed_kmh": 25.02,
-        "longitudinal_accel": 4.895,
-        "lateral_accel": 0.043,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": true,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9177088746208374,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 423,
-      "world_frame": 423,
-      "timestamp": 21.15,
-      "ego": {
-        "speed_kmh": 28.6,
-        "longitudinal_accel": 4.395,
-        "lateral_accel": 0.13,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": true,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.913404623283327,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 427,
-      "world_frame": 427,
-      "timestamp": 21.35,
-      "ego": {
-        "speed_kmh": 28.79,
-        "longitudinal_accel": -1.77,
-        "lateral_accel": 0.036,
+        "speed_kmh": 28.36,
+        "longitudinal_accel": -2.392,
+        "lateral_accel": 0.031,
         "location": {
           "x": 0,
           "y": 0,
@@ -4314,13 +5098,13 @@
       }
     },
     {
-      "frame_id": 431,
-      "world_frame": 431,
-      "timestamp": 21.55,
+      "frame_id": 432,
+      "world_frame": 432,
+      "timestamp": 21.6,
       "ego": {
-        "speed_kmh": 27.11,
-        "longitudinal_accel": -1.99,
-        "lateral_accel": 0.015,
+        "speed_kmh": 26.83,
+        "longitudinal_accel": -1.599,
+        "lateral_accel": 0.017,
         "location": {
           "x": 0,
           "y": 0,
@@ -4407,18 +5191,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.924193713730129,
+        "driver_factor": 0.9315843970183166,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 441,
-      "world_frame": 441,
-      "timestamp": 22.05,
+      "frame_id": 440,
+      "world_frame": 440,
+      "timestamp": 22,
       "ego": {
-        "speed_kmh": 28.27,
-        "longitudinal_accel": -0.902,
-        "lateral_accel": 0.081,
+        "speed_kmh": 28.43,
+        "longitudinal_accel": -0.157,
+        "lateral_accel": 0.096,
         "location": {
           "x": 0,
           "y": 0,
@@ -4456,18 +5240,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9213932167300608,
+        "driver_factor": 0.9438086467209442,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 446,
-      "world_frame": 446,
-      "timestamp": 22.3,
+      "frame_id": 445,
+      "world_frame": 445,
+      "timestamp": 22.25,
       "ego": {
-        "speed_kmh": 27.1,
-        "longitudinal_accel": -0.647,
-        "lateral_accel": 0.033,
+        "speed_kmh": 27.21,
+        "longitudinal_accel": -1.061,
+        "lateral_accel": 0.041,
         "location": {
           "x": 0,
           "y": 0,
@@ -4505,7 +5289,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9415577984927006,
+        "driver_factor": 0.9505667651414393,
         "final_risk_score": 100
       }
     },
@@ -4554,18 +5338,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9576030624117279,
+        "driver_factor": 0.958977542417792,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 454,
-      "world_frame": 454,
-      "timestamp": 22.7,
+      "frame_id": 455,
+      "world_frame": 455,
+      "timestamp": 22.75,
       "ego": {
-        "speed_kmh": 28.03,
-        "longitudinal_accel": -0.474,
-        "lateral_accel": 0.09,
+        "speed_kmh": 27.84,
+        "longitudinal_accel": -1.06,
+        "lateral_accel": 0.077,
         "location": {
           "x": 0,
           "y": 0,
@@ -4603,18 +5387,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9532849426720746,
+        "driver_factor": 0.9648738719060603,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 458,
-      "world_frame": 458,
-      "timestamp": 22.9,
+      "frame_id": 459,
+      "world_frame": 459,
+      "timestamp": 22.95,
       "ego": {
-        "speed_kmh": 26.7,
-        "longitudinal_accel": -2.234,
-        "lateral_accel": 0.045,
+        "speed_kmh": 26.4,
+        "longitudinal_accel": -1.672,
+        "lateral_accel": 0.035,
         "location": {
           "x": 0,
           "y": 0,
@@ -4652,18 +5436,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9626798961196864,
+        "driver_factor": 0.9746972172688797,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 463,
-      "world_frame": 463,
-      "timestamp": 23.15,
+      "frame_id": 464,
+      "world_frame": 464,
+      "timestamp": 23.2,
       "ego": {
-        "speed_kmh": 26.62,
-        "longitudinal_accel": 1.826,
-        "lateral_accel": 0.159,
+        "speed_kmh": 27.09,
+        "longitudinal_accel": 2.607,
+        "lateral_accel": 0.124,
         "location": {
           "x": 0,
           "y": 0,
@@ -4701,18 +5485,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9688627543114727,
+        "driver_factor": 0.9700754312674869,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 467,
-      "world_frame": 467,
-      "timestamp": 23.35,
+      "frame_id": 469,
+      "world_frame": 469,
+      "timestamp": 23.45,
       "ego": {
-        "speed_kmh": 29.06,
-        "longitudinal_accel": 4.035,
-        "lateral_accel": 0.081,
+        "speed_kmh": 30.48,
+        "longitudinal_accel": 3.839,
+        "lateral_accel": 0.061,
         "location": {
           "x": 0,
           "y": 0,
@@ -4750,18 +5534,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9676273605789757,
+        "driver_factor": 0.9704806139846511,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 471,
-      "world_frame": 471,
-      "timestamp": 23.55,
+      "frame_id": 473,
+      "world_frame": 473,
+      "timestamp": 23.65,
       "ego": {
-        "speed_kmh": 31.67,
-        "longitudinal_accel": 3.167,
-        "lateral_accel": 0.049,
+        "speed_kmh": 32.66,
+        "longitudinal_accel": 2.714,
+        "lateral_accel": 0.315,
         "location": {
           "x": 0,
           "y": 0,
@@ -4799,18 +5583,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9680272305121165,
+        "driver_factor": 0.9704806139846511,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 475,
-      "world_frame": 475,
-      "timestamp": 23.75,
+      "frame_id": 477,
+      "world_frame": 477,
+      "timestamp": 23.85,
       "ego": {
-        "speed_kmh": 33.6,
-        "longitudinal_accel": 2.684,
-        "lateral_accel": 0.16,
+        "speed_kmh": 34.62,
+        "longitudinal_accel": 2.926,
+        "lateral_accel": 0.111,
         "location": {
           "x": 0,
           "y": 0,
@@ -4848,18 +5632,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9703853901875921,
+        "driver_factor": 0.9700840800698112,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 479,
-      "world_frame": 479,
-      "timestamp": 23.95,
+      "frame_id": 482,
+      "world_frame": 482,
+      "timestamp": 24.1,
       "ego": {
-        "speed_kmh": 35.7,
-        "longitudinal_accel": 3.06,
-        "lateral_accel": 0.081,
+        "speed_kmh": 37.31,
+        "longitudinal_accel": 2.899,
+        "lateral_accel": 0.04,
         "location": {
           "x": 0,
           "y": 0,
@@ -4897,67 +5681,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9690424611472531,
+        "driver_factor": 0.9704806139846511,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 483,
-      "world_frame": 483,
-      "timestamp": 24.15,
+      "frame_id": 486,
+      "world_frame": 486,
+      "timestamp": 24.3,
       "ego": {
-        "speed_kmh": 37.81,
-        "longitudinal_accel": 2.763,
-        "lateral_accel": 1.982,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9711982406275327,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 487,
-      "world_frame": 487,
-      "timestamp": 24.35,
-      "ego": {
-        "speed_kmh": 38.76,
-        "longitudinal_accel": 0.955,
-        "lateral_accel": 6.623,
+        "speed_kmh": 38.58,
+        "longitudinal_accel": 1.102,
+        "lateral_accel": 7.953,
         "location": {
           "x": 0,
           "y": 0,
@@ -4995,18 +5730,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9667441163037194,
+        "driver_factor": 0.9754806139846511,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 491,
-      "world_frame": 491,
-      "timestamp": 24.55,
+      "frame_id": 490,
+      "world_frame": 490,
+      "timestamp": 24.5,
       "ego": {
-        "speed_kmh": 39.99,
-        "longitudinal_accel": 3.153,
-        "lateral_accel": 3.71,
+        "speed_kmh": 39.43,
+        "longitudinal_accel": 2.093,
+        "lateral_accel": 4.235,
         "location": {
           "x": 0,
           "y": 0,
@@ -5044,18 +5779,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9682590771640466,
+        "driver_factor": 0.9748192514784353,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 495,
-      "world_frame": 495,
-      "timestamp": 24.75,
+      "frame_id": 494,
+      "world_frame": 494,
+      "timestamp": 24.7,
       "ego": {
-        "speed_kmh": 42.73,
-        "longitudinal_accel": 3.487,
-        "lateral_accel": -6.247,
+        "speed_kmh": 42.09,
+        "longitudinal_accel": 3.639,
+        "lateral_accel": -4.687,
         "location": {
           "x": 0,
           "y": 0,
@@ -5093,18 +5828,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9675152458490964,
+        "driver_factor": 0.9754806139846511,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 499,
-      "world_frame": 499,
-      "timestamp": 24.95,
+      "frame_id": 498,
+      "world_frame": 498,
+      "timestamp": 24.9,
       "ego": {
-        "speed_kmh": 45.95,
-        "longitudinal_accel": 4.678,
-        "lateral_accel": -4.078,
+        "speed_kmh": 45.12,
+        "longitudinal_accel": 4.661,
+        "lateral_accel": -4.511,
         "location": {
           "x": 0,
           "y": 0,
@@ -5131,29 +5866,29 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 2.960577379527129,
-      "headway_sec": 2.960577379527129,
+      "min_ttc": 10,
+      "headway_sec": 10,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": true,
         "harsh_corner": true,
         "speeding": false,
-        "tailgating": true
+        "tailgating": false
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9638186115710345,
+        "driver_factor": 0.9670114701022905,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 503,
-      "world_frame": 503,
-      "timestamp": 25.15,
+      "frame_id": 502,
+      "world_frame": 502,
+      "timestamp": 25.1,
       "ego": {
-        "speed_kmh": 48.69,
-        "longitudinal_accel": 3.043,
-        "lateral_accel": -5.915,
+        "speed_kmh": 48.16,
+        "longitudinal_accel": 3.567,
+        "lateral_accel": -5.042,
         "location": {
           "x": 0,
           "y": 0,
@@ -5180,225 +5915,78 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 2.960577379527129,
-      "headway_sec": 2.960577379527129,
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": true,
+        "harsh_corner": true,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9584746278216448,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 506,
+      "world_frame": 506,
+      "timestamp": 25.3,
+      "ego": {
+        "speed_kmh": 50.2,
+        "longitudinal_accel": 2.698,
+        "lateral_accel": -3.413,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
         "harsh_corner": true,
         "speeding": false,
-        "tailgating": true
+        "tailgating": false
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9481731361104155,
+        "driver_factor": 0.9596263979139377,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 507,
-      "world_frame": 507,
-      "timestamp": 25.35,
+      "frame_id": 510,
+      "world_frame": 510,
+      "timestamp": 25.5,
       "ego": {
-        "speed_kmh": 50.65,
-        "longitudinal_accel": 2.558,
-        "lateral_accel": -2.943,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 2.6105773795271277,
-      "headway_sec": 2.6105773795271277,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": true
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9530212088004342,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 511,
-      "world_frame": 511,
-      "timestamp": 25.55,
-      "ego": {
-        "speed_kmh": 52.36,
-        "longitudinal_accel": 2.349,
-        "lateral_accel": -1.756,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 2.3605773795271277,
-      "headway_sec": 2.3605773795271277,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": true
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9441776913249754,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 515,
-      "world_frame": 515,
-      "timestamp": 25.75,
-      "ego": {
-        "speed_kmh": 54.02,
-        "longitudinal_accel": 2.272,
-        "lateral_accel": -0.783,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 2.3605773795271277,
-      "headway_sec": 2.3605773795271277,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": true
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9156308650689506,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 519,
-      "world_frame": 519,
-      "timestamp": 25.95,
-      "ego": {
-        "speed_kmh": 55.25,
-        "longitudinal_accel": 1.149,
-        "lateral_accel": -0.246,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "open",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 2.1105773795271277,
-      "headway_sec": 2.1105773795271277,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": true
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.90747501591783,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 523,
-      "world_frame": 523,
-      "timestamp": 26.15,
-      "ego": {
-        "speed_kmh": 55.15,
-        "longitudinal_accel": -0.806,
-        "lateral_accel": -0.031,
+        "speed_kmh": 51.94,
+        "longitudinal_accel": 2.367,
+        "lateral_accel": -2.312,
         "location": {
           "x": 0,
           "y": 0,
@@ -5436,7 +6024,154 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8743107562689754,
+        "driver_factor": 0.9695396864404884,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 514,
+      "world_frame": 514,
+      "timestamp": 25.7,
+      "ego": {
+        "speed_kmh": 53.61,
+        "longitudinal_accel": 2.307,
+        "lateral_accel": -0.996,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": true
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9356403207535238,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 518,
+      "world_frame": 518,
+      "timestamp": 25.9,
+      "ego": {
+        "speed_kmh": 55.04,
+        "longitudinal_accel": 1.613,
+        "lateral_accel": -0.335,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 2.5,
+      "headway_sec": 2.5,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": true
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9365782072188906,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 522,
+      "world_frame": 522,
+      "timestamp": 26.1,
+      "ego": {
+        "speed_kmh": 55.3,
+        "longitudinal_accel": -0.439,
+        "lateral_accel": -0.059,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 10,
+      "headway_sec": 10,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9259800534419795,
         "final_risk_score": 100
       }
     },
@@ -5469,23 +6204,23 @@
         "state": "yawning",
         "alertness_score": 0.7,
         "eye_state": "open",
-        "head_pose": "right",
+        "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 2.5,
-      "headway_sec": 2.5,
+      "min_ttc": 10,
+      "headway_sec": 10,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
         "harsh_corner": false,
         "speeding": false,
-        "tailgating": true
+        "tailgating": false
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8712946692185014,
+        "driver_factor": 0.8816044155865067,
         "final_risk_score": 100
       }
     },
@@ -5518,7 +6253,7 @@
         "state": "yawning",
         "alertness_score": 0.7,
         "eye_state": "open",
-        "head_pose": "right",
+        "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
       },
@@ -5534,7 +6269,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8448315424493839,
+        "driver_factor": 0.8666234000111542,
         "final_risk_score": 100
       }
     },
@@ -5583,7 +6318,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8740735445476543,
+        "driver_factor": 0.8952219578376895,
         "final_risk_score": 100
       }
     },
@@ -5621,8 +6356,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 20.773065160031347,
+      "headway_sec": 20.773065160031347,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -5632,7 +6367,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.8925373753622112,
+        "driver_factor": 0.9173842645087089,
         "final_risk_score": 100
       }
     },
@@ -5670,8 +6405,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 20.773065160031347,
+      "headway_sec": 20.773065160031347,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -5681,7 +6416,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9367979154711715,
+        "driver_factor": 0.9663233439929781,
         "final_risk_score": 100
       }
     },
@@ -5719,8 +6454,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 39.75789871197661,
+      "headway_sec": 39.75789871197661,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -5730,214 +6465,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9243626497734734,
+        "driver_factor": 0.9523773494724328,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 552,
-      "world_frame": 552,
-      "timestamp": 27.6,
-      "ego": {
-        "speed_kmh": 57.38,
-        "longitudinal_accel": 0.193,
-        "lateral_accel": -0.029,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.7,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9182834006135416,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 556,
-      "world_frame": 556,
-      "timestamp": 27.8,
-      "ego": {
-        "speed_kmh": 57.19,
-        "longitudinal_accel": -0.172,
-        "lateral_accel": -4.59,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "yawning",
-        "alertness_score": 0.696,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": true,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.9217258677526077,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 560,
-      "world_frame": 560,
-      "timestamp": 28,
-      "ego": {
-        "speed_kmh": 57.27,
-        "longitudinal_accel": 0.222,
-        "lateral_accel": -4.784,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "microsleep",
-        "alertness_score": 0.05,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": true,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.95,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 564,
-      "world_frame": 564,
-      "timestamp": 28.2,
-      "ego": {
-        "speed_kmh": 57.35,
-        "longitudinal_accel": 0.128,
-        "lateral_accel": -2.594,
-        "location": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "rotation": {
-          "yaw": 0,
-          "pitch": 0,
-          "roll": 0
-        },
-        "geolocation": {
-          "lat": 0,
-          "lon": 0,
-          "alt": 0
-        }
-      },
-      "targets": [],
-      "driver": {
-        "state": "microsleep",
-        "alertness_score": 0.05,
-        "eye_state": "closed",
-        "head_pose": "normal",
-        "mouth_state": "normal",
-        "nthu_subject_id": "runtime"
-      },
-      "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
-      "behavior_flags": {
-        "harsh_brake": false,
-        "harsh_accel": false,
-        "harsh_corner": false,
-        "speeding": false,
-        "tailgating": false
-      },
-      "risk": {
-        "base_risk": 100,
-        "driver_factor": 0.95,
-        "final_risk_score": 100
-      }
-    },
-    {
-      "frame_id": 568,
-      "world_frame": 568,
-      "timestamp": 28.4,
+      "frame_id": 551,
+      "world_frame": 551,
+      "timestamp": 27.55,
       "ego": {
         "speed_kmh": 57.34,
-        "longitudinal_accel": -0.042,
-        "lateral_accel": -0.889,
+        "longitudinal_accel": 0.259,
+        "lateral_accel": -0.003,
         "location": {
           "x": 0,
           "y": 0,
@@ -5958,14 +6497,14 @@
       "driver": {
         "state": "yawning",
         "alertness_score": 0.7,
-        "eye_state": "open",
+        "eye_state": "closed",
         "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 17.89526068830999,
+      "headway_sec": 17.89526068830999,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -5975,18 +6514,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9235864608384784,
+        "driver_factor": 0.9525179075696585,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 572,
-      "world_frame": 572,
-      "timestamp": 28.6,
+      "frame_id": 555,
+      "world_frame": 555,
+      "timestamp": 27.75,
       "ego": {
-        "speed_kmh": 57.31,
-        "longitudinal_accel": -0.024,
-        "lateral_accel": -0.063,
+        "speed_kmh": 57.22,
+        "longitudinal_accel": -0.554,
+        "lateral_accel": -5.291,
         "location": {
           "x": 0,
           "y": 0,
@@ -6007,35 +6546,133 @@
       "driver": {
         "state": "yawning",
         "alertness_score": 0.7,
-        "eye_state": "open",
+        "eye_state": "closed",
         "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 17.89526068830999,
+      "headway_sec": 17.89526068830999,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
-        "harsh_corner": false,
+        "harsh_corner": true,
         "speeding": false,
         "tailgating": false
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9227462828635538,
+        "driver_factor": 0.9535586566113778,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 576,
-      "world_frame": 576,
-      "timestamp": 28.8,
+      "frame_id": 559,
+      "world_frame": 559,
+      "timestamp": 27.95,
       "ego": {
-        "speed_kmh": 57.31,
-        "longitudinal_accel": -0.013,
-        "lateral_accel": 0.062,
+        "speed_kmh": 57.25,
+        "longitudinal_accel": 0.276,
+        "lateral_accel": -4.099,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "microsleep",
+        "alertness_score": 0.05,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 15.453112894355753,
+      "headway_sec": 15.453112894355753,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": true,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.95,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 563,
+      "world_frame": 563,
+      "timestamp": 28.15,
+      "ego": {
+        "speed_kmh": 57.33,
+        "longitudinal_accel": 0.167,
+        "lateral_accel": -3.082,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "microsleep",
+        "alertness_score": 0.05,
+        "eye_state": "closed",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 15.453112894355753,
+      "headway_sec": 15.453112894355753,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": true,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.95,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 567,
+      "world_frame": 567,
+      "timestamp": 28.35,
+      "ego": {
+        "speed_kmh": 57.35,
+        "longitudinal_accel": -0.04,
+        "lateral_accel": -1.212,
         "location": {
           "x": 0,
           "y": 0,
@@ -6062,8 +6699,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 20.496492264490783,
+      "headway_sec": 20.496492264490783,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -6073,18 +6710,18 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9297733312436329,
+        "driver_factor": 0.9388129775363417,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 580,
-      "world_frame": 580,
-      "timestamp": 29,
+      "frame_id": 571,
+      "world_frame": 571,
+      "timestamp": 28.55,
       "ego": {
         "speed_kmh": 57.32,
-        "longitudinal_accel": -0.013,
-        "lateral_accel": 0.111,
+        "longitudinal_accel": -0.022,
+        "lateral_accel": -0.326,
         "location": {
           "x": 0,
           "y": 0,
@@ -6111,8 +6748,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 20.496492264490783,
+      "headway_sec": 20.496492264490783,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -6122,18 +6759,67 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9431498785617518,
+        "driver_factor": 0.941317708972317,
         "final_risk_score": 100
       }
     },
     {
-      "frame_id": 584,
-      "world_frame": 584,
-      "timestamp": 29.2,
+      "frame_id": 575,
+      "world_frame": 575,
+      "timestamp": 28.75,
+      "ego": {
+        "speed_kmh": 57.31,
+        "longitudinal_accel": 0.012,
+        "lateral_accel": 0.06,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 54.74759363744546,
+      "headway_sec": 54.74759363744546,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9469176977154926,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 579,
+      "world_frame": 579,
+      "timestamp": 28.95,
       "ego": {
         "speed_kmh": 57.32,
         "longitudinal_accel": 0.012,
-        "lateral_accel": 0.055,
+        "lateral_accel": 0.117,
         "location": {
           "x": 0,
           "y": 0,
@@ -6154,14 +6840,14 @@
       "driver": {
         "state": "yawning",
         "alertness_score": 0.7,
-        "eye_state": "closed",
+        "eye_state": "open",
         "head_pose": "normal",
         "mouth_state": "normal",
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 54.74759363744546,
+      "headway_sec": 54.74759363744546,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -6171,7 +6857,56 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9595239339984026,
+        "driver_factor": 0.966626151209777,
+        "final_risk_score": 100
+      }
+    },
+    {
+      "frame_id": 583,
+      "world_frame": 583,
+      "timestamp": 29.15,
+      "ego": {
+        "speed_kmh": 57.32,
+        "longitudinal_accel": 0,
+        "lateral_accel": 0.063,
+        "location": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "yaw": 0,
+          "pitch": 0,
+          "roll": 0
+        },
+        "geolocation": {
+          "lat": 0,
+          "lon": 0,
+          "alt": 0
+        }
+      },
+      "targets": [],
+      "driver": {
+        "state": "yawning",
+        "alertness_score": 0.7,
+        "eye_state": "open",
+        "head_pose": "normal",
+        "mouth_state": "normal",
+        "nthu_subject_id": "runtime"
+      },
+      "events_active": [],
+      "min_ttc": 37.1080699543347,
+      "headway_sec": 37.1080699543347,
+      "behavior_flags": {
+        "harsh_brake": false,
+        "harsh_accel": false,
+        "harsh_corner": false,
+        "speeding": false,
+        "tailgating": false
+      },
+      "risk": {
+        "base_risk": 100,
+        "driver_factor": 0.9648053307367472,
         "final_risk_score": 100
       }
     },
@@ -6209,8 +6944,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 39.76675853838181,
+      "headway_sec": 39.76675853838181,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -6220,7 +6955,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.9681660856669339,
+        "driver_factor": 0.9794030173276335,
         "final_risk_score": 100
       }
     },
@@ -6258,8 +6993,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 39.76675853838181,
+      "headway_sec": 39.76675853838181,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -6269,7 +7004,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.971815092460629,
+        "driver_factor": 0.9864821578776553,
         "final_risk_score": 100
       }
     },
@@ -6307,8 +7042,8 @@
         "nthu_subject_id": "runtime"
       },
       "events_active": [],
-      "min_ttc": 10,
-      "headway_sec": 10,
+      "min_ttc": 40.908666067501905,
+      "headway_sec": 40.908666067501905,
       "behavior_flags": {
         "harsh_brake": false,
         "harsh_accel": false,
@@ -6318,7 +7053,7 @@
       },
       "risk": {
         "base_risk": 100,
-        "driver_factor": 0.972470092956681,
+        "driver_factor": 0.9815003387828796,
         "final_risk_score": 100
       }
     }

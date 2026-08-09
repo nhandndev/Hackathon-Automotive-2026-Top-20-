@@ -211,8 +211,6 @@ Chỉ dùng lệnh này khi `SE\BE\.env` đã có CarSky external credential th�
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
   -DataDir ..\Practice_Dataset `
-  -DriverModel AI\models\driver_state_current.joblib `
-  -DataDir E:\automotive_cc\Practice_Dataset `
   -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard
 ```
@@ -227,7 +225,7 @@ Chỉ khi cần demo đầy đủ với CarSky cloud thì cấu hình credential
 ```powershell
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
-  -DataDir E:\automotive_cc\Practice_Dataset `
+  -DataDir ..\Practice_Dataset `
   -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard `
   -RequireCarSky
@@ -263,7 +261,6 @@ DecisionEvent vẫn là contract tích hợp chính.
 python AI\scripts\run_inference.py `
   --data-dir ..\Practice_Dataset `
   --samples-only `
-  --driver-model AI\models\driver_state_current.joblib `
   --driver-model AI\models\candidate_013.joblib `
   --out AI\artifacts\predictions_6_samples
 
@@ -274,6 +271,12 @@ python AI\team_kit\evaluation.py `
 ```
 
 Submission inference từng frame và không cần Backend, Dashboard hay CarSky.
+
+#5.1 (Ngoài lề): Script chạy analysis cho inference
+HACKATHON\.venv\Scripts\python.exe experiment\evaluate_driver_state_simple_v3.py `
+  HACKATHON\AI\artifacts\predictions_6_samples `
+  Practice_Dataset `
+  --output experiment\analysis_driver_state_simple_v3
 
 ## 6. Backup và troubleshooting
 

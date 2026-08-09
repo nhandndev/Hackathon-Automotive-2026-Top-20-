@@ -133,13 +133,15 @@ def main() -> int:
 
     intervention_overlay = InterventionOverlayState()
     _stop_poll = threading.Event()
-    intervention_endpoint = args.se_endpoint.rstrip("/") + "/interventions/pending"
-    _poll_thread = threading.Thread(
-        target=_poll_interventions,
-        args=(intervention_overlay, dataset.trip_id, _stop_poll, intervention_endpoint),
-        daemon=True,
-    )
-    _poll_thread.start()
+    _poll_thread = None
+    if args.se_endpoint:
+        intervention_endpoint = args.se_endpoint.rstrip("/") + "/interventions/pending"
+        _poll_thread = threading.Thread(
+            target=_poll_interventions,
+            args=(intervention_overlay, dataset.trip_id, _stop_poll, intervention_endpoint),
+            daemon=True,
+        )
+        _poll_thread.start()
 
     try:
         with args.events.open("w", encoding="utf-8") as event_stream:
@@ -172,6 +174,7 @@ def main() -> int:
                         if args.driver_source == "dataset"
                         else None
                     ),
+                    force_driver_sync=args.driver_source == "dataset",
                 )
                 
                 cached_ttc = res["cached_ttc"]

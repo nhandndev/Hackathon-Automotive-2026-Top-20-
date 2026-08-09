@@ -55,6 +55,8 @@ class CarSkyPublisher:
         if dedup_key == self.last_delivered_key:
             return False
         delivery = Delivery(payload=payload, kind=kind, dedup_key=dedup_key)
+        if kind is DeliveryKind.TELEMETRY:
+            self._drop_queued_telemetry()
         if not self.queue.full():
             self.queue.put_nowait(delivery)
             return True
@@ -82,6 +84,16 @@ class CarSkyPublisher:
             self.delivery_status = "degraded"
             self.last_error = "transition queue timeout"
             return False
+
+    def _drop_queued_telemetry(self) -> None:
+        retained: list[Delivery] = []
+        while not self.queue.empty():
+            queued = self.queue.get_nowait()
+            self.queue.task_done()
+            if queued.kind is not DeliveryKind.TELEMETRY:
+                retained.append(queued)
+        for queued in retained:
+            self.queue.put_nowait(queued)
 
     async def _run(self) -> None:
         while True:

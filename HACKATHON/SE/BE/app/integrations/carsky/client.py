@@ -51,14 +51,24 @@ class CarSkyClient:
 
     async def actuate(self, payload: dict[str, Any]) -> Any:
         signals = payload.get("signals")
+        if (
+            isinstance(signals, list)
+            and payload.get("transport") == "vehicle-speed-mux"
+            and payload.get("realtime") is True
+        ):
+            responses: list[Any] = []
+            for signal in signals:
+                responses.append(await self._post_actuate({"signals": [signal]}))
+                await asyncio.sleep(0.015)
+            return responses[-1] if responses else None
         if isinstance(signals, list) and self._needs_hmi_pulse(signals):
             responses: list[Any] = []
             for signal in signals:
                 responses.append(await self._post_actuate({"signals": [signal]}))
-                await asyncio.sleep(0.08)
+                await asyncio.sleep(0.04)
             for signal in self._visible_hmi_signals(signals):
                 responses.append(await self._post_actuate({"signals": [signal]}))
-                await asyncio.sleep(0.12)
+                await asyncio.sleep(0.08)
             return responses[-1] if responses else None
         return await self._post_actuate(payload)
 

@@ -82,7 +82,7 @@ class CarSkySignalMapper:
             "recommended_action": action_code,
             "ai_status": ai_status.value,
         }
-        return self.map_live_snapshot(payload, data_age_ms=data_age_ms)
+        return self.map_live_snapshot(payload, data_age_ms=data_age_ms, realtime=False)
 
     def map_decision_event(
         self,
@@ -148,7 +148,12 @@ class CarSkySignalMapper:
             "recommended_action": action_code,
             "ai_status": AIStatus.ONLINE.value,
         }
-        return self.map_live_snapshot(payload, data_age_ms=data_age_ms, transition=transition.value)
+        return self.map_live_snapshot(
+            payload,
+            data_age_ms=data_age_ms,
+            transition=transition.value,
+            realtime=False,
+        )
 
     def map_live_snapshot(
         self,
@@ -156,6 +161,7 @@ class CarSkySignalMapper:
         *,
         data_age_ms: int = 0,
         transition: str | None = None,
+        realtime: bool = True,
     ) -> dict[str, list[dict[str, Any]]]:
         """Map live dashboard telemetry to the BTC-compatible speed-mux VHAL path.
 
@@ -199,6 +205,7 @@ class CarSkySignalMapper:
         return {
             "transport": "vehicle-speed-mux",
             "transition": transition,
+            "realtime": realtime,
             "signals": signals,
         }
 

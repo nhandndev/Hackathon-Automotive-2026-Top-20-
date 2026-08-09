@@ -96,7 +96,7 @@ router = APIRouter(prefix="/alerts", tags=["AI Decision Alerts"])
 live_clients: set[WebSocket] = set()
 carsky_mapper = CarSkySignalMapper()
 MAX_CABIN_FRAME_BYTES = 2 * 1024 * 1024
-CARSKY_SNAPSHOT_MIN_INTERVAL_SEC = 0.75
+CARSKY_SNAPSHOT_MIN_INTERVAL_SEC = 0.25
 
 
 async def _broadcast(document: dict[str, Any]) -> None:

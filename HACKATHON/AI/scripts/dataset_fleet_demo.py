@@ -382,13 +382,15 @@ def main() -> int:
                                 break
 
                             source_index += 1
-                            if realtime_pacing:
-                                frame_period = 1.0 / (fps * args.speed)
-                                behind = time.perf_counter() - next_frame_due
-                                if behind >= frame_period:
-                                    skipped = min(int(behind / frame_period), len(records) - source_index)
-                                    source_index += skipped
-                                    next_frame_due += skipped * frame_period
+                            # Do not skip source frames in dataset-fleet mode.
+                            # Challenge 2 uses causal temporal features
+                            # (eye-closure duration, PERCLOS, rolling EAR/MAR).
+                            # Jumping over BTC cabin frames breaks that temporal
+                            # context and can turn microsleep segments into
+                            # cached/default "alert" predictions. If inference is
+                            # slower than realtime, the replay is allowed to slow
+                            # down; model input continuity is more important than
+                            # wall-clock pacing for this demo mode.
 
                         engine.end_trip(event_stream)
                 finally:

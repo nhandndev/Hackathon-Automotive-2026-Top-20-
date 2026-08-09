@@ -237,7 +237,11 @@ class DriverStatePredictor:
             distraction_prob_debug = p_distracted
             
         if state not in DRIVER_STATES:
-            state = "alert"
+            raise ValueError(
+                f"Driver model returned unsupported state {state!r}; "
+                f"expected one of {DRIVER_STATES}. Check the .joblib label "
+                "contract instead of silently mapping it to alert."
+            )
         fused = fuse_driver_state(
             state,
             confidence,

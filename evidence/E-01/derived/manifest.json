@@ -1,0 +1,59 @@
+{
+  "evidence_id": "E-01",
+  "title": "Reproducibility C1/C2/C3",
+  "generated_at": "2026-08-10",
+  "scope": "Production AI inference runtime for BTC-style trip input and prediction CSV output.",
+  "entrypoints": {
+    "batch_inference": "HACKATHON/AI/scripts/run_inference.py",
+    "evaluation": "HACKATHON/AI/team_kit/evaluation.py",
+    "product_demo": "HACKATHON/scripts/run_product_demo.ps1"
+  },
+  "configs": [
+    "HACKATHON/AI/configs/challenge1.yaml",
+    "HACKATHON/AI/configs/challenge2.yaml",
+    "HACKATHON/AI/configs/decision_engine.yaml",
+    "HACKATHON/AI/configs/runtime_demo.yaml",
+    "HACKATHON/AI/configs/model_registry.yaml"
+  ],
+  "model_artifacts": [
+    {
+      "path": "HACKATHON/AI/models/yolov8s_finetuned_carla_v2.pt",
+      "challenge": "Challenge 1",
+      "purpose": "Road object detection for TTC"
+    },
+    {
+      "path": "HACKATHON/AI/models/candidate_013.joblib",
+      "challenge": "Challenge 2",
+      "purpose": "Random Forest driver-state classifier, legacy 59 features"
+    },
+    {
+      "path": "HACKATHON/AI/models/face_detection_yunet_2023mar.onnx",
+      "challenge": "Challenge 2",
+      "purpose": "Face detection"
+    },
+    {
+      "path": "HACKATHON/AI/models/face_landmark_468.onnx",
+      "challenge": "Challenge 2",
+      "purpose": "Face landmarks for features"
+    }
+  ],
+  "expected_csv_schema": [
+    "frame_id",
+    "timestamp",
+    "predicted_ttc",
+    "predicted_driver_state",
+    "predicted_risk_score"
+  ],
+  "notes": [
+    "Challenge 3 is formula-based and implemented in HACKATHON/AI/core/challenge3_fusion/risk_engine.py.",
+    "Final three-challenge evaluation artifact: HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json.",
+    "Dataset files are intentionally not bundled here; owner must provide dataset path such as ../Practice_Dataset.",
+    "This is a reproducibility manifest, not a final zip bundle."
+  ],
+  "final_evaluation": {
+    "path": "HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json",
+    "challenge1_overall_composite": 73.6,
+    "challenge2_overall_composite": 84.0,
+    "challenge3_overall_composite": 100.0
+  }
+}

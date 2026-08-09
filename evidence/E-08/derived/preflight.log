@@ -1,0 +1,16 @@
+C2 PREFLIGHT
+python 3.13.14
+opencv 5.0.0
+numpy 2.5.1
+sklearn 1.9.0
+onnxruntime 1.28.0
+ort_providers ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
+FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\models\candidate_013.joblib
+FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\models\face_detection_yunet_2023mar.onnx
+FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\models\face_landmark_468.onnx
+FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\configs\challenge2.yaml
+model_classes ['alert', 'distracted', 'drowsy', 'microsleep', 'yawning']
+feature_count 59
+feature_schema legacy_59
+challenge2_config_ml {'architecture': 'legacy_5class', 'feature_schema': 'legacy_59'}
+C2 PREFLIGHT PASS

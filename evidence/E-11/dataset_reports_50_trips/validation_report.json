@@ -1,0 +1,996 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-08-09T17:23:15+00:00",
+  "dataset_root": "C:\\FA Hackathon\\dataset_carla\\dataset_carla",
+  "overall_status": "PASS",
+  "summary": {
+    "expected_trips": 50,
+    "discovered_trips": 50,
+    "valid_trips": 50,
+    "invalid_trips": 0,
+    "count_matches_target": true,
+    "source_frames": 30000,
+    "retained_frames": 22650,
+    "removed_frames": 7350,
+    "retention_rate": 0.755,
+    "labels": 98253,
+    "events": 2,
+    "duration_sec": 1132.5,
+    "dataset_bytes": 8482510103,
+    "average_safe_driving_score": 0.0
+  },
+  "validation_method": {
+    "implementation": "collect.py validate_run (BTC CARLA Collector V6.8)",
+    "collector_source": "C:\\FA Hackathon\\source\\script_carla.zip",
+    "jpeg_decoder": "Pillow RGB decode exposed as the validator's cv2.imread-compatible shim",
+    "all_invalid_trip_directories_preserved": true
+  },
+  "configuration": {
+    "expected_frames": 600,
+    "allow_pruned_frames": true,
+    "max_invalid_frames": 300,
+    "depth_step": 5,
+    "width": 640,
+    "height": 360,
+    "expect_empty_driver": true,
+    "strict_occlusion": false,
+    "runtime_blocked_depth_ratio": 0.2,
+    "runtime_blocked_consecutive_frames": 20,
+    "runtime_max_blocked_frame_ratio": 0.05,
+    "trip_max_stationary_fraction": 0.6,
+    "trip_max_stationary_run_s": 10.0
+  },
+  "dataset_errors": [],
+  "trips": [
+    {
+      "trip_id": "T14-Sample",
+      "relative_path": "T14-Sample/T14-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 441,
+        "image_3": 441,
+        "calib": 441,
+        "label_2": 441,
+        "depth": 89,
+        "driver": 0
+      },
+      "frames": 441,
+      "source_frames": 600,
+      "removed_frames": 159,
+      "labels": 1877,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T15-Sample",
+      "relative_path": "T15-Sample/T15-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 498,
+        "image_3": 498,
+        "calib": 498,
+        "label_2": 498,
+        "depth": 100,
+        "driver": 0
+      },
+      "frames": 498,
+      "source_frames": 600,
+      "removed_frames": 102,
+      "labels": 2529,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T16-Sample",
+      "relative_path": "T16-Sample/T16-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 555,
+        "image_3": 555,
+        "calib": 555,
+        "label_2": 555,
+        "depth": 111,
+        "driver": 0
+      },
+      "frames": 555,
+      "source_frames": 600,
+      "removed_frames": 45,
+      "labels": 4837,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T17-Sample",
+      "relative_path": "T17-Sample/T17-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 379,
+        "image_3": 379,
+        "calib": 379,
+        "label_2": 379,
+        "depth": 76,
+        "driver": 0
+      },
+      "frames": 379,
+      "source_frames": 600,
+      "removed_frames": 221,
+      "labels": 1735,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T18-Sample",
+      "relative_path": "T18-Sample/T18-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 455,
+        "image_3": 455,
+        "calib": 455,
+        "label_2": 455,
+        "depth": 91,
+        "driver": 0
+      },
+      "frames": 455,
+      "source_frames": 600,
+      "removed_frames": 145,
+      "labels": 2120,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T19-Sample",
+      "relative_path": "T19-Sample/T19-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 547,
+        "image_3": 547,
+        "calib": 547,
+        "label_2": 547,
+        "depth": 110,
+        "driver": 0
+      },
+      "frames": 547,
+      "source_frames": 600,
+      "removed_frames": 53,
+      "labels": 2858,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T20-Sample",
+      "relative_path": "T20-Sample/T20-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 313,
+        "image_3": 313,
+        "calib": 313,
+        "label_2": 313,
+        "depth": 63,
+        "driver": 0
+      },
+      "frames": 313,
+      "source_frames": 600,
+      "removed_frames": 287,
+      "labels": 830,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T21-Sample",
+      "relative_path": "T21-Sample/T21-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 383,
+        "image_3": 383,
+        "calib": 383,
+        "label_2": 383,
+        "depth": 77,
+        "driver": 0
+      },
+      "frames": 383,
+      "source_frames": 600,
+      "removed_frames": 217,
+      "labels": 2065,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T22-Sample",
+      "relative_path": "T22-Sample/T22-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 506,
+        "image_3": 506,
+        "calib": 506,
+        "label_2": 506,
+        "depth": 102,
+        "driver": 0
+      },
+      "frames": 506,
+      "source_frames": 600,
+      "removed_frames": 94,
+      "labels": 1978,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T23-Sample",
+      "relative_path": "T23-Sample/T23-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 545,
+        "image_3": 545,
+        "calib": 545,
+        "label_2": 545,
+        "depth": 109,
+        "driver": 0
+      },
+      "frames": 545,
+      "source_frames": 600,
+      "removed_frames": 55,
+      "labels": 1367,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T24-Sample",
+      "relative_path": "T24-Sample/T24-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 556,
+        "image_3": 556,
+        "calib": 556,
+        "label_2": 556,
+        "depth": 112,
+        "driver": 0
+      },
+      "frames": 556,
+      "source_frames": 600,
+      "removed_frames": 44,
+      "labels": 1787,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T25-Sample",
+      "relative_path": "T25-Sample/T25-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 437,
+        "image_3": 437,
+        "calib": 437,
+        "label_2": 437,
+        "depth": 88,
+        "driver": 0
+      },
+      "frames": 437,
+      "source_frames": 600,
+      "removed_frames": 163,
+      "labels": 2723,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T26-Sample",
+      "relative_path": "T26-Sample/T26-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 475,
+        "image_3": 475,
+        "calib": 475,
+        "label_2": 475,
+        "depth": 95,
+        "driver": 0
+      },
+      "frames": 475,
+      "source_frames": 600,
+      "removed_frames": 125,
+      "labels": 2034,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T27-Sample",
+      "relative_path": "T27-Sample/T27-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 593,
+        "image_3": 593,
+        "calib": 593,
+        "label_2": 593,
+        "depth": 119,
+        "driver": 0
+      },
+      "frames": 593,
+      "source_frames": 600,
+      "removed_frames": 7,
+      "labels": 2455,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T28-Sample",
+      "relative_path": "T28-Sample/T28-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 560,
+        "image_3": 560,
+        "calib": 560,
+        "label_2": 560,
+        "depth": 112,
+        "driver": 0
+      },
+      "frames": 560,
+      "source_frames": 600,
+      "removed_frames": 40,
+      "labels": 1717,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T29-Sample",
+      "relative_path": "T29-Sample/T29-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 477,
+        "image_3": 477,
+        "calib": 477,
+        "label_2": 477,
+        "depth": 96,
+        "driver": 0
+      },
+      "frames": 477,
+      "source_frames": 600,
+      "removed_frames": 123,
+      "labels": 1181,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T30-Sample",
+      "relative_path": "T30-Sample/T30-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 560,
+        "image_3": 560,
+        "calib": 560,
+        "label_2": 560,
+        "depth": 112,
+        "driver": 0
+      },
+      "frames": 560,
+      "source_frames": 600,
+      "removed_frames": 40,
+      "labels": 2738,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T31-Sample",
+      "relative_path": "T31-Sample/T31-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 492,
+        "image_3": 492,
+        "calib": 492,
+        "label_2": 492,
+        "depth": 99,
+        "driver": 0
+      },
+      "frames": 492,
+      "source_frames": 600,
+      "removed_frames": 108,
+      "labels": 1368,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T32-Sample",
+      "relative_path": "T32-Sample/T32-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 457,
+        "image_3": 457,
+        "calib": 457,
+        "label_2": 457,
+        "depth": 92,
+        "driver": 0
+      },
+      "frames": 457,
+      "source_frames": 600,
+      "removed_frames": 143,
+      "labels": 3287,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T33-Sample",
+      "relative_path": "T33-Sample/T33-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 320,
+        "image_3": 320,
+        "calib": 320,
+        "label_2": 320,
+        "depth": 64,
+        "driver": 0
+      },
+      "frames": 320,
+      "source_frames": 600,
+      "removed_frames": 280,
+      "labels": 1795,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T34-Sample",
+      "relative_path": "T34-Sample/T34-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 370,
+        "image_3": 370,
+        "calib": 370,
+        "label_2": 370,
+        "depth": 74,
+        "driver": 0
+      },
+      "frames": 370,
+      "source_frames": 600,
+      "removed_frames": 230,
+      "labels": 1650,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T35-Sample",
+      "relative_path": "T35-Sample/T35-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 325,
+        "image_3": 325,
+        "calib": 325,
+        "label_2": 325,
+        "depth": 65,
+        "driver": 0
+      },
+      "frames": 325,
+      "source_frames": 600,
+      "removed_frames": 275,
+      "labels": 1683,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T36-Sample",
+      "relative_path": "T36-Sample/T36-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 473,
+        "image_3": 473,
+        "calib": 473,
+        "label_2": 473,
+        "depth": 95,
+        "driver": 0
+      },
+      "frames": 473,
+      "source_frames": 600,
+      "removed_frames": 127,
+      "labels": 2160,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T37-Sample",
+      "relative_path": "T37-Sample/T37-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 593,
+        "image_3": 593,
+        "calib": 593,
+        "label_2": 593,
+        "depth": 119,
+        "driver": 0
+      },
+      "frames": 593,
+      "source_frames": 600,
+      "removed_frames": 7,
+      "labels": 2134,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T38-Sample",
+      "relative_path": "T38-Sample/T38-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 326,
+        "image_3": 326,
+        "calib": 326,
+        "label_2": 326,
+        "depth": 66,
+        "driver": 0
+      },
+      "frames": 326,
+      "source_frames": 600,
+      "removed_frames": 274,
+      "labels": 1643,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T39-Sample",
+      "relative_path": "T39-Sample/T39-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 346,
+        "image_3": 346,
+        "calib": 346,
+        "label_2": 346,
+        "depth": 70,
+        "driver": 0
+      },
+      "frames": 346,
+      "source_frames": 600,
+      "removed_frames": 254,
+      "labels": 1115,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T40-Sample",
+      "relative_path": "T40-Sample/T40-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 534,
+        "image_3": 534,
+        "calib": 534,
+        "label_2": 534,
+        "depth": 107,
+        "driver": 0
+      },
+      "frames": 534,
+      "source_frames": 600,
+      "removed_frames": 66,
+      "labels": 1706,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T41-Sample",
+      "relative_path": "T41-Sample/T41-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 315,
+        "image_3": 315,
+        "calib": 315,
+        "label_2": 315,
+        "depth": 63,
+        "driver": 0
+      },
+      "frames": 315,
+      "source_frames": 600,
+      "removed_frames": 285,
+      "labels": 1975,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T42-Sample",
+      "relative_path": "T42-Sample/T42-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 585,
+        "image_3": 585,
+        "calib": 585,
+        "label_2": 585,
+        "depth": 117,
+        "driver": 0
+      },
+      "frames": 585,
+      "source_frames": 600,
+      "removed_frames": 15,
+      "labels": 1925,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T43-Sample",
+      "relative_path": "T43-Sample/T43-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 311,
+        "image_3": 311,
+        "calib": 311,
+        "label_2": 311,
+        "depth": 63,
+        "driver": 0
+      },
+      "frames": 311,
+      "source_frames": 600,
+      "removed_frames": 289,
+      "labels": 1591,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T44-Sample",
+      "relative_path": "T44-Sample/T44-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 423,
+        "image_3": 423,
+        "calib": 423,
+        "label_2": 423,
+        "depth": 85,
+        "driver": 0
+      },
+      "frames": 423,
+      "source_frames": 600,
+      "removed_frames": 177,
+      "labels": 966,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T45-Sample",
+      "relative_path": "T45-Sample/T45-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 514,
+        "image_3": 514,
+        "calib": 514,
+        "label_2": 514,
+        "depth": 103,
+        "driver": 0
+      },
+      "frames": 514,
+      "source_frames": 600,
+      "removed_frames": 86,
+      "labels": 3385,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T46-Sample",
+      "relative_path": "T46-Sample/T46-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 596,
+        "image_3": 596,
+        "calib": 596,
+        "label_2": 596,
+        "depth": 120,
+        "driver": 0
+      },
+      "frames": 596,
+      "source_frames": 600,
+      "removed_frames": 4,
+      "labels": 1460,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T47-Sample",
+      "relative_path": "T47-Sample/T47-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 401,
+        "image_3": 401,
+        "calib": 401,
+        "label_2": 401,
+        "depth": 81,
+        "driver": 0
+      },
+      "frames": 401,
+      "source_frames": 600,
+      "removed_frames": 199,
+      "labels": 1712,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T48-Sample",
+      "relative_path": "T48-Sample/T48-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 349,
+        "image_3": 349,
+        "calib": 349,
+        "label_2": 349,
+        "depth": 70,
+        "driver": 0
+      },
+      "frames": 349,
+      "source_frames": 600,
+      "removed_frames": 251,
+      "labels": 942,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T49-Sample",
+      "relative_path": "T49-Sample/T49-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 309,
+        "image_3": 309,
+        "calib": 309,
+        "label_2": 309,
+        "depth": 62,
+        "driver": 0
+      },
+      "frames": 309,
+      "source_frames": 600,
+      "removed_frames": 291,
+      "labels": 2040,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T50-Sample",
+      "relative_path": "T50-Sample/T50-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 552,
+        "image_3": 552,
+        "calib": 552,
+        "label_2": 552,
+        "depth": 111,
+        "driver": 0
+      },
+      "frames": 552,
+      "source_frames": 600,
+      "removed_frames": 48,
+      "labels": 1583,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T51-Sample",
+      "relative_path": "T51-Sample/T51-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 309,
+        "image_3": 309,
+        "calib": 309,
+        "label_2": 309,
+        "depth": 62,
+        "driver": 0
+      },
+      "frames": 309,
+      "source_frames": 600,
+      "removed_frames": 291,
+      "labels": 992,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T52-Sample",
+      "relative_path": "T52-Sample/T52-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 336,
+        "image_3": 336,
+        "calib": 336,
+        "label_2": 336,
+        "depth": 68,
+        "driver": 0
+      },
+      "frames": 336,
+      "source_frames": 600,
+      "removed_frames": 264,
+      "labels": 1906,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T53-Sample",
+      "relative_path": "T53-Sample/T53-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 488,
+        "image_3": 488,
+        "calib": 488,
+        "label_2": 488,
+        "depth": 98,
+        "driver": 0
+      },
+      "frames": 488,
+      "source_frames": 600,
+      "removed_frames": 112,
+      "labels": 2443,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T54-Sample",
+      "relative_path": "T54-Sample/T54-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 556,
+        "image_3": 556,
+        "calib": 556,
+        "label_2": 556,
+        "depth": 112,
+        "driver": 0
+      },
+      "frames": 556,
+      "source_frames": 600,
+      "removed_frames": 44,
+      "labels": 2186,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T55-Sample",
+      "relative_path": "T55-Sample/T55-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 553,
+        "image_3": 553,
+        "calib": 553,
+        "label_2": 553,
+        "depth": 111,
+        "driver": 0
+      },
+      "frames": 553,
+      "source_frames": 600,
+      "removed_frames": 47,
+      "labels": 2214,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T56-Sample",
+      "relative_path": "T56-Sample/T56-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 553,
+        "image_3": 553,
+        "calib": 553,
+        "label_2": 553,
+        "depth": 111,
+        "driver": 0
+      },
+      "frames": 553,
+      "source_frames": 600,
+      "removed_frames": 47,
+      "labels": 1668,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T57-Sample",
+      "relative_path": "T57-Sample/T57-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 529,
+        "image_3": 529,
+        "calib": 529,
+        "label_2": 529,
+        "depth": 106,
+        "driver": 0
+      },
+      "frames": 529,
+      "source_frames": 600,
+      "removed_frames": 71,
+      "labels": 2294,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T58-Sample",
+      "relative_path": "T58-Sample/T58-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 366,
+        "image_3": 366,
+        "calib": 366,
+        "label_2": 366,
+        "depth": 74,
+        "driver": 0
+      },
+      "frames": 366,
+      "source_frames": 600,
+      "removed_frames": 234,
+      "labels": 2305,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T59-Sample",
+      "relative_path": "T59-Sample/T59-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 441,
+        "image_3": 441,
+        "calib": 441,
+        "label_2": 441,
+        "depth": 89,
+        "driver": 0
+      },
+      "frames": 441,
+      "source_frames": 600,
+      "removed_frames": 159,
+      "labels": 2298,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T60-Sample",
+      "relative_path": "T60-Sample/T60-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 318,
+        "image_3": 318,
+        "calib": 318,
+        "label_2": 318,
+        "depth": 64,
+        "driver": 0
+      },
+      "frames": 318,
+      "source_frames": 600,
+      "removed_frames": 282,
+      "labels": 2192,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T61-Sample",
+      "relative_path": "T61-Sample/T61-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 549,
+        "image_3": 549,
+        "calib": 549,
+        "label_2": 549,
+        "depth": 110,
+        "driver": 0
+      },
+      "frames": 549,
+      "source_frames": 600,
+      "removed_frames": 51,
+      "labels": 2240,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T62-Sample",
+      "relative_path": "T62-Sample/T62-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 430,
+        "image_3": 430,
+        "calib": 430,
+        "label_2": 430,
+        "depth": 86,
+        "driver": 0
+      },
+      "frames": 430,
+      "source_frames": 600,
+      "removed_frames": 170,
+      "labels": 1503,
+      "error_total": 0,
+      "errors": []
+    },
+    {
+      "trip_id": "T63-Sample",
+      "relative_path": "T63-Sample/T63-Sample",
+      "valid": true,
+      "counts": {
+        "image_2": 351,
+        "image_3": 351,
+        "calib": 351,
+        "label_2": 351,
+        "depth": 71,
+        "driver": 0
+      },
+      "frames": 351,
+      "source_frames": 600,
+      "removed_frames": 249,
+      "labels": 1061,
+      "error_total": 0,
+      "errors": []
+    }
+  ]
+}

@@ -14,15 +14,6 @@ Phần giao diện người dùng và trải nghiệm thao tác cần có video 
 - [ ] **Kết quả mong đợi:** `ui_failure_states.pdf`, MP4.
 - **Ghi chú của Owner:**
 
-## E-39: HMI usability (alert fatigue) (Thiện/Dân)
-- [ ] **Hành động:** Test với người dùng thật, đo lường sự mệt mỏi/phiền hà từ cảnh báo.
-- [ ] **Kết quả mong đợi:** `alert_fatigue_metrics.csv`
-- **Ghi chú của Owner:**
-
-## E-40: Copilot improves review time (Thiện/Nhân)
-- [ ] **Hành động:** Task test có người dùng đo thời gian review có/không có Copilot.
-- [ ] **Kết quả mong đợi:** `review_time_comparison.csv`
-- **Ghi chú của Owner:**
 
 ## E-17: Intervention chỉ là human workflow (Thiện)
 - [ ] **Hành động:** Quay video luồng UI/Dashboard khi có sự can thiệp của operator (Intervention).

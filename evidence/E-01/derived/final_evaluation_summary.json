@@ -1,0 +1,24 @@
+{
+  "evidence_id": "E-01",
+  "source": "HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json",
+  "status": "final evaluation artifact exists in repo",
+  "challenge1": {
+    "overall_composite_score": 73.6,
+    "overall_f1": 0.731,
+    "overall_mae_critical": 1.028,
+    "overall_inv_ttc_mae": 0.1681
+  },
+  "challenge2": {
+    "overall_composite_score": 84.0,
+    "model": "HACKATHON/AI/models/candidate_013.joblib",
+    "feature_schema": "legacy_59"
+  },
+  "challenge3": {
+    "overall_composite_score": 100.0,
+    "formula_source": "HACKATHON/AI/core/challenge3_fusion/risk_engine.py"
+  },
+  "notes": [
+    "The referenced evaluation.json contains C1 metrics at root level, C2 metrics under challenge2, and C3 metrics under challenge3.",
+    "This confirms the selected three-challenge pipeline has already been evaluated."
+  ]
+}

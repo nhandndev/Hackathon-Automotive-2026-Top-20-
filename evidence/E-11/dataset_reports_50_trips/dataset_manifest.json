@@ -1,0 +1,1818 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "CARLA_V6_8_50_TRIPS",
+  "generated_at_utc": "2026-08-09T17:23:15+00:00",
+  "dataset_root": "C:\\FA Hackathon\\dataset_carla\\dataset_carla",
+  "dataset_root_relative_to_reports": "../dataset_carla",
+  "collection": {
+    "collector": "BTC CARLA Collector V6.8",
+    "trip_range": [
+      "T14-Sample",
+      "T63-Sample"
+    ],
+    "map_target": "Town10HD_Opt",
+    "raw_frames_per_trip": 600,
+    "fps": 20,
+    "image_resolution": [
+      640,
+      360
+    ],
+    "depth_step": 5,
+    "frame_salvage_enabled": true,
+    "max_invalid_frames_per_trip": 300
+  },
+  "summary": {
+    "expected_trips": 50,
+    "discovered_trips": 50,
+    "valid_trips": 50,
+    "invalid_trips": 0,
+    "count_matches_target": true,
+    "source_frames": 30000,
+    "retained_frames": 22650,
+    "removed_frames": 7350,
+    "retention_rate": 0.755,
+    "labels": 98253,
+    "events": 2,
+    "duration_sec": 1132.5,
+    "dataset_bytes": 8482510103,
+    "average_safe_driving_score": 0.0
+  },
+  "distributions": {
+    "maps": {
+      "Town10HD": 50
+    },
+    "weather_modes": {
+      "clear_day": 6,
+      "dawn": 6,
+      "dusk": 5,
+      "dust": 6,
+      "fog": 6,
+      "night": 5,
+      "overcast": 6,
+      "rain": 6,
+      "storm": 4
+    },
+    "time_of_day": {
+      "day": 30,
+      "night": 6,
+      "twilight": 14
+    },
+    "scenarios": {
+      "lead_brake_release": 1,
+      "lead_lane_change": 1,
+      "none": 48
+    }
+  },
+  "trips": [
+    {
+      "trip_id": "T14-Sample",
+      "relative_path": "T14-Sample/T14-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "rain",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 441,
+      "source_frames": 600,
+      "removed_frames": 159,
+      "duration_sec": 22.05,
+      "fps": 20,
+      "events": 0,
+      "labels": 1877,
+      "file_counts": {
+        "image_2": 441,
+        "image_3": 441,
+        "depth": 89,
+        "calib": 441,
+        "label_2": 441,
+        "driver": 0
+      },
+      "bytes": 160446583,
+      "metadata_files": {
+        "T14-Sample.json": {
+          "bytes": 5324399,
+          "sha256": "e36a73ccc43c821e83cb32cf905b3d40f9fb921b2e83ef67af244e62fbc907a6"
+        },
+        "T14-Sample.json.gz": {
+          "bytes": 361172,
+          "sha256": "434e9cf5c0a2b061aa526ca92bb50f0be301a23bea058e69176ef7ea061c8d65"
+        }
+      }
+    },
+    {
+      "trip_id": "T15-Sample",
+      "relative_path": "T15-Sample/T15-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "fog",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 498,
+      "source_frames": 600,
+      "removed_frames": 102,
+      "duration_sec": 24.9,
+      "fps": 20,
+      "events": 0,
+      "labels": 2529,
+      "file_counts": {
+        "image_2": 498,
+        "image_3": 498,
+        "depth": 100,
+        "calib": 498,
+        "label_2": 498,
+        "driver": 0
+      },
+      "bytes": 187464125,
+      "metadata_files": {
+        "T15-Sample.json": {
+          "bytes": 5368749,
+          "sha256": "49fc4a3492b374efb6e793d80fb18aa900ae20a88380e5a7b0cdc39a84964738"
+        },
+        "T15-Sample.json.gz": {
+          "bytes": 389303,
+          "sha256": "33da13b4d929639d4f7f8d98d529c617488a1f9b5e57db40496920d5aa565848"
+        }
+      }
+    },
+    {
+      "trip_id": "T16-Sample",
+      "relative_path": "T16-Sample/T16-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "overcast",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 555,
+      "source_frames": 600,
+      "removed_frames": 45,
+      "duration_sec": 27.75,
+      "fps": 20,
+      "events": 0,
+      "labels": 4837,
+      "file_counts": {
+        "image_2": 555,
+        "image_3": 555,
+        "depth": 111,
+        "calib": 555,
+        "label_2": 555,
+        "driver": 0
+      },
+      "bytes": 201048207,
+      "metadata_files": {
+        "T16-Sample.json": {
+          "bytes": 7002745,
+          "sha256": "fd5d3b2463bf86a1fc81e337a4ccb1571277efbfff0946c2891a32fbe235f73b"
+        },
+        "T16-Sample.json.gz": {
+          "bytes": 414482,
+          "sha256": "cc05b4ad72ed9f0222e8c0718549076b7c6fc46157221c9bdc0ec14ea25035bd"
+        }
+      }
+    },
+    {
+      "trip_id": "T17-Sample",
+      "relative_path": "T17-Sample/T17-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "storm",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 379,
+      "source_frames": 600,
+      "removed_frames": 221,
+      "duration_sec": 18.95,
+      "fps": 20,
+      "events": 0,
+      "labels": 1735,
+      "file_counts": {
+        "image_2": 379,
+        "image_3": 379,
+        "depth": 76,
+        "calib": 379,
+        "label_2": 379,
+        "driver": 0
+      },
+      "bytes": 135444250,
+      "metadata_files": {
+        "T17-Sample.json": {
+          "bytes": 4470083,
+          "sha256": "c35a83c379e1b65f1b1fecb8d4d444702f41250afedcdddc3861b01cce7500ea"
+        },
+        "T17-Sample.json.gz": {
+          "bytes": 313677,
+          "sha256": "f35de04aa52a563e9fc5b98bf1a0b01949e7631529224accae93f59cd865eb80"
+        }
+      }
+    },
+    {
+      "trip_id": "T18-Sample",
+      "relative_path": "T18-Sample/T18-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "clear_day",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 455,
+      "source_frames": 600,
+      "removed_frames": 145,
+      "duration_sec": 22.75,
+      "fps": 20,
+      "events": 0,
+      "labels": 2120,
+      "file_counts": {
+        "image_2": 455,
+        "image_3": 455,
+        "depth": 91,
+        "calib": 455,
+        "label_2": 455,
+        "driver": 0
+      },
+      "bytes": 171582205,
+      "metadata_files": {
+        "T18-Sample.json": {
+          "bytes": 6149828,
+          "sha256": "a363c58659b1798cd37280550888f4422c679f4d8a8dbcaca961675789f6511b"
+        },
+        "T18-Sample.json.gz": {
+          "bytes": 372069,
+          "sha256": "11d0a33cfadb95261b07c2241574e1ebf28b91d0d6d7faa6225fd8b5c0a4f421"
+        }
+      }
+    },
+    {
+      "trip_id": "T19-Sample",
+      "relative_path": "T19-Sample/T19-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dawn",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 547,
+      "source_frames": 600,
+      "removed_frames": 53,
+      "duration_sec": 27.35,
+      "fps": 20,
+      "events": 0,
+      "labels": 2858,
+      "file_counts": {
+        "image_2": 547,
+        "image_3": 547,
+        "depth": 110,
+        "calib": 547,
+        "label_2": 547,
+        "driver": 0
+      },
+      "bytes": 210026700,
+      "metadata_files": {
+        "T19-Sample.json": {
+          "bytes": 6497215,
+          "sha256": "0aabc97d8f026ee3c97fe00e157d5f2956a17d94e9b4ab54d19a6b87ef7a3590"
+        },
+        "T19-Sample.json.gz": {
+          "bytes": 453441,
+          "sha256": "54acbfa2679716f1f2158f0724db541c4363980ee6da1b6a9b0a7ebed0841a3c"
+        }
+      }
+    },
+    {
+      "trip_id": "T20-Sample",
+      "relative_path": "T20-Sample/T20-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dusk",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 313,
+      "source_frames": 600,
+      "removed_frames": 287,
+      "duration_sec": 15.65,
+      "fps": 20,
+      "events": 0,
+      "labels": 830,
+      "file_counts": {
+        "image_2": 313,
+        "image_3": 313,
+        "depth": 63,
+        "calib": 313,
+        "label_2": 313,
+        "driver": 0
+      },
+      "bytes": 118159014,
+      "metadata_files": {
+        "T20-Sample.json": {
+          "bytes": 2304803,
+          "sha256": "662a12f3c3dd1344a35abd992216b7443b716725ffca64a1c9eeb4192d560fd4"
+        },
+        "T20-Sample.json.gz": {
+          "bytes": 150480,
+          "sha256": "48e8c4126fa8e17b0e1c34e522fad278f9ea9fc3b0ba6fe705e152c91762e1aa"
+        }
+      }
+    },
+    {
+      "trip_id": "T21-Sample",
+      "relative_path": "T21-Sample/T21-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "night",
+      "time_of_day": "night",
+      "scenario": "none",
+      "frames": 383,
+      "source_frames": 600,
+      "removed_frames": 217,
+      "duration_sec": 19.15,
+      "fps": 20,
+      "events": 0,
+      "labels": 2065,
+      "file_counts": {
+        "image_2": 383,
+        "image_3": 383,
+        "depth": 77,
+        "calib": 383,
+        "label_2": 383,
+        "driver": 0
+      },
+      "bytes": 143470605,
+      "metadata_files": {
+        "T21-Sample.json": {
+          "bytes": 5168435,
+          "sha256": "dcd0e34e3516f0c66097a24e9fe0eca4c280bf25d6d0db675275bfc7adeae2d6"
+        },
+        "T21-Sample.json.gz": {
+          "bytes": 366746,
+          "sha256": "e2edf251bdad1e410ed0d3cb32967e0464e9bf16e90bec0672718aee576ca3c8"
+        }
+      }
+    },
+    {
+      "trip_id": "T22-Sample",
+      "relative_path": "T22-Sample/T22-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dust",
+      "time_of_day": "night",
+      "scenario": "lead_lane_change",
+      "frames": 506,
+      "source_frames": 600,
+      "removed_frames": 94,
+      "duration_sec": 25.3,
+      "fps": 20,
+      "events": 1,
+      "labels": 1978,
+      "file_counts": {
+        "image_2": 506,
+        "image_3": 506,
+        "depth": 102,
+        "calib": 506,
+        "label_2": 506,
+        "driver": 0
+      },
+      "bytes": 195748876,
+      "metadata_files": {
+        "T22-Sample.json": {
+          "bytes": 5853297,
+          "sha256": "2345513452079a4da7e8eed4a7753fb3302e051ad4a60c974e771abe2962a8f5"
+        },
+        "T22-Sample.json.gz": {
+          "bytes": 420050,
+          "sha256": "acf7bd1cb8f1dfbe5f4b08e67bfc38c6d1530b98a211771853f5d47cd3d02a95"
+        }
+      }
+    },
+    {
+      "trip_id": "T23-Sample",
+      "relative_path": "T23-Sample/T23-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dawn",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 545,
+      "source_frames": 600,
+      "removed_frames": 55,
+      "duration_sec": 27.25,
+      "fps": 20,
+      "events": 0,
+      "labels": 1367,
+      "file_counts": {
+        "image_2": 545,
+        "image_3": 545,
+        "depth": 109,
+        "calib": 545,
+        "label_2": 545,
+        "driver": 0
+      },
+      "bytes": 212677624,
+      "metadata_files": {
+        "T23-Sample.json": {
+          "bytes": 6874609,
+          "sha256": "1ec3696250301f127e666381efd6cd0259610e8df2c448165e4f6b67a9213f1f"
+        },
+        "T23-Sample.json.gz": {
+          "bytes": 398357,
+          "sha256": "87cde52dd16c2045f7b10c982483af816098fbf6e06c9ac033e1a5450b4e4669"
+        }
+      }
+    },
+    {
+      "trip_id": "T24-Sample",
+      "relative_path": "T24-Sample/T24-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "clear_day",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 556,
+      "source_frames": 600,
+      "removed_frames": 44,
+      "duration_sec": 27.8,
+      "fps": 20,
+      "events": 0,
+      "labels": 1787,
+      "file_counts": {
+        "image_2": 556,
+        "image_3": 556,
+        "depth": 112,
+        "calib": 556,
+        "label_2": 556,
+        "driver": 0
+      },
+      "bytes": 210246492,
+      "metadata_files": {
+        "T24-Sample.json": {
+          "bytes": 4611510,
+          "sha256": "579bcbf78eb6474d47f19fa3ebe9f95b01c7b298c92c71c51522834f5f19171b"
+        },
+        "T24-Sample.json.gz": {
+          "bytes": 318702,
+          "sha256": "048dee39abe0a6dc92d8f55aa29f07400506f4dee17e9254b66dd99170b18c16"
+        }
+      }
+    },
+    {
+      "trip_id": "T25-Sample",
+      "relative_path": "T25-Sample/T25-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "rain",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 437,
+      "source_frames": 600,
+      "removed_frames": 163,
+      "duration_sec": 21.85,
+      "fps": 20,
+      "events": 0,
+      "labels": 2723,
+      "file_counts": {
+        "image_2": 437,
+        "image_3": 437,
+        "depth": 88,
+        "calib": 437,
+        "label_2": 437,
+        "driver": 0
+      },
+      "bytes": 157230320,
+      "metadata_files": {
+        "T25-Sample.json": {
+          "bytes": 5076194,
+          "sha256": "87c9782e288dba5de2a30d286aefcc33bdefc941bf5a1bae539bf3351dd506c0"
+        },
+        "T25-Sample.json.gz": {
+          "bytes": 300399,
+          "sha256": "3c305dcea69dbbdc1a260ca2897d51e88f98ac445ea66fddeb5eb4fbda4cd28a"
+        }
+      }
+    },
+    {
+      "trip_id": "T26-Sample",
+      "relative_path": "T26-Sample/T26-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "overcast",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 475,
+      "source_frames": 600,
+      "removed_frames": 125,
+      "duration_sec": 23.75,
+      "fps": 20,
+      "events": 0,
+      "labels": 2034,
+      "file_counts": {
+        "image_2": 475,
+        "image_3": 475,
+        "depth": 95,
+        "calib": 475,
+        "label_2": 475,
+        "driver": 0
+      },
+      "bytes": 176076564,
+      "metadata_files": {
+        "T26-Sample.json": {
+          "bytes": 4995871,
+          "sha256": "bb70672738a39e2225fda48f38a97d71a8a59394bc4af4d60f0273fa30d7aaa7"
+        },
+        "T26-Sample.json.gz": {
+          "bytes": 359825,
+          "sha256": "f9324ebe12b10b54a6427ee2df05a1586ea19f8a2662f82ae4abfd0d16258655"
+        }
+      }
+    },
+    {
+      "trip_id": "T27-Sample",
+      "relative_path": "T27-Sample/T27-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "fog",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 593,
+      "source_frames": 600,
+      "removed_frames": 7,
+      "duration_sec": 29.65,
+      "fps": 20,
+      "events": 0,
+      "labels": 2455,
+      "file_counts": {
+        "image_2": 593,
+        "image_3": 593,
+        "depth": 119,
+        "calib": 593,
+        "label_2": 593,
+        "driver": 0
+      },
+      "bytes": 222740661,
+      "metadata_files": {
+        "T27-Sample.json": {
+          "bytes": 5462336,
+          "sha256": "e2aa09cb17a465f9ba1599a0159c6dd6c1ece648582e21fe7b842b6c128c3331"
+        },
+        "T27-Sample.json.gz": {
+          "bytes": 342263,
+          "sha256": "02ee52f47756f9002c439d0a74887190a75f4b24c4e11b61f9736b6a6508afd3"
+        }
+      }
+    },
+    {
+      "trip_id": "T28-Sample",
+      "relative_path": "T28-Sample/T28-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dawn",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 560,
+      "source_frames": 600,
+      "removed_frames": 40,
+      "duration_sec": 28,
+      "fps": 20,
+      "events": 0,
+      "labels": 1717,
+      "file_counts": {
+        "image_2": 560,
+        "image_3": 560,
+        "depth": 112,
+        "calib": 560,
+        "label_2": 560,
+        "driver": 0
+      },
+      "bytes": 212979077,
+      "metadata_files": {
+        "T28-Sample.json": {
+          "bytes": 4871257,
+          "sha256": "72e4f5466170815f7ddace5fd8190d0fd62f6414e1c41c24329545b3092d56ca"
+        },
+        "T28-Sample.json.gz": {
+          "bytes": 276563,
+          "sha256": "f41909ac7d2a503598e45c964d1505cff69323b266e7c8df4e18bae141d763ed"
+        }
+      }
+    },
+    {
+      "trip_id": "T29-Sample",
+      "relative_path": "T29-Sample/T29-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dusk",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 477,
+      "source_frames": 600,
+      "removed_frames": 123,
+      "duration_sec": 23.85,
+      "fps": 20,
+      "events": 0,
+      "labels": 1181,
+      "file_counts": {
+        "image_2": 477,
+        "image_3": 477,
+        "depth": 96,
+        "calib": 477,
+        "label_2": 477,
+        "driver": 0
+      },
+      "bytes": 177994208,
+      "metadata_files": {
+        "T29-Sample.json": {
+          "bytes": 3468941,
+          "sha256": "1f555644943e679806b7af5ab9a525445f4cb89afdcd0f1abd1e4739c8efd9cd"
+        },
+        "T29-Sample.json.gz": {
+          "bytes": 235260,
+          "sha256": "d55beae850eacf8bce620290be4c016183300977d5acdac8c14f2b6b09d3433a"
+        }
+      }
+    },
+    {
+      "trip_id": "T30-Sample",
+      "relative_path": "T30-Sample/T30-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dust",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 560,
+      "source_frames": 600,
+      "removed_frames": 40,
+      "duration_sec": 28,
+      "fps": 20,
+      "events": 0,
+      "labels": 2738,
+      "file_counts": {
+        "image_2": 560,
+        "image_3": 560,
+        "depth": 112,
+        "calib": 560,
+        "label_2": 560,
+        "driver": 0
+      },
+      "bytes": 213034683,
+      "metadata_files": {
+        "T30-Sample.json": {
+          "bytes": 5357342,
+          "sha256": "9b385d60de77d68a067077abe92913a8adc370e4d375194b3bb05414dc515026"
+        },
+        "T30-Sample.json.gz": {
+          "bytes": 332144,
+          "sha256": "9a1cc3b6797279e742d3cbd5f0c16de508b927cefce41ecd20ff2e606e2fd187"
+        }
+      }
+    },
+    {
+      "trip_id": "T31-Sample",
+      "relative_path": "T31-Sample/T31-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "night",
+      "time_of_day": "night",
+      "scenario": "none",
+      "frames": 492,
+      "source_frames": 600,
+      "removed_frames": 108,
+      "duration_sec": 24.6,
+      "fps": 20,
+      "events": 0,
+      "labels": 1368,
+      "file_counts": {
+        "image_2": 492,
+        "image_3": 492,
+        "depth": 99,
+        "calib": 492,
+        "label_2": 492,
+        "driver": 0
+      },
+      "bytes": 186270881,
+      "metadata_files": {
+        "T31-Sample.json": {
+          "bytes": 5845638,
+          "sha256": "46792c17f06c5648fa685a11c15c61a438adc3f94791240ba1e5f19f12c119f1"
+        },
+        "T31-Sample.json.gz": {
+          "bytes": 421892,
+          "sha256": "9307bc69adc3034ef34b067304c7a570bb4cbbcddcf954e1d6a9464b405c688f"
+        }
+      }
+    },
+    {
+      "trip_id": "T32-Sample",
+      "relative_path": "T32-Sample/T32-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dust",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 457,
+      "source_frames": 600,
+      "removed_frames": 143,
+      "duration_sec": 22.85,
+      "fps": 20,
+      "events": 0,
+      "labels": 3287,
+      "file_counts": {
+        "image_2": 457,
+        "image_3": 457,
+        "depth": 92,
+        "calib": 457,
+        "label_2": 457,
+        "driver": 0
+      },
+      "bytes": 185422787,
+      "metadata_files": {
+        "T32-Sample.json": {
+          "bytes": 5084052,
+          "sha256": "65964f0758b16c8aaf71a9f8908db93db562dbe52f1bb718ba882b9e321a5266"
+        },
+        "T32-Sample.json.gz": {
+          "bytes": 288071,
+          "sha256": "9401556b472c9739b94f2c9671e41aa5a67f43d377968ae17e307c5e655e1373"
+        }
+      }
+    },
+    {
+      "trip_id": "T33-Sample",
+      "relative_path": "T33-Sample/T33-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "storm",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 320,
+      "source_frames": 600,
+      "removed_frames": 280,
+      "duration_sec": 16,
+      "fps": 20,
+      "events": 0,
+      "labels": 1795,
+      "file_counts": {
+        "image_2": 320,
+        "image_3": 320,
+        "depth": 64,
+        "calib": 320,
+        "label_2": 320,
+        "driver": 0
+      },
+      "bytes": 114804793,
+      "metadata_files": {
+        "T33-Sample.json": {
+          "bytes": 4701857,
+          "sha256": "54d64053a21ed0fb1ce88c167f1419b42f8f9914c1ffe9f30217186f008413b5"
+        },
+        "T33-Sample.json.gz": {
+          "bytes": 313959,
+          "sha256": "41c378f07bedfda85509110fd896ae978b1e8af4c4176dbb6c6e8ca0e7a34b91"
+        }
+      }
+    },
+    {
+      "trip_id": "T34-Sample",
+      "relative_path": "T34-Sample/T34-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "night",
+      "time_of_day": "night",
+      "scenario": "none",
+      "frames": 370,
+      "source_frames": 600,
+      "removed_frames": 230,
+      "duration_sec": 18.5,
+      "fps": 20,
+      "events": 0,
+      "labels": 1650,
+      "file_counts": {
+        "image_2": 370,
+        "image_3": 370,
+        "depth": 74,
+        "calib": 370,
+        "label_2": 370,
+        "driver": 0
+      },
+      "bytes": 142473158,
+      "metadata_files": {
+        "T34-Sample.json": {
+          "bytes": 3983893,
+          "sha256": "96a5beaf3a247a0795e26385f253ee4902e251b0154bfae4f9f785ba823fd764"
+        },
+        "T34-Sample.json.gz": {
+          "bytes": 283835,
+          "sha256": "7eefb05b2a029ebf7556ee33ee1c2e27642ad0875aa0200c0db60fec4abfce9e"
+        }
+      }
+    },
+    {
+      "trip_id": "T35-Sample",
+      "relative_path": "T35-Sample/T35-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "clear_day",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 325,
+      "source_frames": 600,
+      "removed_frames": 275,
+      "duration_sec": 16.25,
+      "fps": 20,
+      "events": 0,
+      "labels": 1683,
+      "file_counts": {
+        "image_2": 325,
+        "image_3": 325,
+        "depth": 65,
+        "calib": 325,
+        "label_2": 325,
+        "driver": 0
+      },
+      "bytes": 127361450,
+      "metadata_files": {
+        "T35-Sample.json": {
+          "bytes": 3242151,
+          "sha256": "497a3400e0f457dc3a20d7485ef1a8dc3385d32e70d7f924f6b9f3c9a2773d34"
+        },
+        "T35-Sample.json.gz": {
+          "bytes": 228500,
+          "sha256": "09529ea06236a979cfbcaa4cb76f9ba63c508820e6141c0ad546dc3a81074faf"
+        }
+      }
+    },
+    {
+      "trip_id": "T36-Sample",
+      "relative_path": "T36-Sample/T36-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "overcast",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 473,
+      "source_frames": 600,
+      "removed_frames": 127,
+      "duration_sec": 23.65,
+      "fps": 20,
+      "events": 0,
+      "labels": 2160,
+      "file_counts": {
+        "image_2": 473,
+        "image_3": 473,
+        "depth": 95,
+        "calib": 473,
+        "label_2": 473,
+        "driver": 0
+      },
+      "bytes": 162846070,
+      "metadata_files": {
+        "T36-Sample.json": {
+          "bytes": 4142643,
+          "sha256": "ca68e0b8a5ed7c91a5b374756ca8b27d5353b12bab2a820c04213c804143e557"
+        },
+        "T36-Sample.json.gz": {
+          "bytes": 257977,
+          "sha256": "79f1cabb5a8bc698952cd514da34f5542910be3aab145ce29afd52d94f1d4a14"
+        }
+      }
+    },
+    {
+      "trip_id": "T37-Sample",
+      "relative_path": "T37-Sample/T37-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "fog",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 593,
+      "source_frames": 600,
+      "removed_frames": 7,
+      "duration_sec": 29.65,
+      "fps": 20,
+      "events": 0,
+      "labels": 2134,
+      "file_counts": {
+        "image_2": 593,
+        "image_3": 593,
+        "depth": 119,
+        "calib": 593,
+        "label_2": 593,
+        "driver": 0
+      },
+      "bytes": 225519093,
+      "metadata_files": {
+        "T37-Sample.json": {
+          "bytes": 4623923,
+          "sha256": "0e280489f9a037cbf61eb60706974f1ede34215a0272c039a9d5b08f69a2e53b"
+        },
+        "T37-Sample.json.gz": {
+          "bytes": 322271,
+          "sha256": "2440e9249ce35e98d05313980c1ee968a28aa905f40d57c922f8ab99d15e64c4"
+        }
+      }
+    },
+    {
+      "trip_id": "T38-Sample",
+      "relative_path": "T38-Sample/T38-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dusk",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 326,
+      "source_frames": 600,
+      "removed_frames": 274,
+      "duration_sec": 16.3,
+      "fps": 20,
+      "events": 0,
+      "labels": 1643,
+      "file_counts": {
+        "image_2": 326,
+        "image_3": 326,
+        "depth": 66,
+        "calib": 326,
+        "label_2": 326,
+        "driver": 0
+      },
+      "bytes": 124317672,
+      "metadata_files": {
+        "T38-Sample.json": {
+          "bytes": 3779575,
+          "sha256": "aeae710e2ce5acbaf1d3d2f4ecc386e888e471cedc8ebb0b31919b3c44c0a800"
+        },
+        "T38-Sample.json.gz": {
+          "bytes": 273782,
+          "sha256": "cdb5acdb9f6e4f7eb5f7b22e11cd2c05544b40d99cd4441531462a0984a27ee1"
+        }
+      }
+    },
+    {
+      "trip_id": "T39-Sample",
+      "relative_path": "T39-Sample/T39-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dawn",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 346,
+      "source_frames": 600,
+      "removed_frames": 254,
+      "duration_sec": 17.3,
+      "fps": 20,
+      "events": 0,
+      "labels": 1115,
+      "file_counts": {
+        "image_2": 346,
+        "image_3": 346,
+        "depth": 70,
+        "calib": 346,
+        "label_2": 346,
+        "driver": 0
+      },
+      "bytes": 123634315,
+      "metadata_files": {
+        "T39-Sample.json": {
+          "bytes": 3255675,
+          "sha256": "18ee6098e89517ebfb3b689fc538609451263a34b79233e145340aace45a6587"
+        },
+        "T39-Sample.json.gz": {
+          "bytes": 211757,
+          "sha256": "c5ed965100813508a3827412d4f84af0d4151fcceb4579566146b9156dc0a634"
+        }
+      }
+    },
+    {
+      "trip_id": "T40-Sample",
+      "relative_path": "T40-Sample/T40-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "rain",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 534,
+      "source_frames": 600,
+      "removed_frames": 66,
+      "duration_sec": 26.7,
+      "fps": 20,
+      "events": 0,
+      "labels": 1706,
+      "file_counts": {
+        "image_2": 534,
+        "image_3": 534,
+        "depth": 107,
+        "calib": 534,
+        "label_2": 534,
+        "driver": 0
+      },
+      "bytes": 197231224,
+      "metadata_files": {
+        "T40-Sample.json": {
+          "bytes": 5387729,
+          "sha256": "556f28d35bf9d1b81e927123b56b010c723b1111e1c41bbb10cb7299b2f9e217"
+        },
+        "T40-Sample.json.gz": {
+          "bytes": 370819,
+          "sha256": "ec1edf1157a0138c6c8f30aa258002acebf60e53445c55a624a233de44f232a8"
+        }
+      }
+    },
+    {
+      "trip_id": "T41-Sample",
+      "relative_path": "T41-Sample/T41-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "clear_day",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 315,
+      "source_frames": 600,
+      "removed_frames": 285,
+      "duration_sec": 15.75,
+      "fps": 20,
+      "events": 0,
+      "labels": 1975,
+      "file_counts": {
+        "image_2": 315,
+        "image_3": 315,
+        "depth": 63,
+        "calib": 315,
+        "label_2": 315,
+        "driver": 0
+      },
+      "bytes": 113744040,
+      "metadata_files": {
+        "T41-Sample.json": {
+          "bytes": 2780595,
+          "sha256": "31d951fe5b196508d8c18f7f152344d7d5092edc3e9c41ba9472c735775816d2"
+        },
+        "T41-Sample.json.gz": {
+          "bytes": 195809,
+          "sha256": "6b1bc1e165e824ae7c1521650a3f166d42e21c389866d5337d5e0706e388aab9"
+        }
+      }
+    },
+    {
+      "trip_id": "T42-Sample",
+      "relative_path": "T42-Sample/T42-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "rain",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 585,
+      "source_frames": 600,
+      "removed_frames": 15,
+      "duration_sec": 29.25,
+      "fps": 20,
+      "events": 0,
+      "labels": 1925,
+      "file_counts": {
+        "image_2": 585,
+        "image_3": 585,
+        "depth": 117,
+        "calib": 585,
+        "label_2": 585,
+        "driver": 0
+      },
+      "bytes": 212265842,
+      "metadata_files": {
+        "T42-Sample.json": {
+          "bytes": 5035993,
+          "sha256": "095ee38857ab83e954ad0066a9d94b0d95361ec34fd17a2b05d3b442b8c66a73"
+        },
+        "T42-Sample.json.gz": {
+          "bytes": 325829,
+          "sha256": "ab50a29b4f6b7bf425507c28832dc42ed85c057fa0ec097018984c326d9c5618"
+        }
+      }
+    },
+    {
+      "trip_id": "T43-Sample",
+      "relative_path": "T43-Sample/T43-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "storm",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 311,
+      "source_frames": 600,
+      "removed_frames": 289,
+      "duration_sec": 15.55,
+      "fps": 20,
+      "events": 0,
+      "labels": 1591,
+      "file_counts": {
+        "image_2": 311,
+        "image_3": 311,
+        "depth": 63,
+        "calib": 311,
+        "label_2": 311,
+        "driver": 0
+      },
+      "bytes": 113768017,
+      "metadata_files": {
+        "T43-Sample.json": {
+          "bytes": 2639321,
+          "sha256": "0104241d2625bdb71affa8c153fcf1b097f21b7a6df53fee621208d119f23b86"
+        },
+        "T43-Sample.json.gz": {
+          "bytes": 166427,
+          "sha256": "d7bf5f3da08c9f475e88666b7ce44e16908b85d1e01db0a1572f82bce17a3c8f"
+        }
+      }
+    },
+    {
+      "trip_id": "T44-Sample",
+      "relative_path": "T44-Sample/T44-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "night",
+      "time_of_day": "night",
+      "scenario": "none",
+      "frames": 423,
+      "source_frames": 600,
+      "removed_frames": 177,
+      "duration_sec": 21.15,
+      "fps": 20,
+      "events": 0,
+      "labels": 966,
+      "file_counts": {
+        "image_2": 423,
+        "image_3": 423,
+        "depth": 85,
+        "calib": 423,
+        "label_2": 423,
+        "driver": 0
+      },
+      "bytes": 160013670,
+      "metadata_files": {
+        "T44-Sample.json": {
+          "bytes": 3189565,
+          "sha256": "6035b56aafe264b1a38c089f28d1e99658925c235a8b61937be30f722ad20ef7"
+        },
+        "T44-Sample.json.gz": {
+          "bytes": 230087,
+          "sha256": "c93710b4c9d671ffb9b6e4d78d7e7993e83ab0b45dac7837427d17db1412802b"
+        }
+      }
+    },
+    {
+      "trip_id": "T45-Sample",
+      "relative_path": "T45-Sample/T45-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "overcast",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 514,
+      "source_frames": 600,
+      "removed_frames": 86,
+      "duration_sec": 25.7,
+      "fps": 20,
+      "events": 0,
+      "labels": 3385,
+      "file_counts": {
+        "image_2": 514,
+        "image_3": 514,
+        "depth": 103,
+        "calib": 514,
+        "label_2": 514,
+        "driver": 0
+      },
+      "bytes": 182890213,
+      "metadata_files": {
+        "T45-Sample.json": {
+          "bytes": 7459859,
+          "sha256": "ac2b3c09bb90d9ac5deb80c113fb312e576672fe52ebaae57f9f677670c18027"
+        },
+        "T45-Sample.json.gz": {
+          "bytes": 370345,
+          "sha256": "a7da267df312b068f4420249a54ce92dfdfc12b506602a2e1f5368828373636e"
+        }
+      }
+    },
+    {
+      "trip_id": "T46-Sample",
+      "relative_path": "T46-Sample/T46-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dust",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 596,
+      "source_frames": 600,
+      "removed_frames": 4,
+      "duration_sec": 29.8,
+      "fps": 20,
+      "events": 0,
+      "labels": 1460,
+      "file_counts": {
+        "image_2": 596,
+        "image_3": 596,
+        "depth": 120,
+        "calib": 596,
+        "label_2": 596,
+        "driver": 0
+      },
+      "bytes": 228226525,
+      "metadata_files": {
+        "T46-Sample.json": {
+          "bytes": 5203883,
+          "sha256": "8380c459731c864c404bbba871087dc5e052a3c69245c6392c76bffe51972455"
+        },
+        "T46-Sample.json.gz": {
+          "bytes": 270174,
+          "sha256": "56b58196a5141c6b3448d28d3c8ffebd388d4454ca09df8516886872c7669774"
+        }
+      }
+    },
+    {
+      "trip_id": "T47-Sample",
+      "relative_path": "T47-Sample/T47-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "fog",
+      "time_of_day": "day",
+      "scenario": "lead_brake_release",
+      "frames": 401,
+      "source_frames": 600,
+      "removed_frames": 199,
+      "duration_sec": 20.05,
+      "fps": 20,
+      "events": 1,
+      "labels": 1712,
+      "file_counts": {
+        "image_2": 401,
+        "image_3": 401,
+        "depth": 81,
+        "calib": 401,
+        "label_2": 401,
+        "driver": 0
+      },
+      "bytes": 152707447,
+      "metadata_files": {
+        "T47-Sample.json": {
+          "bytes": 5049100,
+          "sha256": "188784dbf2aedac554f591a5767548dbe9a5473cc3c5387f8a13f98fc3e5051d"
+        },
+        "T47-Sample.json.gz": {
+          "bytes": 355150,
+          "sha256": "7d568c21177bd873dec8b720a199cf82ec3615f4c8240001b4a6dcff3433ecc4"
+        }
+      }
+    },
+    {
+      "trip_id": "T48-Sample",
+      "relative_path": "T48-Sample/T48-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dusk",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 349,
+      "source_frames": 600,
+      "removed_frames": 251,
+      "duration_sec": 17.45,
+      "fps": 20,
+      "events": 0,
+      "labels": 942,
+      "file_counts": {
+        "image_2": 349,
+        "image_3": 349,
+        "depth": 70,
+        "calib": 349,
+        "label_2": 349,
+        "driver": 0
+      },
+      "bytes": 132444657,
+      "metadata_files": {
+        "T48-Sample.json": {
+          "bytes": 3584750,
+          "sha256": "1ebc2413a09400b60f7942a35e29e9e17f2ff513edb79da12ae0b7f406af35e2"
+        },
+        "T48-Sample.json.gz": {
+          "bytes": 242519,
+          "sha256": "6a5f903da7d2dba120f26b8dd408a607a426431060fec5bdca0df495475d953b"
+        }
+      }
+    },
+    {
+      "trip_id": "T49-Sample",
+      "relative_path": "T49-Sample/T49-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dawn",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 309,
+      "source_frames": 600,
+      "removed_frames": 291,
+      "duration_sec": 15.45,
+      "fps": 20,
+      "events": 0,
+      "labels": 2040,
+      "file_counts": {
+        "image_2": 309,
+        "image_3": 309,
+        "depth": 62,
+        "calib": 309,
+        "label_2": 309,
+        "driver": 0
+      },
+      "bytes": 121356004,
+      "metadata_files": {
+        "T49-Sample.json": {
+          "bytes": 4692286,
+          "sha256": "261119c3f6b9889c9ac4202b55989c701417ebc05aab6098ae24d0e0170cea59"
+        },
+        "T49-Sample.json.gz": {
+          "bytes": 333947,
+          "sha256": "fed83afca7b1d84d4d593fba8e8f0fcbe6ea94211616dcd11103dbef97776d92"
+        }
+      }
+    },
+    {
+      "trip_id": "T50-Sample",
+      "relative_path": "T50-Sample/T50-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "clear_day",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 552,
+      "source_frames": 600,
+      "removed_frames": 48,
+      "duration_sec": 27.6,
+      "fps": 20,
+      "events": 0,
+      "labels": 1583,
+      "file_counts": {
+        "image_2": 552,
+        "image_3": 552,
+        "depth": 111,
+        "calib": 552,
+        "label_2": 552,
+        "driver": 0
+      },
+      "bytes": 206241777,
+      "metadata_files": {
+        "T50-Sample.json": {
+          "bytes": 4111362,
+          "sha256": "8d002e142308854940816c8cff3ca62f003363764bfc939710075675540fe2d2"
+        },
+        "T50-Sample.json.gz": {
+          "bytes": 248247,
+          "sha256": "c3f63470619c56845fed9f2b5e1395fa0ec597a7bea7107dcea8b11f989f8087"
+        }
+      }
+    },
+    {
+      "trip_id": "T51-Sample",
+      "relative_path": "T51-Sample/T51-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dawn",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 309,
+      "source_frames": 600,
+      "removed_frames": 291,
+      "duration_sec": 15.45,
+      "fps": 20,
+      "events": 0,
+      "labels": 992,
+      "file_counts": {
+        "image_2": 309,
+        "image_3": 309,
+        "depth": 62,
+        "calib": 309,
+        "label_2": 309,
+        "driver": 0
+      },
+      "bytes": 115337069,
+      "metadata_files": {
+        "T51-Sample.json": {
+          "bytes": 2643572,
+          "sha256": "aeb382cc0991a335b3f6faba41fef6e6146a9f9dec6efeaa124ee70f29741d15"
+        },
+        "T51-Sample.json.gz": {
+          "bytes": 188876,
+          "sha256": "9de5c65e4d423e105cec233585a9e32c3643daef0711789bb5c7e17861ccc956"
+        }
+      }
+    },
+    {
+      "trip_id": "T52-Sample",
+      "relative_path": "T52-Sample/T52-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "overcast",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 336,
+      "source_frames": 600,
+      "removed_frames": 264,
+      "duration_sec": 16.8,
+      "fps": 20,
+      "events": 0,
+      "labels": 1906,
+      "file_counts": {
+        "image_2": 336,
+        "image_3": 336,
+        "depth": 68,
+        "calib": 336,
+        "label_2": 336,
+        "driver": 0
+      },
+      "bytes": 118563288,
+      "metadata_files": {
+        "T52-Sample.json": {
+          "bytes": 3789454,
+          "sha256": "14be76f3877f6a7d3b02648c60d3214af56c1c122bcb1c3af22fb8f64b52aab6"
+        },
+        "T52-Sample.json.gz": {
+          "bytes": 254791,
+          "sha256": "78d627daba7f50deaf662ec27b387870e6af16ee416f3098258c5f0610ad8001"
+        }
+      }
+    },
+    {
+      "trip_id": "T53-Sample",
+      "relative_path": "T53-Sample/T53-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dust",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 488,
+      "source_frames": 600,
+      "removed_frames": 112,
+      "duration_sec": 24.4,
+      "fps": 20,
+      "events": 0,
+      "labels": 2443,
+      "file_counts": {
+        "image_2": 488,
+        "image_3": 488,
+        "depth": 98,
+        "calib": 488,
+        "label_2": 488,
+        "driver": 0
+      },
+      "bytes": 191140277,
+      "metadata_files": {
+        "T53-Sample.json": {
+          "bytes": 5306539,
+          "sha256": "f668b5d9a666bf5bb15eda91ed4a8c3a7d7586f15af7c9a3f77876ce7271b89c"
+        },
+        "T53-Sample.json.gz": {
+          "bytes": 379792,
+          "sha256": "7d15f789a12bdc144ae72b6da605e9d4803f36aa8d43f3b6ac7ef3653854876d"
+        }
+      }
+    },
+    {
+      "trip_id": "T54-Sample",
+      "relative_path": "T54-Sample/T54-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dusk",
+      "time_of_day": "twilight",
+      "scenario": "none",
+      "frames": 556,
+      "source_frames": 600,
+      "removed_frames": 44,
+      "duration_sec": 27.8,
+      "fps": 20,
+      "events": 0,
+      "labels": 2186,
+      "file_counts": {
+        "image_2": 556,
+        "image_3": 556,
+        "depth": 112,
+        "calib": 556,
+        "label_2": 556,
+        "driver": 0
+      },
+      "bytes": 208382725,
+      "metadata_files": {
+        "T54-Sample.json": {
+          "bytes": 7052829,
+          "sha256": "2d0a68d7a008f408b4456e152b39cc863ad7a00fba45c6c5ae4f10002b0dbecf"
+        },
+        "T54-Sample.json.gz": {
+          "bytes": 491357,
+          "sha256": "0ab88d3432c521964108041eeb81d0ef5bdb6393802a6c4b5a92c886175f3f58"
+        }
+      }
+    },
+    {
+      "trip_id": "T55-Sample",
+      "relative_path": "T55-Sample/T55-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "rain",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 553,
+      "source_frames": 600,
+      "removed_frames": 47,
+      "duration_sec": 27.65,
+      "fps": 20,
+      "events": 0,
+      "labels": 2214,
+      "file_counts": {
+        "image_2": 553,
+        "image_3": 553,
+        "depth": 111,
+        "calib": 553,
+        "label_2": 553,
+        "driver": 0
+      },
+      "bytes": 207439314,
+      "metadata_files": {
+        "T55-Sample.json": {
+          "bytes": 5770575,
+          "sha256": "ad6e288245594023a0ca14dab4b26b951de6546769e83f072a9816ff79de229f"
+        },
+        "T55-Sample.json.gz": {
+          "bytes": 364205,
+          "sha256": "41e208a6b1e382aab594667d69b07ab711144a9c3c7fcb1ef7f16dce2b2f6ca9"
+        }
+      }
+    },
+    {
+      "trip_id": "T56-Sample",
+      "relative_path": "T56-Sample/T56-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "fog",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 553,
+      "source_frames": 600,
+      "removed_frames": 47,
+      "duration_sec": 27.65,
+      "fps": 20,
+      "events": 0,
+      "labels": 1668,
+      "file_counts": {
+        "image_2": 553,
+        "image_3": 553,
+        "depth": 111,
+        "calib": 553,
+        "label_2": 553,
+        "driver": 0
+      },
+      "bytes": 208878874,
+      "metadata_files": {
+        "T56-Sample.json": {
+          "bytes": 4411296,
+          "sha256": "b3c783be5f7d132dabf2df03a9c59a560f043addef255a9a92a1264ed175b5ab"
+        },
+        "T56-Sample.json.gz": {
+          "bytes": 303632,
+          "sha256": "1b9072b61927d0c5ac7a119cd891be4539c1ce9ea0108116ad22b7c519286d19"
+        }
+      }
+    },
+    {
+      "trip_id": "T57-Sample",
+      "relative_path": "T57-Sample/T57-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "night",
+      "time_of_day": "night",
+      "scenario": "none",
+      "frames": 529,
+      "source_frames": 600,
+      "removed_frames": 71,
+      "duration_sec": 26.45,
+      "fps": 20,
+      "events": 0,
+      "labels": 2294,
+      "file_counts": {
+        "image_2": 529,
+        "image_3": 529,
+        "depth": 106,
+        "calib": 529,
+        "label_2": 529,
+        "driver": 0
+      },
+      "bytes": 198741729,
+      "metadata_files": {
+        "T57-Sample.json": {
+          "bytes": 5253194,
+          "sha256": "a6846f8cbd8d13ad4f4d6eaf3f05fecdacdd7416a901c0c6aea5f200e59c8426"
+        },
+        "T57-Sample.json.gz": {
+          "bytes": 313740,
+          "sha256": "08c0b37a89193d80d656b8891d8fca59f94d938070876bca306ab3fcf83a93c3"
+        }
+      }
+    },
+    {
+      "trip_id": "T58-Sample",
+      "relative_path": "T58-Sample/T58-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "storm",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 366,
+      "source_frames": 600,
+      "removed_frames": 234,
+      "duration_sec": 18.3,
+      "fps": 20,
+      "events": 0,
+      "labels": 2305,
+      "file_counts": {
+        "image_2": 366,
+        "image_3": 366,
+        "depth": 74,
+        "calib": 366,
+        "label_2": 366,
+        "driver": 0
+      },
+      "bytes": 130424137,
+      "metadata_files": {
+        "T58-Sample.json": {
+          "bytes": 3292843,
+          "sha256": "e8efcc1fd94d2270bcbf42bab379082c50ce13c8da5d915e072147b513871ad6"
+        },
+        "T58-Sample.json.gz": {
+          "bytes": 244476,
+          "sha256": "2e37c160a8ad939b76b792614db92dee6b502c4952c42f72603427ce2d391646"
+        }
+      }
+    },
+    {
+      "trip_id": "T59-Sample",
+      "relative_path": "T59-Sample/T59-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "overcast",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 441,
+      "source_frames": 600,
+      "removed_frames": 159,
+      "duration_sec": 22.05,
+      "fps": 20,
+      "events": 0,
+      "labels": 2298,
+      "file_counts": {
+        "image_2": 441,
+        "image_3": 441,
+        "depth": 89,
+        "calib": 441,
+        "label_2": 441,
+        "driver": 0
+      },
+      "bytes": 166496853,
+      "metadata_files": {
+        "T59-Sample.json": {
+          "bytes": 5565541,
+          "sha256": "ad1977b5397803133fb8e452640b51b3beee0170439b0e36eb29e1c3575084b6"
+        },
+        "T59-Sample.json.gz": {
+          "bytes": 392034,
+          "sha256": "9ee3dad4b3055f312919f5c28aed1a5a04f0fcfb6186acfa7ec7ea3239d982e7"
+        }
+      }
+    },
+    {
+      "trip_id": "T60-Sample",
+      "relative_path": "T60-Sample/T60-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "rain",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 318,
+      "source_frames": 600,
+      "removed_frames": 282,
+      "duration_sec": 15.9,
+      "fps": 20,
+      "events": 0,
+      "labels": 2192,
+      "file_counts": {
+        "image_2": 318,
+        "image_3": 318,
+        "depth": 64,
+        "calib": 318,
+        "label_2": 318,
+        "driver": 0
+      },
+      "bytes": 117531730,
+      "metadata_files": {
+        "T60-Sample.json": {
+          "bytes": 4505764,
+          "sha256": "ecfef35378f09a05eda62aff292574d5707f7976df6110d34207c4e7e4cfd520"
+        },
+        "T60-Sample.json.gz": {
+          "bytes": 283577,
+          "sha256": "5fb14aa78f10a99b8b3b6b455b82873449834259f05b815bbeffb94da86bebe9"
+        }
+      }
+    },
+    {
+      "trip_id": "T61-Sample",
+      "relative_path": "T61-Sample/T61-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "clear_day",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 549,
+      "source_frames": 600,
+      "removed_frames": 51,
+      "duration_sec": 27.45,
+      "fps": 20,
+      "events": 0,
+      "labels": 2240,
+      "file_counts": {
+        "image_2": 549,
+        "image_3": 549,
+        "depth": 110,
+        "calib": 549,
+        "label_2": 549,
+        "driver": 0
+      },
+      "bytes": 206247250,
+      "metadata_files": {
+        "T61-Sample.json": {
+          "bytes": 7367136,
+          "sha256": "7f0301fae01fbd1039ff35b32bfb2ea5402a5a44158e81b92897244d94bcb962"
+        },
+        "T61-Sample.json.gz": {
+          "bytes": 507422,
+          "sha256": "b0aae6fea864ea5f44ec8b42680587e0a1ec5f84ab4793bd586a41490f3ee33e"
+        }
+      }
+    },
+    {
+      "trip_id": "T62-Sample",
+      "relative_path": "T62-Sample/T62-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "dust",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 430,
+      "source_frames": 600,
+      "removed_frames": 170,
+      "duration_sec": 21.5,
+      "fps": 20,
+      "events": 0,
+      "labels": 1503,
+      "file_counts": {
+        "image_2": 430,
+        "image_3": 430,
+        "depth": 86,
+        "calib": 430,
+        "label_2": 430,
+        "driver": 0
+      },
+      "bytes": 159304091,
+      "metadata_files": {
+        "T62-Sample.json": {
+          "bytes": 4382192,
+          "sha256": "ca62e80913d217d2ddb0b2efc95b599cf8e634214381d388b963d0f1b756e3c5"
+        },
+        "T62-Sample.json.gz": {
+          "bytes": 323354,
+          "sha256": "03057018b83623daba18ed34d58c1cee5beeaf4a7f9436ce92c8bf73e1ab5e19"
+        }
+      }
+    },
+    {
+      "trip_id": "T63-Sample",
+      "relative_path": "T63-Sample/T63-Sample",
+      "status": "valid",
+      "map": "Town10HD",
+      "weather_mode": "fog",
+      "time_of_day": "day",
+      "scenario": "none",
+      "frames": 351,
+      "source_frames": 600,
+      "removed_frames": 249,
+      "duration_sec": 17.55,
+      "fps": 20,
+      "events": 0,
+      "labels": 1061,
+      "file_counts": {
+        "image_2": 351,
+        "image_3": 351,
+        "depth": 71,
+        "calib": 351,
+        "label_2": 351,
+        "driver": 0
+      },
+      "bytes": 134112937,
+      "metadata_files": {
+        "T63-Sample.json": {
+          "bytes": 2183591,
+          "sha256": "d5272a527a99b10ea790bfd5529c4e888d4999919e449cfacdcb72d8d13d3f10"
+        },
+        "T63-Sample.json.gz": {
+          "bytes": 144839,
+          "sha256": "7a82de499f60cb8a35404c88ca22ca3a947f9b3357ba8c9bad03389416d21f2f"
+        }
+      }
+    }
+  ]
+}

@@ -272,13 +272,20 @@ def main() -> int:
                 if args.max_frames and processed >= args.max_frames: break
                 
                 source_index += 1
-                if realtime_pacing:
+                if realtime_pacing and args.driver_source != "dataset":
                     frame_period = 1.0 / (fps * args.speed)
                     behind = time.perf_counter() - next_frame_due
                     if behind >= frame_period:
                         skipped = min(int(behind / frame_period), len(records) - source_index)
                         source_index += skipped
                         next_frame_due += skipped * frame_period
+                elif realtime_pacing:
+                    # Dataset driver replay must preserve every cabin frame for
+                    # Challenge 2 temporal features. Dropping source frames here
+                    # breaks continuous eye-closure/PERCLOS windows and causes
+                    # microsleep to be under-detected. Live webcam mode may still
+                    # skip BTC road frames to keep visual pacing responsive.
+                    pass
 
             engine.end_trip(event_stream)
             trip_finished = True

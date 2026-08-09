@@ -1,0 +1,15 @@
+Artifact: HACKATHON/AI/models/face_detection_yunet_2023mar.onnx
+Component: YuNet face detector
+Purpose in Challenge 2: detect driver face ROI before landmark extraction.
+
+Source recorded in repo:
+https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
+
+License recorded in repo:
+Apache-2.0
+
+Repo evidence source:
+HACKATHON/AI/models/face_landmark_models.manifest.yaml
+
+Manual follow-up if needed:
+Capture a screenshot/PDF of the upstream source and license page for final submission.

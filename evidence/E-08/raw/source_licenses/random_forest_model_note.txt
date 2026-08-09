@@ -1,0 +1,19 @@
+Artifact: HACKATHON/AI/models/candidate_013.joblib
+Component: Team-trained Random Forest driver-state classifier
+Purpose in Challenge 2: predict 5 driver states from legacy 59 causal features.
+
+Classes:
+- alert
+- distracted
+- drowsy
+- microsleep
+- yawning
+
+Feature schema:
+legacy_59
+
+Training artifact lineage recorded by project context:
+experiment/training_outputs/driver_state_rf_v4_50model/candidate_models/run_20260805_012346/candidate_013.joblib
+
+License/source note:
+This is a team-trained model artifact. Dataset provenance and permission should be tracked in the dataset evidence tasks, not in this dependency artifact task.

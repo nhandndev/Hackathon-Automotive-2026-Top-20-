@@ -12,12 +12,12 @@ thật của bạn. Không chạy được nếu bỏ qua bước này.
 - [ ] **Kết quả mong đợi:** `evaluation_bundle.zip`, `manifest.json`, `commands.log`
 - **Ghi chú của Owner:**
 
-## E-08: C2 dependencies đầy đủ (Tâm)
+## E-08: C2 dependencies đầy đủ (Hùng)
 - [ ] **Hành động:** Cung cấp artifact YuNet/FaceMesh ONNX + license/nguồn gốc.
 - [ ] **Kết quả mong đợi:** `c2_artifact_manifest.json`, `preflight.log`, license/source snapshots
 - **Ghi chú của Owner:**
 
-## E-27: C2 generalization (Tâm)
+## E-27: C2 generalization (Hùng)
 - [ ] **Hành động:** Xác nhận split policy (subject/trip-disjoint).
 - [ ] **Kết quả mong đợi:** `c2_eval.json`, `confusion_matrix.png`, `split_manifest.csv`
 - **Ghi chú của Owner:**
@@ -27,12 +27,12 @@ thật của bạn. Không chạy được nếu bỏ qua bước này.
 - [ ] **Kết quả mong đợi:** `psi_ks_metrics.csv`
 - **Ghi chú của Owner:**
 
-## E-05: Alert Orchestrator state/policy (Hùng)
+## E-05: Alert Orchestrator state/policy (Tâm)
 - [ ] **Hành động:** Review policy config có đúng ý đồ thiết kế không.
 - [ ] **Kết quả mong đợi:** `orchestrator_junit.xml`, `policy_config.yaml`, `state_trace.jsonl`
 - **Ghi chú của Owner:**
 
-## E-06: Ablation: raw alert vs orchestrated (Hùng)
+## E-06: Ablation: raw alert vs orchestrated (Tâm)
 Supporting: Nhân
 - [ ] **Hành động:** Cung cấp label protocol cho episode.
 - [ ] **Kết quả mong đợi:** `ablation.csv`, `ablation_notebook.html`, label protocol
@@ -43,12 +43,12 @@ Supporting: Nhân
 - [ ] **Kết quả mong đợi:** `c3_formula.md`, `c3_tests.xml`, `sample_calculation.csv`
 - **Ghi chú của Owner:**
 
-## E-13: C1 critical cases evaluated (Hùng)
+## E-13: C1 critical cases evaluated (Tâm)
 - [ ] **Hành động:** Review bin definition có đúng thiết kế.
 - [ ] **Kết quả mong đợi:** `c1_metrics.json`, `c1_cases.pdf`, prediction/GT CSV
 - **Ghi chú của Owner:**
 
-## E-37: Calibration quality (Hùng)
+## E-37: Calibration quality (Tâm)
 Supporting: Dân
 - [ ] **Hành động:** Parse manifest, tính baseline distribution, tạo epipolar montage.
 - [ ] **Kết quả mong đợi:** Baseline distribution, epipolar montage

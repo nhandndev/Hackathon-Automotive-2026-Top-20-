@@ -171,6 +171,8 @@ try {
         Write-Host "Driver model: AI/configs/model_registry.yaml (production)"
     }
     New-Item -ItemType Directory -Force -Path $logDir, $predictionDir, $eventDir | Out-Null
+    Write-Step "Clear saved demo trips before starting this run"
+    Clear-SavedDemoTrips
 
     if (!$SkipCarSkyPreflight) {
         Write-Step "Preflight CarSky cloud deployment"

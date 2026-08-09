@@ -262,7 +262,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                                 <span className="font-bold text-slate-100 group-hover:text-sky-300 block truncate">{d.trip_id}</span>
                                 <span className="text-[10px] font-mono text-slate-400 block truncate">
                                   {d.riskLevel || d.trip_id || 'N/A'}
-                                  {typeof d.maxRisk === 'number' ? ` • Max risk ${d.maxRisk}/100` : ''}
+                                  {typeof d.maxRisk === 'number' ? ` • Maximum Risk Score ${d.maxRisk}/100` : ''}
                                   {d.dtcCode && d.dtcCode !== 'N/A' ? ` • DTC ${d.dtcCode}` : ''}
                                 </span>
                               </div>

@@ -166,15 +166,15 @@ export const DriverRankingAnalysisPage: React.FC<DriverRankingAnalysisPageProps>
   const fatigueEventPct = row ? (row.fatigueEvents / totalFrames) * 100 : 0;
   const nearMissPct = row ? (row.nearMissCount / totalFrames) * 100 : 0;
   const estimatedPenalties = row ? [
-    { label: 'Average risk', value: row.avgRisk * 0.45, detail: `${row.avgRisk.toFixed(1)} × 0.45` },
-    { label: 'Max risk', value: row.maxRisk * 0.20, detail: `${row.maxRisk.toFixed(1)} × 0.20` },
+    { label: 'Average Risk Score', value: row.avgRisk * 0.45, detail: `${row.avgRisk.toFixed(1)} × 0.45` },
+    { label: 'Maximum Risk Score', value: row.maxRisk * 0.20, detail: `${row.maxRisk.toFixed(1)} × 0.20` },
     { label: 'Critical frames', value: row.criticalEventPct * 0.15, detail: `${row.criticalEventPct.toFixed(1)}% × 0.15` },
     { label: 'Distracted', value: row.distractedPct * 0.10, detail: `${row.distractedPct.toFixed(1)}% × 0.10` },
     { label: 'Fatigue', value: fatigueEventPct * 0.05, detail: `${fatigueEventPct.toFixed(1)}% × 0.05` },
     { label: 'Speeding', value: row.speedingPct * 0.03, detail: `${row.speedingPct.toFixed(1)}% × 0.03` },
     { label: 'Tailgating', value: row.tailgatingPct * 0.04, detail: `${row.tailgatingPct.toFixed(1)}% × 0.04` },
     { label: 'Harsh behavior', value: harshEventPct * 0.03, detail: `${harshEventPct.toFixed(1)}% × 0.03` },
-    { label: 'Near misses', value: nearMissPct * 0.05, detail: `${nearMissPct.toFixed(1)}% × 0.05` },
+    { label: 'Near Miss Count', value: nearMissPct * 0.05, detail: `${nearMissPct.toFixed(1)}% × 0.05` },
   ].filter((item) => item.value > 0.01) : [];
   const estimatedTotalPenalty = estimatedPenalties.reduce((sum, item) => sum + item.value, 0);
   const rawRankingScore = Math.max(0, 100 - estimatedTotalPenalty);

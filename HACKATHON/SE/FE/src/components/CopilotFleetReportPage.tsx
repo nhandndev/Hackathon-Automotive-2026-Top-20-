@@ -3,8 +3,6 @@ import { CalendarDays, Download, FileText, Shield, UserRound, Wrench, FileDown, 
 import { TripData } from '../types';
 import { buildRankingRows } from './DriverRankingView';
 import { buildCopilotInput, buildVehicleReportModels, inferReportMode, VehicleReportModel } from '../reportModel';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
 
 interface CopilotFleetReportPageProps {
   vehicles: TripData[];
@@ -316,8 +314,10 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   const [aiInsightStatus, setAiInsightStatus] = useState<AiInsightStatus>('loading');
   const [aiTripInsights, setAiTripInsights] = useState<Record<string, any>>({});
   const [isLoadingInsight, setIsLoadingInsight] = useState(true);
+  const [bedrockRequested, setBedrockRequested] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [expandedTrips, setExpandedTrips] = useState<Record<string, boolean>>({});
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -460,6 +460,14 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
         return;
       }
 
+      if (!bedrockRequested) {
+        setIsLoadingInsight(false);
+        setAiInsightStatus('unavailable');
+        setAiTripInsights({});
+        setCopilotInsight(localReportNarrative);
+        return;
+      }
+
       setIsLoadingInsight(true);
       setAiInsightStatus('loading');
       setCopilotInsight(localReportNarrative);
@@ -543,6 +551,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     };
   }, [
     dataReady,
+    bedrockRequested,
     canRequestBedrockInsight,
     reportType,
     reportMode,
@@ -848,75 +857,95 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     `;
   };
 
+  const buildOfficeReportHTML = () => {
+    return generateReportHTML().replace(
+      '<html>',
+      "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>",
+    );
+  };
+
+  const buildPrintableReportHTML = () => {
+    const printStyle = `
+          <style>
+            @page { size: A4; margin: 12mm; }
+            body { margin: 0; background: #ffffff; }
+            table { page-break-inside: auto; }
+            tr, .trip-card, .insight-box, .summary-card { page-break-inside: avoid; }
+            .no-print { display: none !important; }
+          </style>`;
+    return generateReportHTML().replace('</head>', `${printStyle}</head>`);
+  };
+
   const handleExportPDF = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
     setShowExportMenu(false);
     const tripLabel = rows.length === 1 ? rows[0].trip_id : 'Fleet';
     const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
-    // Expand all trip cards temporarily so entire detailed report is captured in screenshot
-    const previousExpandedState = { ...expandedTrips };
-    const allExpandedState: Record<string, boolean> = {};
-    rows.forEach(r => { allExpandedState[r.trip_id] = true; });
-    setExpandedTrips(allExpandedState);
-
-    // Wait 200ms for React DOM to render all expanded cards
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    const targetElement = document.getElementById('copilot-report-print-target') || document.body;
-
-    const opt = {
-      margin: 5,
-      filename: fileName,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        backgroundColor: '#070A12',
-        logging: false 
-      },
-      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
-    };
-
     try {
-      await html2pdf().set(opt).from(targetElement).save();
-      setDownloadSuccess(`Đã chụp toàn bộ màn hình giao diện & tải xuống file ${fileName} thành công!`);
+      const printWindow = window.open('', '_blank', 'width=1024,height=768');
+      if (!printWindow) {
+        setDownloadSuccess('Popup bi chan. Hay cho phep popup roi bam Export PDF lai.');
+        return;
+      }
+
+      printWindow.document.open();
+      printWindow.document.write(buildPrintableReportHTML());
+      printWindow.document.close();
+      printWindow.focus();
+
+      window.setTimeout(() => {
+        try {
+          printWindow.document.title = fileName;
+          printWindow.print();
+        } catch (err) {
+          console.error('PDF print export error:', err);
+        }
+      }, 250);
+
+      setDownloadSuccess(`Da mo ban in PDF cho ${fileName}. Chon "Save as PDF" trong hop thoai in de luu file.`);
     } catch (err) {
-      console.error('PDF screenshot export error:', err);
+      console.error('PDF document export error:', err);
+      setDownloadSuccess('Xuat PDF bi loi. Hay thu xuat Word truoc hoac bam Export PDF lai.');
     } finally {
-      // Restore user's previous expand state
-      setExpandedTrips(previousExpandedState);
-      setTimeout(() => setDownloadSuccess(null), 4000);
+      window.setTimeout(() => setIsExporting(false), 500);
+      window.setTimeout(() => setDownloadSuccess(null), 6000);
     }
   };
 
   const handleExportWord = () => {
+    if (isExporting) return;
+    setIsExporting(true);
     setShowExportMenu(false);
-    const htmlContent = generateReportHTML();
+    const sourceHTML = buildOfficeReportHTML();
 
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
-      "xmlns:w='urn:schemas-microsoft-com:office:word' " +
-      "xmlns='http://www.w3.org/TR/REC-html40'>" +
-      "<head><meta charset='utf-8'><title>" + reportTitle + "</title></head><body>";
-    const footer = "</body></html>";
-    const sourceHTML = header + htmlContent + footer;
+    try {
+      const blob = new Blob(['\ufeff', sourceHTML], {
+        type: 'application/msword;charset=utf-8'
+      });
 
-    const blob = new Blob(['\ufeff', sourceHTML], {
-      type: 'application/msword;charset=utf-8'
-    });
+      const tripLabel = rows.length === 1 ? rows[0].trip_id : 'Fleet';
+      const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.doc`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    const tripLabel = rows.length === 1 ? rows[0].trip_id : 'Fleet';
-    const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.doc`;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-    setDownloadSuccess(`Đã tải xuống báo cáo Word (${fileName}) thành công!`);
-    setTimeout(() => setDownloadSuccess(null), 4000);
+      setDownloadSuccess(`Da tai xuong bao cao Word (${fileName}) thanh cong!`);
+    } catch (err) {
+      console.error('Word export error:', err);
+      setDownloadSuccess('Xuat Word bi loi. Hay bam Export Report va thu lai.');
+    } finally {
+      setTimeout(() => {
+        setIsExporting(false);
+        setDownloadSuccess(null);
+      }, 4000);
+    }
   };
 
   return (
@@ -952,27 +981,39 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
               <CalendarDays className="h-4 w-4 text-slate-500" />
               03/08/2026 ~ 03/08/2026
             </div>
+            <button
+              onClick={() => setBedrockRequested(true)}
+              disabled={bedrockRequested || !canRequestBedrockInsight}
+              className={`${panel} flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60`}
+              title={canRequestBedrockInsight ? 'Call Bedrock AI Copilot for this selected report' : 'Canonical trip data is not ready yet'}
+            >
+              <FileText className="h-4 w-4 text-sky-400" />
+              {aiIsLoading ? 'Generating AI...' : bedrockRequested ? 'AI Requested' : 'Generate AI Insight'}
+            </button>
             <div className="relative" ref={menuRef}>
               <button 
                 onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={isExporting}
                 className={`${panel} flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 active:scale-95`}
               >
                 <Download className="h-4 w-4 text-sky-400" />
-                Export Report
+                {isExporting ? 'Exporting...' : 'Export Report'}
               </button>
 
               {showExportMenu && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-[#1E293B] bg-[#0F172A] p-1 shadow-2xl backdrop-blur-md">
                   <button
                     onClick={handleExportPDF}
-                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400"
+                    disabled={isExporting}
+                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400 disabled:cursor-wait disabled:opacity-60"
                   >
                     <FileDown className="h-4 w-4 text-red-400" />
                     <span>Xuất báo cáo PDF (.pdf)</span>
                   </button>
                   <button
                     onClick={handleExportWord}
-                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400"
+                    disabled={isExporting}
+                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400 disabled:cursor-wait disabled:opacity-60"
                   >
                     <FileCode className="h-4 w-4 text-blue-400" />
                     <span>Xuất báo cáo Word (.doc)</span>

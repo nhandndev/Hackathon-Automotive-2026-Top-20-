@@ -166,7 +166,7 @@ class CarSkySignalMapper:
         """Map live dashboard telemetry to the BTC-compatible speed-mux VHAL path.
 
         Current CarSky/AAOS only accepts standard Vehicle.Speed. The APK V2.2
-        decodes decimal groups 41..49 from this one property.
+        decodes decimal groups 41..50 from this one property.
         """
         if data_age_ms < 0:
             raise ValueError("data_age_ms must not be negative")
@@ -176,6 +176,7 @@ class CarSkySignalMapper:
         driver_state = str(snapshot.get("driver_state") or "alert").lower()
         alertness = self._number(snapshot.get("alertness_score"), None)
         speed = self._number(snapshot.get("speed_kmh"), None)
+        safe_score = self._number(snapshot.get("safe_driving_score"), None)
 
         severity = str(snapshot.get("severity") or "").upper()
         if severity not in {"SAFE", "WARNING", "CRITICAL", "RECOVERY"}:
@@ -200,6 +201,8 @@ class CarSkySignalMapper:
             values.append(self._mux(45, self._scale(ttc, 10)))
         if speed is not None and math.isfinite(speed):
             values.append(self._mux(49, speed))
+        if safe_score is not None and math.isfinite(safe_score):
+            values.append(self._mux(50, safe_score))
 
         signals = [{"path": self.paths.speed_mux, "value": value} for value in values]
         return {

@@ -78,6 +78,7 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
     private TextView alertnessValue;
     private TextView ttcValue;
     private TextView riskValue;
+    private TextView safeScoreValue;
     private TextView ecuValue;
     private TextView speedValue;
     private TextView limitValue;
@@ -161,10 +162,12 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
         LinearLayout rightCard = card();
         TextView riskLabel = label("RISK SCORE");
         rightCard.addView(riskLabel);
-        riskValue = text(52, Color.WHITE);
+        riskValue = text(46, Color.WHITE);
         riskValue.setTypeface(Typeface.DEFAULT_BOLD);
+        riskValue.setSingleLine(true);
         riskValue.setBackground(cardBackground(0x44111827, 0x26ffffff, 999));
-        rightCard.addView(riskValue, new LinearLayout.LayoutParams(154, 154));
+        rightCard.addView(riskValue, new LinearLayout.LayoutParams(210, 128));
+        safeScoreValue = addMetric(rightCard, "SAFE SCORE", "--", 24);
         ecuValue = addMetric(rightCard, "ECU REACTION", "STANDBY", 20);
         main.addView(rightCard, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
 
@@ -415,7 +418,7 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
     }
 
     private void decodeMultiplex(float raw) {
-        if (raw >= 41.0f && raw < 50.0f) {
+        if (raw >= 41.0f && raw < 51.0f) {
             int group = (int) Math.floor(raw);
             int payload = Math.round((raw - group) * 1000.0f);
             state.lastUpdateAt = System.currentTimeMillis();
@@ -446,6 +449,9 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
                     break;
                 case 49:
                     state.speed = payload;
+                    break;
+                case 50:
+                    state.safeScore = payload;
                     break;
                 default:
                     Log.w(TAG, "Unknown decimal DMS mux value=" + raw);
@@ -535,6 +541,7 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
         ttcValue.setText(String.format(Locale.US, "%.1fs", state.ttc));
         riskValue.setText(String.format(Locale.US, "%.0f", state.risk));
         riskValue.setTextColor(accent);
+        safeScoreValue.setText(String.format(Locale.US, "%.0f/100", state.safeScore));
         ecuValue.setText(ecuText(state.severity));
         speedValue.setText(String.format(Locale.US, "%.0f km/h", state.speed));
         limitValue.setText("Limit 80");
@@ -559,6 +566,7 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
         ttcValue.setText("--");
         riskValue.setText("--");
         riskValue.setTextColor(Color.WHITE);
+        safeScoreValue.setText("--");
         ecuValue.setText("STANDBY");
         speedValue.setText("-- km/h");
         limitValue.setText("Limit 80");
@@ -673,6 +681,7 @@ public final class MainActivity extends Activity implements TextToSpeech.OnInitL
         String recommendedAction = "NONE";
         float speed = 0f;
         float risk = 0f;
+        float safeScore = 100f;
         float alertness = 0f;
         float ttc = 0f;
         boolean critical = false;

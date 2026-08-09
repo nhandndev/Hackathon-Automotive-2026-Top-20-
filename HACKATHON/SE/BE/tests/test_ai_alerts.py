@@ -139,6 +139,7 @@ def test_live_snapshot_is_forwarded_to_carsky(client: TestClient):
         "speed_kmh": 48,
         "predicted_ttc_sec": 1.2,
         "risk_score": 88,
+        "safe_driving_score": 12,
         "driver_state": "microsleep",
         "driver_confidence": 0.9,
         "alertness_score": 0.2,
@@ -152,3 +153,4 @@ def test_live_snapshot_is_forwarded_to_carsky(client: TestClient):
     assert 43.004 in values
     assert 45.012 in values
     assert 49.048 in values
+    assert 50.012 in values

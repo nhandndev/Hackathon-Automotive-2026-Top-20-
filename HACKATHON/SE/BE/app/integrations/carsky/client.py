@@ -124,4 +124,4 @@ class CarSkyClient:
             value = float(signal.get("value"))
         except (TypeError, ValueError):
             return False
-        return 41.0 <= value < 50.0
+        return 41.0 <= value < 51.0

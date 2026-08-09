@@ -113,6 +113,36 @@ export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = (
     distractedPct >= 25
       ? 'Mất tập trung là contributor lớn ở cấp fleet; cần review cabin evidence theo từng trip.'
       : 'Mất tập trung chưa vượt ngưỡng contributor chính ở cấp fleet.',
+export const PerformanceInsightsView: React.FC<PerformanceInsightsViewProps> = ({ vehicle, liveAlerts = [], onOpenCopilot }) => {
+  const summary = vehicle.driver_summary;
+  const canonicalRow = buildRankingRows([vehicle])[0];
+  const finite = (value: unknown, digits = 1) =>
+    typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : 'N/A';
+  const validHeadways = (vehicle.frames ?? [])
+    .map((frame) => frame.headway_sec)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
+  const avgHeadway = validHeadways.length
+    ? validHeadways.reduce((sum, value) => sum + value, 0) / validHeadways.length
+    : vehicle.trip_aggregate?.avg_headway_sec;
+  const tripSessionAlerts = liveAlerts.filter(
+    (alert) => alert.trip_id === vehicle.trip_id,
+  );
+  const liveMicrosleepCount = new Set(
+    tripSessionAlerts
+      .filter((alert) => alert.alert_type === 'microsleep')
+      .map((alert) => alert.event_id),
+  ).size;
+  const microsleepCount = Math.max(
+    liveMicrosleepCount,
+    summary?.microsleep_count ?? 0,
+  );
+  const metrics = [
+    ['Ranking score', finite(canonicalRow?.score)],
+    ['Near misses', String(canonicalRow?.nearMissCount ?? 'N/A')],
+    ['Maximum risk', finite(canonicalRow?.maxRisk)],
+    ['Average headway', typeof avgHeadway === 'number' && Number.isFinite(avgHeadway) && avgHeadway > 0 ? `${avgHeadway.toFixed(2)}s` : 'No TTC data'],
+    ['Microsleep count', microsleepCount.toString()],
+    ['Average alertness', typeof summary?.average_alertness_score === 'number' ? `${Math.round(summary.average_alertness_score * 100)}%` : 'N/A'],
   ];
 
   return (

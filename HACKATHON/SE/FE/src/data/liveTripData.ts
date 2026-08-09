@@ -28,9 +28,9 @@ const toFrame = (snapshot: LiveSnapshot): Frame => ({
   driver: {
     state: snapshot.driver_state ?? 'unknown',
     alertness_score: snapshot.alertness_score ?? 0,
-    eye_state: 'unknown',
-    head_pose: 'unknown',
-    mouth_state: 'unknown',
+    eye_state: snapshot.eye_state ?? 'unknown',
+    head_pose: snapshot.head_pose ?? 'unknown',
+    mouth_state: snapshot.mouth_state ?? 'unknown',
     nthu_subject_id: 'runtime',
   },
   events_active: [],
@@ -114,9 +114,11 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
   const averageAlertness = alertness.length
     ? alertness.reduce((sum, value) => sum + value, 0) / alertness.length
     : 1;
-  const averageHeadway = finiteHeadways.length
-    ? finiteHeadways.reduce((sum, value) => sum + value, 0) / finiteHeadways.length
-    : 0;
+  const averageHeadway = typeof last?.avg_headway_sec === 'number' && Number.isFinite(last.avg_headway_sec) && last.avg_headway_sec > 0
+    ? last.avg_headway_sec
+    : finiteHeadways.length
+      ? finiteHeadways.reduce((sum, value) => sum + value, 0) / finiteHeadways.length
+      : 0;
 
   const duration = recentSnapshots.length
     ? recentSnapshots[recentSnapshots.length - 1].trip_timestamp_ms / 1000
@@ -125,7 +127,9 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
 
   const currentRisk = last?.risk_score ?? averageRisk;
   const rawSafeScore = 100 - currentRisk;
-  const safeDrivingScore = capSafeScoreByRisk(rawSafeScore, maxRisk, averageRisk);
+  const safeDrivingScore = typeof last?.safe_driving_score === 'number'
+    ? clamp(last.safe_driving_score)
+    : capSafeScoreByRisk(rawSafeScore, maxRisk, averageRisk);
 
   return {
     trip_id: session.trip_id,
@@ -154,7 +158,7 @@ export const sessionToTrip = (session: LiveTripSession): TripData => {
           : 0,
       },
       longest_drowsy_episode_sec: 0,
-      microsleep_count: episodeCount(
+      microsleep_count: last?.microsleep_count ?? episodeCount(
         recentSnapshots, (item) => item.driver_state === 'microsleep',
       ),
       average_alertness_score: averageAlertness,

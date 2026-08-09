@@ -90,6 +90,31 @@ def fuse_driver_state(
     )
 
 
+def state_adjusted_alertness(
+    raw_alertness: float,
+    final_state: str,
+    confidence: float,
+) -> float:
+    """Keep alertness consistent with the final ML/fusion driver state.
+
+    The primitive rule engine can report high alertness when EAR calibration is
+    conservative, while the Random Forest still detects a fatigue state from
+    rolling temporal features.  Dashboard/Decision Engine consumers should see
+    the final C2 decision, not a contradictory "microsleep + 100% alert" pair.
+    """
+    value = max(0.0, min(1.0, float(raw_alertness)))
+    if confidence < 0.50:
+        return value
+    caps = {
+        "microsleep": 0.05,
+        "drowsy": 0.45,
+        "yawning": 0.70,
+        "distracted": 0.60,
+    }
+    cap = caps.get(final_state)
+    return min(value, cap) if cap is not None else value
+
+
 class DriverStatePredictor:
     """ONNX feature extraction plus the production Random Forest."""
 
@@ -219,13 +244,18 @@ class DriverStatePredictor:
             primitive,
             int(self.config["eye"]["microsleep_min_ms"]),
         )
+        alertness_score = state_adjusted_alertness(
+            float(primitive["alertness_score"]),
+            fused.state,
+            fused.confidence,
+        )
         observation = primitive.get("observation", {})
         return {
             "state": fused.state,
             "confidence": fused.confidence,
             "prediction_source": fused.source if self.architecture == "legacy_5class" or fused.source == "safety-fusion" else prediction_source,
             "fusion_reason": fused.reason,
-            "alertness_score": float(primitive["alertness_score"]),
+            "alertness_score": alertness_score,
             "eye_state": primitive["eye_state"],
             "mouth_state": primitive["mouth_state"],
             "head_pose": primitive["head_state"],

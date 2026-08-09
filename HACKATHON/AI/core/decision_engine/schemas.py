@@ -49,6 +49,8 @@ class DecisionSnapshot(StrictModel):
     continuous_eye_closure_ms: int = Field(default=0, ge=0)
     perclos_30s: float = Field(default=0.0, ge=0, le=1)
     off_road_duration_ms: int = Field(default=0, ge=0)
+    eye_state: str = "unknown"
+    head_pose: str = "unknown"
     mouth_state: str = "normal"
     mouth_open_duration_ms: int = Field(default=0, ge=0)
     c3_risk_score: float = Field(default=0.0, ge=0, le=100)
@@ -63,6 +65,7 @@ class DecisionSnapshot(StrictModel):
     harsh_accel_count: int = Field(default=0, ge=0)
     harsh_corner_count: int = Field(default=0, ge=0)
     near_miss_count: int = Field(default=0, ge=0)
+    microsleep_count: int = Field(default=0, ge=0)
     speeding_pct_time: float = Field(default=0.0, ge=0, le=100)
     tailgating_pct_time: float = Field(default=0.0, ge=0, le=100)
     avg_headway_sec: float = Field(default=0.0, ge=0)

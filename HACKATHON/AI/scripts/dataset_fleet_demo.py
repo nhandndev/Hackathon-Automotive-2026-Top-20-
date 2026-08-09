@@ -250,6 +250,8 @@ def main() -> int:
                                 cabin_frame=cabin,
                                 left_frame=left_frame,
                                 right_frame=right_frame,
+                                live_timestamp_ms=round(frame.timestamp * 1000),
+                                force_driver_sync=True,
                             )
 
                             cached_ttc = res["cached_ttc"]

@@ -1,5 +1,6 @@
 challenge2:
   production:
-    # Main Driver-State artifact used by batch, webcam and end-to-end demos
-    # when --driver-model/--model is omitted.
-    artifact: models/driver_state_current.joblib
+    # Production rollback artifact: Random Forest legacy 5-class, 59 features.
+    # driver_state_current.joblib is kept as a byte-identical alias for older
+    # commands, but demos should pass models/candidate_013.joblib explicitly.
+    artifact: models/candidate_013.joblib

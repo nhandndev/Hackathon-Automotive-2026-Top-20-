@@ -192,6 +192,9 @@ export interface LiveSnapshot {
   driver_state: string;
   driver_confidence: number;
   alertness_score: number;
+  eye_state?: string;
+  head_pose?: string;
+  mouth_state?: string;
   longitudinal_accel?: number;
   lateral_accel?: number;
   speed_limit_kmh?: number;
@@ -206,6 +209,7 @@ export interface LiveSnapshot {
   harsh_accel_count?: number;
   harsh_corner_count?: number;
   near_miss_count?: number;
+  microsleep_count?: number;
   speeding_pct_time?: number;
   tailgating_pct_time?: number;
   avg_headway_sec?: number;

@@ -146,7 +146,10 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
     return [...counts.entries()];
   }, [tripAlerts]);
 
-  const safetyScore = rankingRow?.score ?? null;
+  const safetyScore = displaySnapshot?.safe_driving_score
+    ?? vehicle.trip_aggregate?.safe_driving_score
+    ?? rankingRow?.score
+    ?? null;
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-hidden bg-[#070A12] p-4 text-white md:p-6">
@@ -193,6 +196,9 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({
             <div className="flex justify-between"><span className="text-[10px] font-bold uppercase text-slate-300">Trip score context</span><AlertTriangle className="h-3.5 w-3.5 text-amber-400" /></div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center"><Metric label="RANK" value={formatNumber(safetyScore)} /><Metric label="RISK" value={formatNumber(displaySnapshot?.risk_score)} /><Metric label="TTC" value={displaySnapshot?.predicted_ttc_sec === null ? '∞' : formatNumber(displaySnapshot?.predicted_ttc_sec, 2)} /></div>
             <p className="mt-3 text-[9px] text-slate-500">Ranking Score dùng JSON/local AI risk và behavior fields. Live risk/TTC dùng snapshot nếu có, nếu không dùng saved frame cuối.</p>
+            <div className="flex justify-between"><span className="text-[10px] font-bold uppercase text-slate-300">Challenge 3 scores</span><AlertTriangle className="h-3.5 w-3.5 text-amber-400" /></div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center"><Metric label="SAFE" value={formatNumber(safetyScore)} /><Metric label="RISK" value={formatNumber(displaySnapshot?.risk_score)} /><Metric label="TTC" value={displaySnapshot?.predicted_ttc_sec === null ? '∞' : formatNumber(displaySnapshot?.predicted_ttc_sec, 2)} /></div>
+            <p className="mt-3 text-[9px] text-slate-500">Live SAFE/RISK/TTC dùng snapshot thật từ AI Challenge 3; nếu backend offline mới fallback sang saved frame.</p>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-sky-900/50 bg-[#0B0F19] p-4">

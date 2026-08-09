@@ -195,11 +195,9 @@ BTC road cameras + live webcam driver camera:
   -TripDir ..\Practice_Dataset\T01-Sample `
   -Camera 0 `
   -DriverId driver_001 `
-  -DriverModel AI\models\driver_state_current.joblib `
+  -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard `
   -SkipCarSkyPreflight
-  -DriverModel AI\models\candidate_013.joblib `
-  -OpenDashboard
 ```
 
 Dataset fleet demo:
@@ -208,10 +206,18 @@ Dataset fleet demo:
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
   -DataDir ..\Practice_Dataset `
-  -DriverModel AI\models\driver_state_current.joblib `
+  -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard `
   -SkipCarSkyPreflight
 ```
+
+This product runner uses the stable end-to-end demo profile:
+
+- Challenge 2 driver state is refreshed on every replayed dataset frame.
+- Challenge 3 risk/safe score is updated on every frame.
+- Challenge 1 TTC runs on a fixed 200 ms cadence to keep the UI stable.
+- Fleet Dashboard media publishing is limited to 3 FPS.
+- Dataset replay runs at 0.5x speed for smoother desktop + dashboard sync.
 
 If testing a candidate Challenge 2 model, replace only `-DriverModel`, for
 example:
@@ -220,11 +226,9 @@ example:
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
   -DataDir ..\Practice_Dataset `
-  -DriverModel AI\models\modelv5-final.joblib `
+  -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard `
   -SkipCarSkyPreflight
-  -DriverModel AI\models\candidate_013.joblib `
-  -OpenDashboard
 ```
 
 By default, this runner continues with local AI + SE Backend + Fleet Dashboard

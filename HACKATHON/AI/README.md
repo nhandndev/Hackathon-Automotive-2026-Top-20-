@@ -91,6 +91,15 @@ python -m pip install -r SE\BE\requirements.txt
 python AI\scripts\preflight_ai.py
 ```
 
+Install Fleet Dashboard dependencies once:
+
+```powershell
+Push-Location SE\FE
+npm install
+npm run build
+Pop-Location
+```
+
 CUDA is expected for the full product demo. Random Forest itself runs on CPU,
 while YOLO/ONNX parts use GPU providers when available.
 
@@ -167,15 +176,24 @@ python AI\scripts\webcam_driver_demo.py `
 
 ## End-to-End Demo
 
+The product runner can run in two scopes:
+
+- Local AI + SE Backend + Fleet Dashboard: add `-SkipCarSkyPreflight`.
+- Full AI + SE Backend + Fleet Dashboard + CarSky: remove
+  `-SkipCarSkyPreflight` and configure `SE\BE\.env` with real CarSky external
+  credentials.
+
 BTC road cameras + live webcam driver camera:
 
 ```powershell
 .\scripts\run_product_demo.ps1 `
+  -Mode hybrid-live `
   -TripDir ..\Practice_Dataset\T01-Sample `
   -Camera 0 `
   -DriverId driver_001 `
   -DriverModel AI\models\driver_state_current.joblib `
-  -OpenDashboard
+  -OpenDashboard `
+  -SkipCarSkyPreflight
 ```
 
 Dataset fleet demo:
@@ -185,12 +203,37 @@ Dataset fleet demo:
   -Mode dataset-fleet `
   -DataDir ..\Practice_Dataset `
   -DriverModel AI\models\driver_state_current.joblib `
-  -OpenDashboard
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+If testing a candidate Challenge 2 model, replace only `-DriverModel`, for
+example:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\modelv5-final.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
 ```
 
 Keep this runner terminal open while inspecting Fleet Dashboard. When the
 runner exits, it stops the local SE Backend, and the browser will show
 `ERR_CONNECTION_REFUSED` for `127.0.0.1:8000`.
+
+For full CarSky demo, `SE\BE\.env` must include:
+
+```env
+CARSKY_ENABLED=true
+CARSKY_MODE=external
+CARSKY_BASE_URL=...
+CARSKY_API_KEY=...
+CARSKY_ROOM_ID=...
+CARSKY_NODE_KEY=...
+CARSKY_ANDROID_NODE_KEY=...
+```
 
 ## Training Challenge 2
 

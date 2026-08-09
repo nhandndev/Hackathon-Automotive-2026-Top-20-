@@ -111,11 +111,28 @@ gửi kèm model package; máy clone đặt đúng vào `AI\models\` trước kh
 Tạo cấu hình Backend cục bộ:
 
 ```powershell
-Copy-Item SE\BE\.env.example SE\BE\.env
+if (!(Test-Path SE\BE\.env)) {
+  Copy-Item SE\BE\.env.example SE\BE\.env
+}
 ```
 
-Điền CarSky external credential vào `SE/BE/.env`. Không commit hoặc chiếu secret.
-APK realtime phải được cài và mở sẵn trên Android node.
+Mặc định `.env.example` là cấu hình local/offline. Nếu chỉ demo AI + SE Backend + Fleet Dashboard trên máy local thì giữ nguyên và khi chạy thêm
+`-SkipCarSkyPreflight`.
+
+Nếu demo full CarSky thì sửa `SE/BE/.env` thành external thật:
+
+```env
+CARSKY_ENABLED=true
+CARSKY_MODE=external
+CARSKY_BASE_URL=...
+CARSKY_API_KEY=...
+CARSKY_ROOM_ID=...
+CARSKY_NODE_KEY=...
+CARSKY_ANDROID_NODE_KEY=...
+```
+
+Không commit hoặc chiếu secret. APK realtime phải được cài và mở sẵn trên
+Android node.
 
 ### 1.5 Personalized driver profile (tùy chọn)
 
@@ -130,12 +147,30 @@ python AI\scripts\webcam_driver_demo.py `
 
 ## 2. Demo A — BTC road + webcam tài xế
 
+### 2.1 Local dashboard demo, chưa dùng CarSky
+
 ```powershell
 .\scripts\run_product_demo.ps1 `
   -Mode hybrid-live `
-  -TripDir E:\automotive_cc\Practice_Dataset\T01-Sample `
+  -TripDir ..\Practice_Dataset\T01-Sample `
   -Camera 0 `
   -DriverId driver_001 `
+  -DriverModel AI\models\modelv5-final `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+### 2.2 Full demo có CarSky
+
+Chỉ dùng lệnh này khi `SE\BE\.env` đã có CarSky external credential thật:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode hybrid-live `
+  -TripDir ..\Practice_Dataset\T01-Sample `
+  -Camera 0 `
+  -DriverId driver_001 `
+  -DriverModel AI\models\driver_state_current.joblib `
   -OpenDashboard
 ```
 
@@ -144,17 +179,44 @@ Runner kiểm tra môi trường/CarSky, mở Backend và Dashboard rồi chạy
 
 ## 3. Demo B — nhiều trip từ một folder
 
+### 3.1 Local dashboard demo, chưa dùng CarSky
+
 ```powershell
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
-  -DataDir E:\automotive_cc\Practice_Dataset `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\driver_state_current.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+Nếu muốn test model Challenge 2 candidate:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\modelv5-final.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+### 3.2 Full demo có CarSky
+
+Chỉ dùng lệnh này khi `SE\BE\.env` đã có CarSky external credential thật:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\driver_state_current.joblib `
   -OpenDashboard
 ```
 
 Mỗi thư mục con phải là trip BTC đầy đủ: `<trip_id>.json(.gz)`, `driver/`,
 `kitti/image_2`, `kitti/image_3` và calibration. Chỉ cần đổi `-DataDir` để dùng
 dataset khác. Tất cả trip xuất hiện ngay; AI chạy tuần tự, Dashboard giữ trip đã
-hoàn thành. Sau trip cuối, nhấn Enter tại terminal mới dừng services.
+hoàn thành tạm thời cho demo. Khi runner dừng, saved demo trips sẽ được clear.
 
 ## 4. Bằng chứng cần chỉ trong demo
 
@@ -179,13 +241,14 @@ DecisionEvent vẫn là contract tích hợp chính.
 
 ```powershell
 python AI\scripts\run_inference.py `
-  --data-dir E:\automotive_cc\Practice_Dataset `
+  --data-dir ..\Practice_Dataset `
   --samples-only `
+  --driver-model AI\models\driver_state_current.joblib `
   --out AI\artifacts\predictions_6_samples
 
 python AI\team_kit\evaluation.py `
   --predictions AI\artifacts\predictions_6_samples `
-  --data-dir E:\automotive_cc\Practice_Dataset `
+  --data-dir ..\Practice_Dataset `
   --output AI\artifacts\evaluation_6_samples.json
 ```
 
@@ -206,7 +269,9 @@ python AI\scripts\send_decision_events.py `
 | PowerShell không chạy script | `Set-ExecutionPolicy -Scope Process Bypass` |
 | Thiếu `onnxruntime` | Activate `.venv`, cài lại `AI\requirements.txt` |
 | Profile schema cũ | Enroll lại với `--enroll` |
-| Dashboard offline | Kiểm tra `http://127.0.0.1:8000/health` |
+| Dashboard offline | Kiểm tra `http://127.0.0.1:8000/health`, `http://127.0.0.1:3000/api/health` |
+| Thiếu Frontend dependencies | Chạy `Push-Location SE\FE; npm install; npm run build; Pop-Location` |
+| CarSky preflight fail | Nếu local demo thì thêm `-SkipCarSkyPreflight`; nếu full demo thì điền `SE\BE\.env` external thật |
 | HMI không đổi | Kiểm tra deployment/node/token và ADB còn mở |
 | Chưa có alert | Giữ hành vi đủ temporal gate; không hạ threshold tại chỗ |
 | Chỉ test Dashboard, chưa dùng CarSky | Thêm `-SkipCarSkyPreflight` và nói rõ phạm vi demo |

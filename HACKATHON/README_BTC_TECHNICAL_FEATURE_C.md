@@ -232,15 +232,19 @@ npm run dev     # Khởi chạy giao diện web
 Mở trình duyệt tại: `http://127.0.0.1:3000`
 
 ### Step 4: Chạy Demo Sản phẩm Tự động (End-to-End Product Runner)
-Tại thư mục root `HACKATHON`:
-- **Trên Linux / macOS:**
-  ```bash
-  bash scripts/run_product_demo.sh --mode hybrid-live --trip-dir ./AI/demo_trips/T01-Sample --open-dashboard
-  ```
-- **Trên Windows (PowerShell):**
-  ```powershell
-  .\scripts\run_product_demo.ps1 -Mode hybrid-live -TripDir .\AI\demo_trips\T01-Sample -OpenDashboard
-  ```
+Tại thư mục root `HACKATHON`, dùng Windows PowerShell:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\driver_state_current.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+Nếu demo full CarSky, bỏ `-SkipCarSkyPreflight` chỉ sau khi `SE\BE\.env` đã có
+CarSky external credential thật.
 
 ### Step 5: Kiểm thử Tích hợp CarSky Automotive HMI Signals
 ```bash

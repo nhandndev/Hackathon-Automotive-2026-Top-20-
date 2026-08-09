@@ -456,7 +456,9 @@ Trên Windows PowerShell, từ root `HACKATHON`:
   -TripDir <PATH_TO_PRACTICE_DATASET>\T01-Sample `
   -Camera 0 `
   -DriverId driver_001 `
-  -OpenDashboard
+  -DriverModel AI\models\driver_state_current.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
 ```
 
 Chế độ nhiều trip:
@@ -465,8 +467,14 @@ Chế độ nhiều trip:
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
   -DataDir <PATH_TO_PRACTICE_DATASET> `
-  -OpenDashboard
+  -DriverModel AI\models\driver_state_current.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
 ```
+
+Bỏ `-SkipCarSkyPreflight` chỉ khi `SE\BE\.env` đã có CarSky external
+credential thật (`CARSKY_ENABLED=true`, `CARSKY_MODE=external`, token/room/node
+đầy đủ).
 
 Kỳ vọng end-to-end:
 

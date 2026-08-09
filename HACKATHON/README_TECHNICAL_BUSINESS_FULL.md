@@ -256,30 +256,64 @@ Kiến trúc này đảm bảo dữ liệu AI thật (TTC, driver state, risk sc
 
 ## 5. HƯỚNG DẪN KHỞI CHẠY & KIỂM THỬ THỰC TẾ (RUNBOOK FOR TESTING)
 
-### Step 1: Kích hoạt Môi trường Python
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r AI/requirements.txt -r SE/BE/requirements.txt
+### Step 1: Kích hoạt môi trường Python từ `HACKATHON/`
+
+```powershell
+py -3.13 -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r AI\requirements.txt
+python -m pip install -r SE\BE\requirements.txt
+python AI\scripts\preflight_ai.py
 ```
 
-### Step 2: Chạy FastAPI Backend Engine
-```bash
-cd SE/BE
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
+### Step 2: Cài Fleet Dashboard dependencies một lần
 
-### Step 3: Khởi chạy Fleet Dashboard + AWS Bedrock LLM Gateway
-```bash
-cd SE/FE
+```powershell
+Push-Location SE\FE
 npm install
-npm run dev
+npm run build
+Pop-Location
 ```
-Truy cập giao diện: `http://127.0.0.1:3000`
 
-### Step 4: Chạy Demo Realtime End-to-End Runner
-```bash
-bash scripts/run_product_demo.sh --mode hybrid-live --trip-dir ./AI/demo_trips/T01-Sample --open-dashboard
+### Step 3: Local end-to-end demo — AI + SE Backend + Fleet Dashboard
+
+Runner tự mở FastAPI Backend ở `127.0.0.1:8000`, Fleet Dashboard ở
+`127.0.0.1:3000`, rồi chạy AI pipeline.
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\driver_state_current.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+Nếu test model candidate:
+
+```powershell
+.\scripts\run_product_demo.ps1 `
+  -Mode dataset-fleet `
+  -DataDir ..\Practice_Dataset `
+  -DriverModel AI\models\modelv5-final.joblib `
+  -OpenDashboard `
+  -SkipCarSkyPreflight
+```
+
+### Step 4: Full demo có CarSky
+
+Chỉ bỏ `-SkipCarSkyPreflight` khi `SE\BE\.env` đã có credential external thật:
+
+```env
+CARSKY_ENABLED=true
+CARSKY_MODE=external
+CARSKY_BASE_URL=...
+CARSKY_API_KEY=...
+CARSKY_ROOM_ID=...
+CARSKY_NODE_KEY=...
+CARSKY_ANDROID_NODE_KEY=...
 ```
 
 ---

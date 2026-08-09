@@ -1,0 +1,79 @@
+# Challenge 2 experimental multi-head fusion config.
+# This file is for isolated experiments only. The production pipeline still uses
+# AI/configs/challenge2.yaml + AI/models/candidate_013.joblib.
+
+fps: 20.0
+
+default_profile:
+  driver_id: default
+  ear_open: 0.3225
+  ear_closed: 0.2170
+  mar_neutral: 0.2010
+  mar_yawn: 0.6500
+  neutral_yaw_deg: 0.0
+  neutral_pitch_deg: 0.0
+  neutral_roll_deg: 0.0
+  eye_closure_threshold: 0.72
+  quality_score: 0.85
+
+quality_gate:
+  eye: 0.45
+  mouth: 0.45
+  head: 0.45
+  drowsy: 0.45
+
+microsleep:
+  start_sec: 0.35
+  full_sec: 1.20
+  enter: 0.62
+  exit: 0.35
+  enter_sec: 0.15
+  exit_sec: 0.20
+
+yawning:
+  mouth_open_norm_threshold: 0.65
+  start_sec: 0.60
+  full_sec: 1.80
+  enter: 0.60
+  exit: 0.35
+  enter_sec: 0.20
+  exit_sec: 0.30
+
+distracted:
+  yaw_threshold_deg: 18.0
+  pitch_threshold_deg: 16.0
+  offroad_start_sec: 0.45
+  offroad_full_sec: 1.60
+  hand_start_sec: 0.50
+  hand_full_sec: 3.00
+  visual_weight: 0.65
+  hand_weight: 0.35
+  lateral_accel_threshold: 0.45
+  lateral_context_discount: 0.80
+  phone_bonus: 0.30
+  down_sec: 1.20
+  down_bonus: 0.15
+  enter: 0.58
+  exit: 0.35
+  enter_sec: 0.20
+  exit_sec: 0.35
+
+drowsy:
+  # Optional Binary RF head. If model_path is empty, Drowsy head is disabled
+  # instead of silently using a fake heuristic.
+  model_path: ""
+  enter: 0.65
+  exit: 0.45
+  enter_sec: 0.40
+  exit_sec: 0.60
+  long_closure_sec: 0.50
+  features:
+    - PERCLOS_5s
+    - blink_duration_mean_5s
+    - eye_openness_mean_5s
+    - eye_openness_std_5s
+    - blink_rate_10s
+    - long_closure_count_10s
+
+fusion:
+  conflict_margin: 0.12

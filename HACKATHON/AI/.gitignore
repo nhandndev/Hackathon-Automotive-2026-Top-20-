@@ -13,12 +13,17 @@ predictions/
 artifacts/
 datasets/
 runs/
+experimental/**/artifacts/
 
 # Model weights (auto-downloaded / trained)
 *.pt
 *.onnx
 # ...except the fine-tuned Challenge 1 weight the pipeline is configured to load.
 !yolov8s_finetuned_carla_v2.pt
+
+# Legacy production source files are intentionally NOT ignored here because most
+# of them are tracked code and must remain reviewable/rollbackable.
+# See AI/LEGACY_PIPELINE_PROTECTED.md for the protected legacy list.
 
 # Python caches
 __pycache__/

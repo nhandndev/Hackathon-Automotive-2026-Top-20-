@@ -56,6 +56,7 @@ export default function App() {
   const runningTripIdsRef = useRef<Set<string>>(new Set());
   // Ref: historical trips loaded from server disk (data/saved_trips/).
   const savedTripsCacheRef = useRef<TripData[]>([]);
+  const savingTripIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const alertsHttp = import.meta.env.VITE_ALERTS_HTTP_URL || 'http://127.0.0.1:8000/api/v1/alerts';
@@ -87,6 +88,8 @@ export default function App() {
 
     /** Persist a completed TripData to disk via the Express server. */
     const saveTripToServer = async (tripData: TripData) => {
+      if (savingTripIdsRef.current.has(tripData.trip_id)) return;
+      savingTripIdsRef.current.add(tripData.trip_id);
       try {
         const resp = await fetch('/api/trips/save', {
           method: 'POST',
@@ -102,6 +105,8 @@ export default function App() {
         }
       } catch (err) {
         console.warn('[trip-persist] Auto-save failed:', err);
+      } finally {
+        savingTripIdsRef.current.delete(tripData.trip_id);
       }
     };
 
@@ -145,10 +150,12 @@ export default function App() {
         if (!dynamicTrips.length) return;
 
         // ── Detect running → completed transition and auto-save ─────────────
+        const savedTripIds = new Set(savedTripsCacheRef.current.map(t => t.trip_id));
         for (const session of liveSessions) {
           if (
             session.status === 'completed'
-            && runningTripIdsRef.current.has(session.trip_id)
+            && !savedTripIds.has(session.trip_id)
+            && !savingTripIdsRef.current.has(session.trip_id)
           ) {
             const completedTrip = dynamicTrips.find(t => t.trip_id === session.trip_id);
             if (completedTrip) void saveTripToServer(completedTrip);

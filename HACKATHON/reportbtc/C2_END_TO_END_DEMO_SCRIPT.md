@@ -211,8 +211,6 @@ Chỉ dùng lệnh này khi `SE\BE\.env` đã có CarSky external credential th�
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
   -DataDir ..\Practice_Dataset `
-  -DriverModel AI\models\driver_state_current.joblib `
-  -DataDir E:\automotive_cc\Practice_Dataset `
   -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard
 ```
@@ -227,7 +225,7 @@ Chỉ khi cần demo đầy đủ với CarSky cloud thì cấu hình credential
 ```powershell
 .\scripts\run_product_demo.ps1 `
   -Mode dataset-fleet `
-  -DataDir E:\automotive_cc\Practice_Dataset `
+  -DataDir ..\Practice_Dataset `
   -DriverModel AI\models\candidate_013.joblib `
   -OpenDashboard `
   -RequireCarSky

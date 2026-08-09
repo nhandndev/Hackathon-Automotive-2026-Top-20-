@@ -1,0 +1,23 @@
+{
+  "evidence_id": "E-XX",
+  "title": "",
+  "priority": "P0|P1|P2",
+  "status": "PENDING_CAPTURE",
+  "primary_owner": "",
+  "supporting_owners": [],
+  "captured_at_utc": null,
+  "source_commit": null,
+  "build_id": null,
+  "environment_id": null,
+  "model_hashes": {},
+  "config_hash": null,
+  "dataset_manifest_hash": null,
+  "commands": [],
+  "exit_codes": [],
+  "redaction_status": "NOT_CHECKED",
+  "result": null,
+  "limitations": [],
+  "reviewer": null,
+  "reviewed_at_utc": null
+}
+

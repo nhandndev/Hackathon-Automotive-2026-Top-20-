@@ -1,0 +1,8 @@
+status,meaning,allowed_for_submission
+PENDING_CAPTURE,Chưa có artifact thực tế,NO
+IN_PROGRESS,Đang chạy hoặc đang thu thập,NO
+CAPTURED_UNVERIFIED,Đã có artifact nhưng chưa kiểm tra độc lập,CONDITIONAL
+VERIFIED_PASS,Artifact đã được kiểm tra và chứng minh claim,YES
+VERIFIED_FAIL,Phép thử hoàn tất nhưng claim không đạt,YES_WITH_DISCLOSURE
+NOT_APPLICABLE,Claim đã loại khỏi phạm vi và có lý do,YES_WITH_DISCLOSURE
+

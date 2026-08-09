@@ -14,13 +14,9 @@ Các bằng chứng mang tính chất quyết định nghiệp vụ, kinh doanh 
 - [ ] **Kết quả mong đợi:** `intervention_trace.jsonl`, scope statement.
 - **Ghi chú của Owner:**
 
-## Business & Market (E-28, E-29, E-30, E-31, E-32, E-33)
-- [ ] **E-28 (Market stats):** Tìm nguồn thị trường thật, lưu PDF/page/table.
-- [ ] **E-29 (Competitive gap):** Thu thập vendor docs/demo/quote thật.
-- [ ] **E-30 (Pricing/BOM):** Lấy báo giá thật, tính low/base/high case.
-- [ ] **E-31 (Hypotheses tested):** Phỏng vấn 5-8 người, tổng hợp insight (không tự động hoá).
-- [ ] **E-32 (Pilot value):** Pre-register KPI/threshold trước khi chạy pilot.
-- [ ] **E-33 (ROI not invented):** Đo before/after thật trong pilot.
+## E-24: CarSky/KUKSA/VHAL/APK correlation (Nhân)
+- [ ] **Hành động:** Đồng bộ clock, gửi known event qua platform thật. Thu thập log ở mọi boundary.
+- [ ] **Kết quả mong đợi:** `carsky_trace_bundle.zip`, MP4 60s, `mapping.md`
 - **Ghi chú của Owner:**
 
 ## E-34: Safety/privacy gates (Nhân/Dân)

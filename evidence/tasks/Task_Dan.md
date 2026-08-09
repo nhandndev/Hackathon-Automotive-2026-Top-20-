@@ -19,9 +19,13 @@ Ghi lại trung thực số liệu đo đạc thực tế từ phần cứng ho�
 - [ ] **Kết quả mong đợi:** `collector_environment.json`, `command.sh`, sample trip, MP4
 - **Ghi chú của Owner:**
 
-## E-24: CarSky/KUKSA/VHAL/APK correlation (Dân)
-- [ ] **Hành động:** Đồng bộ clock, gửi known event qua platform thật. Thu thập log ở mọi boundary.
-- [ ] **Kết quả mong đợi:** `carsky_trace_bundle.zip`, MP4 60s, `mapping.md`
+## Business & Market (E-28, E-29, E-30, E-31, E-32, E-33)
+- [ ] **E-28 (Market stats):** Tìm nguồn thị trường thật, lưu PDF/page/table.
+- [ ] **E-29 (Competitive gap):** Thu thập vendor docs/demo/quote thật.
+- [ ] **E-30 (Pricing/BOM):** Lấy báo giá thật, tính low/base/high case.
+- [ ] **E-31 (Hypotheses tested):** Phỏng vấn 5-8 người, tổng hợp insight (không tự động hoá).
+- [ ] **E-32 (Pilot value):** Pre-register KPI/threshold trước khi chạy pilot.
+- [ ] **E-33 (ROI not invented):** Đo before/after thật trong pilot.
 - **Ghi chú của Owner:**
 
 ## E-25: Audio path (Dân)

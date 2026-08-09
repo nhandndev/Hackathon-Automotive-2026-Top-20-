@@ -90,3 +90,8 @@ Supporting: Thiện
 - [ ] **Hành động:** (Chỉ làm SAU khi có durable architecture - điều kiện tiên quyết chưa đủ, để tạm).
 - [ ] **Kết quả mong đợi:** Khác
 - **Ghi chú của Owner:**
+
+## E-24: CarSky/KUKSA/VHAL/APK correlation (Nhân)
+- [ ] **Hành động:** Đồng bộ clock, gửi known event qua platform thật. Thu thập log ở mọi boundary.
+- [ ] **Kết quả mong đợi:** `carsky_trace_bundle.zip`, MP4 60s, `mapping.md`
+- **Ghi chú của Owner:**

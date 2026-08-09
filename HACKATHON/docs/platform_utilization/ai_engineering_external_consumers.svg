@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">AI Engineering External Consumer Proof Map</title>
+  <desc id="desc">Diagram showing how FPTU DMS Vision AI capabilities are consumed by external consumers through contracts, APIs, reports, scripts and CarSky integration artifacts.</desc>
+  <defs>
+    <style>
+      .bg { fill: #07111f; }
+      .panel { fill: #0f1b2d; stroke: #27405f; stroke-width: 2; rx: 18; }
+      .panel2 { fill: #10243a; stroke: #0ea5e9; stroke-width: 2; rx: 18; }
+      .consumer { fill: #172033; stroke: #8b5cf6; stroke-width: 2; rx: 16; }
+      .artifact { fill: #0b1628; stroke: #22d3ee; stroke-width: 2; rx: 14; }
+      .verified { fill: #062c25; stroke: #10b981; stroke-width: 2; rx: 12; }
+      .caveat { fill: #351b20; stroke: #fb7185; stroke-width: 2; rx: 12; }
+      .title { fill: #f8fafc; font: 800 38px Inter, Arial, sans-serif; }
+      .subtitle { fill: #a8bfd8; font: 500 20px Inter, Arial, sans-serif; }
+      .h { fill: #e2e8f0; font: 800 23px Inter, Arial, sans-serif; }
+      .txt { fill: #cbd5e1; font: 500 18px Inter, Arial, sans-serif; }
+      .small { fill: #9fb0c7; font: 500 15px Inter, Arial, sans-serif; }
+      .mono { fill: #67e8f9; font: 700 15px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .ok { fill: #6ee7b7; font: 800 15px Inter, Arial, sans-serif; }
+      .warn { fill: #fda4af; font: 800 15px Inter, Arial, sans-serif; }
+      .arrow { stroke: #38bdf8; stroke-width: 4; fill: none; marker-end: url(#arrowHead); }
+      .arrow2 { stroke: #a78bfa; stroke-width: 4; fill: none; marker-end: url(#arrowHeadPurple); }
+    </style>
+    <marker id="arrowHead" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrowHeadPurple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#a78bfa"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1600" height="980"/>
+  <text class="title" x="70" y="70">AI Engineering Capability: External Consumer Proof Map</text>
+  <text class="subtitle" x="70" y="104">Capability is consumed through real interfaces/artifacts, not by asking reviewers to trust the internal model.</text>
+
+  <rect class="panel2" x="70" y="150" width="390" height="690"/>
+  <text class="h" x="100" y="198">AI-owned capability</text>
+  <rect class="artifact" x="100" y="230" width="330" height="115"/>
+  <text class="txt" x="122" y="268">Decision Engine</text>
+  <text class="small" x="122" y="298">Generates canonical safety events</text>
+  <text class="mono" x="122" y="326">DecisionEvent</text>
+
+  <rect class="artifact" x="100" y="370" width="330" height="125"/>
+  <text class="txt" x="122" y="408">Local AI telemetry</text>
+  <text class="small" x="122" y="438">Trip/risk/frame metrics used as</text>
+  <text class="small" x="122" y="462">canonical report baseline</text>
+  <text class="mono" x="122" y="485">JSON/local AI</text>
+
+  <rect class="artifact" x="100" y="520" width="330" height="125"/>
+  <text class="txt" x="122" y="558">AI Copilot layer</text>
+  <text class="small" x="122" y="588">Explains reports via Bedrock only</text>
+  <text class="small" x="122" y="612">after validation/fallback</text>
+  <text class="mono" x="122" y="635">/api/copilot/report</text>
+
+  <rect class="artifact" x="100" y="670" width="330" height="120"/>
+  <text class="txt" x="122" y="708">Engineering contract</text>
+  <text class="small" x="122" y="738">Stable schema + compatibility</text>
+  <text class="small" x="122" y="762">tests for SE/AI teams</text>
+  <text class="mono" x="122" y="784">AI_CONTRACT</text>
+
+  <rect class="panel" x="560" y="150" width="465" height="690"/>
+  <text class="h" x="590" y="198">Interface / artifact consumed</text>
+
+  <rect class="verified" x="590" y="230" width="405" height="88"/>
+  <text class="txt" x="612" y="265">Backend ingestion API</text>
+  <text class="mono" x="612" y="295">/api/v1/alerts · /api/v1/alerts/snapshot</text>
+
+  <rect class="verified" x="590" y="345" width="405" height="88"/>
+  <text class="txt" x="612" y="380">CarSky adapter + evidence script</text>
+  <text class="mono" x="612" y="410">mapper.py · carsky_phase05.py</text>
+
+  <rect class="verified" x="590" y="460" width="405" height="88"/>
+  <text class="txt" x="612" y="495">Fleet Dashboard / report UI</text>
+  <text class="mono" x="612" y="525">App.tsx · CopilotFleetReportPage.tsx</text>
+
+  <rect class="verified" x="590" y="575" width="405" height="88"/>
+  <text class="txt" x="612" y="610">Word/DOC report artifact</text>
+  <text class="mono" x="612" y="640">handleExportWord · .doc output</text>
+
+  <rect class="verified" x="590" y="690" width="405" height="88"/>
+  <text class="txt" x="612" y="725">Contract docs + tests</text>
+  <text class="mono" x="612" y="755">test_contract.py · test_ai_alerts.py</text>
+
+  <rect class="panel" x="1125" y="150" width="405" height="690"/>
+  <text class="h" x="1155" y="198">External consumer</text>
+
+  <rect class="consumer" x="1155" y="230" width="345" height="88"/>
+  <text class="txt" x="1177" y="265">SE Backend engineer</text>
+  <text class="small" x="1177" y="294">Consumes canonical AI events via API</text>
+
+  <rect class="consumer" x="1155" y="345" width="345" height="88"/>
+  <text class="txt" x="1177" y="380">CarSky integration engineer</text>
+  <text class="small" x="1177" y="409">Publishes DMS state to CarSky runtime</text>
+
+  <rect class="consumer" x="1155" y="460" width="345" height="88"/>
+  <text class="txt" x="1177" y="495">Fleet Manager / reviewer</text>
+  <text class="small" x="1177" y="524">Reads dashboard, ranking, reports</text>
+
+  <rect class="consumer" x="1155" y="575" width="345" height="88"/>
+  <text class="txt" x="1177" y="610">Demo judge / business user</text>
+  <text class="small" x="1177" y="639">Receives report artifact for audit</text>
+
+  <rect class="consumer" x="1155" y="690" width="345" height="88"/>
+  <text class="txt" x="1177" y="725">AI/SE maintainer</text>
+  <text class="small" x="1177" y="754">Checks compatibility when model changes</text>
+
+  <path class="arrow" d="M430 287 C485 287, 520 274, 590 274"/>
+  <path class="arrow" d="M430 287 C500 320, 520 376, 590 389"/>
+  <path class="arrow" d="M430 432 C500 455, 520 500, 590 504"/>
+  <path class="arrow" d="M430 582 C500 585, 520 612, 590 619"/>
+  <path class="arrow" d="M430 730 C500 730, 520 734, 590 734"/>
+
+  <path class="arrow2" d="M995 274 C1045 274, 1085 274, 1155 274"/>
+  <path class="arrow2" d="M995 389 C1045 389, 1085 389, 1155 389"/>
+  <path class="arrow2" d="M995 504 C1045 504, 1085 504, 1155 504"/>
+  <path class="arrow2" d="M995 619 C1045 619, 1085 619, 1155 619"/>
+  <path class="arrow2" d="M995 734 C1045 734, 1085 734, 1155 734"/>
+
+  <rect class="caveat" x="70" y="875" width="1460" height="70"/>
+  <text class="warn" x="98" y="906">Boundary note:</text>
+  <text class="small" x="230" y="906">Bedrock/Copilot is explanation layer only. Canonical safety metrics remain JSON/local AI + DecisionEvent contract.</text>
+  <text class="small" x="230" y="930">The proof claim is interface/artifact consumption by engineers, Fleet users and reviewers, not direct production certification of model accuracy.</text>
+</svg>

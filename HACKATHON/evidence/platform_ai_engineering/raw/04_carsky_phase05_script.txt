@@ -1,0 +1,232 @@
+$ nl -ba SE/BE/scripts/carsky_phase05.py | sed -n '1,230p'
+
+     1	#!/usr/bin/env python3
+     2	"""Operate an existing CarSky deployment without creating/deleting resources.
+     3	
+     4	This helper is for preflight and fallback scenarios. The real end-to-end path
+     5	is AI DecisionEvent -> Backend /api/v1/alerts -> CarSkyPublisher.
+     6	"""
+     7	from __future__ import annotations
+     8	
+     9	import argparse
+    10	import base64
+    11	import json
+    12	import sys
+    13	import time
+    14	from pathlib import Path
+    15	from typing import Any
+    16	
+    17	import httpx
+    18	
+    19	BACKEND_ROOT = Path(__file__).resolve().parents[1]
+    20	if str(BACKEND_ROOT) not in sys.path:
+    21	    sys.path.insert(0, str(BACKEND_ROOT))
+    22	
+    23	from app.core.config import settings
+    24	
+    25	SCENARIOS: dict[str, dict[str, list[dict[str, Any]]]] = {
+    26	    "normal": {"signals": [
+    27	        {"path": "Vehicle.Driver.State", "value": "alert"},
+    28	        {"path": "Vehicle.Driver.AlertnessScore", "value": 0.95},
+    29	        {"path": "Vehicle.ADAS.MinTTC", "value": 10.0},
+    30	        {"path": "Vehicle.ADAS.FinalRiskScore", "value": 5.0},
+    31	        {"path": "Vehicle.ADAS.CriticalAlert", "value": False},
+    32	        {"path": "Vehicle.ADAS.DisplaySeverity", "value": "SAFE"},
+    33	        {"path": "Vehicle.ADAS.AlertReasonCode", "value": "NONE"},
+    34	        {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "NONE"},
+    35	        {"path": "Vehicle.ADAS.EventTransition", "value": "END"},
+    36	        {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+    37	        {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+    38	    ]},
+    39	    "warning": {"signals": [
+    40	        {"path": "Vehicle.Driver.State", "value": "distracted"},
+    41	        {"path": "Vehicle.Driver.AlertnessScore", "value": 0.45},
+    42	        {"path": "Vehicle.ADAS.MinTTC", "value": 3.0},
+    43	        {"path": "Vehicle.ADAS.FinalRiskScore", "value": 55.0},
+    44	        {"path": "Vehicle.ADAS.CriticalAlert", "value": False},
+    45	        {"path": "Vehicle.ADAS.DisplaySeverity", "value": "WARNING"},
+    46	        {"path": "Vehicle.ADAS.AlertReasonCode", "value": "DISTRACTED"},
+    47	        {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "FOCUS_FORWARD"},
+    48	        {"path": "Vehicle.ADAS.EventTransition", "value": "START"},
+    49	        {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+    50	        {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+    51	    ]},
+    52	    "critical": {"signals": [
+    53	        {"path": "Vehicle.Driver.State", "value": "microsleep"},
+    54	        {"path": "Vehicle.Driver.AlertnessScore", "value": 0.15},
+    55	        {"path": "Vehicle.ADAS.MinTTC", "value": 1.2},
+    56	        {"path": "Vehicle.ADAS.FinalRiskScore", "value": 88.0},
+    57	        {"path": "Vehicle.ADAS.CriticalAlert", "value": True},
+    58	        {"path": "Vehicle.ADAS.DisplaySeverity", "value": "CRITICAL"},
+    59	        {"path": "Vehicle.ADAS.AlertReasonCode", "value": "TTC_CRITICAL"},
+    60	        {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "BRAKE_SAFE"},
+    61	        {"path": "Vehicle.ADAS.EventTransition", "value": "START"},
+    62	        {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+    63	        {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+    64	    ]},
+    65	}
+    66	
+    67	SPEED_MUX_SCENARIOS: dict[str, list[float]] = {
+    68	    # Decimal speed-mux contract decoded by APK V2.2:
+    69	    # 41.xxx risk, 42.xxx severity, 43.xxx driver, 44.xxx alertness,
+    70	    # 45.xxx TTC, 46.xxx critical, 47.xxx AI status, 48.xxx action,
+    71	    # 49.xxx real display speed in km/h.
+    72	    "normal": [43.000, 44.095, 45.100, 41.005, 46.000, 42.000, 48.000, 47.000, 49.045],
+    73	    "warning": [43.003, 44.045, 45.030, 41.055, 46.000, 42.001, 48.001, 47.000, 49.035],
+    74	    "critical": [43.004, 44.015, 45.012, 41.088, 46.001, 42.002, 48.003, 47.000, 49.029],
+    75	}
+    76	
+    77	
+    78	class Phase05Operator:
+    79	    def __init__(self) -> None:
+    80	        required = {
+    81	            "CARSKY_BASE_URL": settings.CARSKY_BASE_URL,
+    82	            "CARSKY_API_KEY": settings.CARSKY_API_KEY,
+    83	            "CARSKY_ROOM_ID": settings.CARSKY_ROOM_ID,
+    84	            "CARSKY_NODE_KEY": settings.CARSKY_NODE_KEY,
+    85	        }
+    86	        missing = [name for name, value in required.items() if not value]
+    87	        if missing:
+    88	            raise SystemExit(f"Missing required .env values: {', '.join(missing)}")
+    89	        self.base_url = settings.CARSKY_BASE_URL.rstrip("/")
+    90	        self.room_id = settings.CARSKY_ROOM_ID
+    91	        self.signal_node = settings.CARSKY_NODE_KEY
+    92	        self.android_node = settings.CARSKY_ANDROID_NODE_KEY
+    93	        header = "X-API-Key" if settings.CARSKY_AUTH_MODE == "x-api-key" else "Authorization"
+    94	        token = settings.CARSKY_API_KEY if header == "X-API-Key" else f"Bearer {settings.CARSKY_API_KEY}"
+    95	        self.client = httpx.Client(timeout=30, headers={header: token})
+    96	
+    97	    def close(self) -> None:
+    98	        self.client.close()
+    99	
+   100	    def request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
+   101	        attempts = max(1, settings.CARSKY_MAX_RETRIES + 1)
+   102	        for attempt in range(attempts):
+   103	            try:
+   104	                response = self.client.request(method, f"{self.base_url}{path}", **kwargs)
+   105	                response.raise_for_status()
+   106	                return response
+   107	            except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+   108	                retryable = isinstance(exc, httpx.TransportError) or (
+   109	                    isinstance(exc, httpx.HTTPStatusError)
+   110	                    and (exc.response.status_code == 429 or exc.response.status_code >= 500)
+   111	                )
+   112	                if retryable and attempt < attempts - 1:
+   113	                    time.sleep(0.25 * (2**attempt))
+   114	                    continue
+   115	                if isinstance(exc, httpx.HTTPStatusError):
+   116	                    try:
+   117	                        details = exc.response.json()
+   118	                    except ValueError:
+   119	                        details = exc.response.text[:500]
+   120	                    raise RuntimeError(
+   121	                        f"CarSky {exc.response.status_code} for {path} "
+   122	                        f"after {attempt + 1} attempt(s): {details}"
+   123	                    ) from exc
+   124	                raise RuntimeError(
+   125	                    f"CarSky transport failure for {path} "
+   126	                    f"after {attempt + 1} attempt(s): {exc}"
+   127	                ) from exc
+   128	        raise RuntimeError("Unreachable CarSky retry state")
+   129	
+   130	    def status(self) -> Any:
+   131	        return self.request("GET", f"/api/v1/deployments/{self.room_id}/status").json()
+   132	
+   133	    def nodes(self) -> Any:
+   134	        return self.request("GET", f"/api/v1/deployments/{self.room_id}/nodes").json()
+   135	
+   136	    def adb_tunnel(self) -> Any:
+   137	        return self.request(
+   138	            "GET", f"/api/v1/deployments/{self.room_id}/adb-tunnel"
+   139	        ).json()
+   140	
+   141	    def actuate_signals(self, signals: list[dict[str, Any]]) -> Any:
+   142	        return self.request(
+   143	            "POST", f"/api/v1/signals/{self.room_id}/{self.signal_node}/actuate",
+   144	            json={"signals": signals},
+   145	        ).json()
+   146	
+   147	    def scenario(self, name: str) -> Any:
+   148	        signals = SCENARIOS[name]["signals"]
+   149	        sent = 0
+   150	        responses: list[Any] = []
+   151	        try:
+   152	            for signal in signals:
+   153	                responses.append(self.actuate_signals([signal]))
+   154	                sent += 1
+   155	                time.sleep(0.16)
+   156	        except RuntimeError as exc:
+   157	            if "Unknown signal path" not in str(exc):
+   158	                raise
+   159	            return self.scenario_speed_mux(name, fallback_reason=str(exc))
+   160	
+   161	        # Pulse the most visible HMI fields again. CarSky AAOS may only expose
+   162	        # PERF_VEHICLE_SPEED reliably, so Android polling can miss a rapid
+   163	        # multiplex burst if the final value is AIStatus/DataAge.
+   164	        visible_paths = {
+   165	            "Vehicle.ADAS.FinalRiskScore",
+   166	            "Vehicle.ADAS.DisplaySeverity",
+   167	            "Vehicle.ADAS.RecommendedActionCode",
+   168	            "Vehicle.ADAS.CriticalAlert",
+   169	        }
+   170	        visible = [signal for signal in signals if signal["path"] in visible_paths]
+   171	        for signal in visible:
+   172	            responses.append(self.actuate_signals([signal]))
+   173	            sent += 1
+   174	            time.sleep(0.22)
+   175	        return {"ok": True, "sent": sent, "responses": responses[-3:]}
+   176	
+   177	    def scenario_speed_mux(self, name: str, *, fallback_reason: str | None = None) -> Any:
+   178	        sent = 0
+   179	        responses: list[Any] = []
+   180	        for value in SPEED_MUX_SCENARIOS[name]:
+   181	            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+   182	            sent += 1
+   183	            time.sleep(0.22)
+   184	        # Pulse visible fields again so Android polling catches the important values.
+   185	        for value in [41.088 if name == "critical" else SPEED_MUX_SCENARIOS[name][3],
+   186	                      46.001 if name == "critical" else SPEED_MUX_SCENARIOS[name][4],
+   187	                      42.002 if name == "critical" else SPEED_MUX_SCENARIOS[name][5],
+   188	                      48.003 if name == "critical" else SPEED_MUX_SCENARIOS[name][6],
+   189	                      49.029 if name == "critical" else SPEED_MUX_SCENARIOS[name][8]]:
+   190	            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+   191	            sent += 1
+   192	            time.sleep(0.28)
+   193	        result = {"ok": True, "mode": "vehicle-speed-mux", "sent": sent, "responses": responses[-3:]}
+   194	        if fallback_reason:
+   195	            result["fallback_reason"] = fallback_reason[:300]
+   196	        return result
+   197	
+   198	    def adb(self, command: str, *, binary: bool = False) -> httpx.Response:
+   199	        if not self.android_node:
+   200	            raise SystemExit("CARSKY_ANDROID_NODE_KEY is required for ADB commands")
+   201	        return self.request(
+   202	            "POST", f"/api/v1/deployments/{self.room_id}/adb-exec/{self.android_node}",
+   203	            json={"command": command, "binary": binary},
+   204	        )
+   205	
+   206	    def install_apk(self, apk: Path) -> list[Any]:
+   207	        encoded = base64.b64encode(apk.read_bytes()).decode("ascii")
+   208	        output: list[Any] = []
+   209	        output.append(self.adb(
+   210	            "rm -f /data/local/tmp/dms-hmi.part.* "
+   211	            "/data/local/tmp/dms-hmi.b64 /data/local/tmp/dms-hmi.apk"
+   212	        ).json())
+   213	        for index, offset in enumerate(range(0, len(encoded), 1800)):
+   214	            chunk = encoded[offset:offset + 1800]
+   215	            output.append(self.adb(
+   216	                f"printf '%s' '{chunk}' > /data/local/tmp/dms-hmi.part.{index:04d}"
+   217	            ).json())
+   218	        output.append(self.adb(
+   219	            "cat /data/local/tmp/dms-hmi.part.* > /data/local/tmp/dms-hmi.b64"
+   220	        ).json())
+   221	        output.append(self.adb("base64 -d /data/local/tmp/dms-hmi.b64 > /data/local/tmp/dms-hmi.apk").json())
+   222	        output.append(self.adb("pm install -r -d -t /data/local/tmp/dms-hmi.apk").json())
+   223	        output.append(self.adb("am start -n vn.fpt.dms.hmi/.MainActivity").json())
+   224	        return output
+   225	
+   226	
+   227	def main() -> None:
+   228	    parser = argparse.ArgumentParser(description=__doc__)
+   229	    sub = parser.add_subparsers(dest="command", required=True)
+   230	    sub.add_parser("status")

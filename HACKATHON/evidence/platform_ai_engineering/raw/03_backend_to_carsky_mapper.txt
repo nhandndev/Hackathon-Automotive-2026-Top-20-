@@ -1,0 +1,247 @@
+$ nl -ba SE/BE/app/integrations/carsky/mapper.py | sed -n '1,245p'
+
+     1	from __future__ import annotations
+     2	
+     3	import math
+     4	from dataclasses import dataclass
+     5	from enum import Enum
+     6	from typing import Any, Mapping
+     7	
+     8	from app.domain.schemas.ai_contract import AIFrame, TripMetadata
+     9	
+    10	
+    11	class CarSkyHMIState(str, Enum):
+    12	    SAFE = "SAFE"
+    13	    WARNING = "WARNING"
+    14	    CRITICAL = "CRITICAL"
+    15	    RECOVERY = "RECOVERY"
+    16	
+    17	
+    18	class EventTransition(str, Enum):
+    19	    NONE = "NONE"
+    20	    START = "START"
+    21	    UPDATE = "UPDATE"
+    22	    END = "END"
+    23	
+    24	
+    25	class AIStatus(str, Enum):
+    26	    ONLINE = "ONLINE"
+    27	    DEGRADED = "DEGRADED"
+    28	    OFFLINE = "OFFLINE"
+    29	
+    30	
+    31	@dataclass(frozen=True)
+    32	class CarSkySignalMap:
+    33	    driver_state: str = "Vehicle.Driver.State"
+    34	    alertness_score: str = "Vehicle.Driver.AlertnessScore"
+    35	    speed: str = "Vehicle.Speed"
+    36	    speed_limit: str = "Vehicle.SpeedLimit"
+    37	    min_ttc: str = "Vehicle.ADAS.MinTTC"
+    38	    headway: str = "Vehicle.ADAS.Headway"
+    39	    final_risk_score: str = "Vehicle.ADAS.FinalRiskScore"
+    40	    critical_alert: str = "Vehicle.ADAS.CriticalAlert"
+    41	    display_severity: str = "Vehicle.ADAS.DisplaySeverity"
+    42	    alert_reason: str = "Vehicle.ADAS.AlertReasonCode"
+    43	    recommended_action: str = "Vehicle.ADAS.RecommendedActionCode"
+    44	    event_transition: str = "Vehicle.ADAS.EventTransition"
+    45	    ai_status: str = "Vehicle.ADAS.AIStatus"
+    46	    data_age_ms: str = "Vehicle.ADAS.DataAgeMs"
+    47	    speed_mux: str = "Vehicle.Speed"
+    48	
+    49	    @property
+    50	    def required_paths(self) -> tuple[str, ...]:
+    51	        return tuple(self.__dict__.values())
+    52	
+    53	
+    54	class CarSkySignalMapper:
+    55	    def __init__(self, signal_map: CarSkySignalMap | None = None) -> None:
+    56	        self.paths = signal_map or CarSkySignalMap()
+    57	
+    58	    def map_frame(
+    59	        self,
+    60	        frame: AIFrame,
+    61	        metadata: TripMetadata,
+    62	        *,
+    63	        severity: CarSkyHMIState = CarSkyHMIState.SAFE,
+    64	        reason_code: str = "NONE",
+    65	        action_code: str = "NONE",
+    66	        transition: EventTransition = EventTransition.NONE,
+    67	        ai_status: AIStatus = AIStatus.ONLINE,
+    68	        data_age_ms: int = 0,
+    69	    ) -> dict[str, list[dict[str, Any]]]:
+    70	        if data_age_ms < 0:
+    71	            raise ValueError("data_age_ms must not be negative")
+    72	
+    73	        payload = {
+    74	            "driver_state": frame.driver.state.value,
+    75	            "alertness_score": frame.driver.alertness_score,
+    76	            "speed_kmh": frame.ego.speed_kmh,
+    77	            "speed_limit_kmh": metadata.speed_limit_kmh,
+    78	            "predicted_ttc_sec": frame.min_ttc if math.isfinite(frame.min_ttc) else None,
+    79	            "risk_score": frame.risk.final_risk_score,
+    80	            "severity": severity.value,
+    81	            "critical_alert": severity is CarSkyHMIState.CRITICAL,
+    82	            "recommended_action": action_code,
+    83	            "ai_status": ai_status.value,
+    84	        }
+    85	        return self.map_live_snapshot(payload, data_age_ms=data_age_ms, realtime=False)
+    86	
+    87	    def map_decision_event(
+    88	        self,
+    89	        event: Mapping[str, Any],
+    90	        *,
+    91	        data_age_ms: int = 0,
+    92	    ) -> dict[str, list[dict[str, Any]]]:
+    93	        """Map the AI-owned DecisionEvent without recomputing its decision.
+    94	
+    95	        Only evidence already emitted by AI is forwarded. Missing telemetry is
+    96	        omitted instead of fabricated. Alert type/severity/lifecycle remain
+    97	        owned by AI; Backend only translates them to the stable VSS vocabulary.
+    98	        """
+    99	        if data_age_ms < 0:
+   100	            raise ValueError("data_age_ms must not be negative")
+   101	        status = str(event.get("status", "update")).lower()
+   102	        severity = str(event.get("severity", "warning")).lower()
+   103	        alert_type = str(event.get("alert_type", "unknown"))
+   104	        evidence = event.get("evidence") or {}
+   105	        if not isinstance(evidence, Mapping):
+   106	            evidence = {}
+   107	
+   108	        hmi_state = (
+   109	            CarSkyHMIState.RECOVERY
+   110	            if status == "resolved"
+   111	            else CarSkyHMIState.CRITICAL
+   112	            if severity == "critical"
+   113	            else CarSkyHMIState.WARNING
+   114	        )
+   115	        transition = {
+   116	            "open": EventTransition.START,
+   117	            "update": EventTransition.UPDATE,
+   118	            "resolved": EventTransition.END,
+   119	        }.get(status, EventTransition.UPDATE)
+   120	        reason_code = {
+   121	            "collision_risk": "TTC_CRITICAL",
+   122	            "microsleep": "MICROSLEEP",
+   123	            "driver_drowsiness": "DROWSY",
+   124	            "driver_distraction": "DISTRACTED",
+   125	            "yawning": "YAWNING",
+   126	            "tailgating": "TAILGATING",
+   127	            "speeding": "SPEEDING",
+   128	            "harsh_brake": "HARSH_BRAKE",
+   129	            "harsh_accel": "HARSH_ACCEL",
+   130	            "harsh_corner": "HARSH_CORNER",
+   131	        }.get(alert_type, "NONE")
+   132	        action_code = {
+   133	            "collision_risk": "BRAKE_SAFE",
+   134	            "microsleep": "TAKE_BREAK",
+   135	            "driver_drowsiness": "TAKE_BREAK",
+   136	            "driver_distraction": "FOCUS_FORWARD",
+   137	            "speeding": "REDUCE_SPEED",
+   138	        }.get(alert_type, "NONE")
+   139	
+   140	        payload = {
+   141	            "driver_state": evidence.get("driver_state"),
+   142	            "alertness_score": evidence.get("alertness_score"),
+   143	            "speed_kmh": evidence.get("speed_kmh"),
+   144	            "predicted_ttc_sec": evidence.get("predicted_ttc_sec"),
+   145	            "risk_score": evidence.get("c3_risk_score"),
+   146	            "severity": hmi_state.value,
+   147	            "critical_alert": hmi_state is CarSkyHMIState.CRITICAL,
+   148	            "recommended_action": action_code,
+   149	            "ai_status": AIStatus.ONLINE.value,
+   150	        }
+   151	        return self.map_live_snapshot(
+   152	            payload,
+   153	            data_age_ms=data_age_ms,
+   154	            transition=transition.value,
+   155	            realtime=False,
+   156	        )
+   157	
+   158	    def map_live_snapshot(
+   159	        self,
+   160	        snapshot: Mapping[str, Any],
+   161	        *,
+   162	        data_age_ms: int = 0,
+   163	        transition: str | None = None,
+   164	        realtime: bool = True,
+   165	    ) -> dict[str, list[dict[str, Any]]]:
+   166	        """Map live dashboard telemetry to the BTC-compatible speed-mux VHAL path.
+   167	
+   168	        Current CarSky/AAOS only accepts standard Vehicle.Speed. The APK V2.2
+   169	        decodes decimal groups 41..50 from this one property.
+   170	        """
+   171	        if data_age_ms < 0:
+   172	            raise ValueError("data_age_ms must not be negative")
+   173	
+   174	        risk = self._number(snapshot.get("risk_score"), None)
+   175	        ttc = self._number(snapshot.get("predicted_ttc_sec"), None)
+   176	        driver_state = str(snapshot.get("driver_state") or "alert").lower()
+   177	        alertness = self._number(snapshot.get("alertness_score"), None)
+   178	        speed = self._number(snapshot.get("speed_kmh"), None)
+   179	        safe_score = self._number(snapshot.get("safe_driving_score"), None)
+   180	
+   181	        severity = str(snapshot.get("severity") or "").upper()
+   182	        if severity not in {"SAFE", "WARNING", "CRITICAL", "RECOVERY"}:
+   183	            severity = self._derive_severity(risk or 0.0, ttc, driver_state)
+   184	
+   185	        action = str(snapshot.get("recommended_action") or "")
+   186	        if action not in {"NONE", "FOCUS_FORWARD", "TAKE_BREAK", "BRAKE_SAFE", "REDUCE_SPEED"}:
+   187	            action = self._derive_action(snapshot, ttc, driver_state, severity)
+   188	
+   189	        values: list[float] = [
+   190	            self._mux(42, self._severity_code(severity)),
+   191	            self._mux(43, self._driver_state_code(driver_state)),
+   192	            self._mux(46, 1 if severity == "CRITICAL" or bool(snapshot.get("critical_alert")) else 0),
+   193	            self._mux(47, self._ai_status_code(str(snapshot.get("ai_status") or "ONLINE"))),
+   194	            self._mux(48, self._action_code(action)),
+   195	        ]
+   196	        if risk is not None and math.isfinite(risk):
+   197	            values.insert(0, self._mux(41, risk))
+   198	        if alertness is not None and math.isfinite(alertness):
+   199	            values.append(self._mux(44, self._scale(alertness, 100)))
+   200	        if ttc is not None and math.isfinite(ttc):
+   201	            values.append(self._mux(45, self._scale(ttc, 10)))
+   202	        if speed is not None and math.isfinite(speed):
+   203	            values.append(self._mux(49, speed))
+   204	        if safe_score is not None and math.isfinite(safe_score):
+   205	            values.append(self._mux(50, safe_score))
+   206	
+   207	        signals = [{"path": self.paths.speed_mux, "value": value} for value in values]
+   208	        return {
+   209	            "transport": "vehicle-speed-mux",
+   210	            "transition": transition,
+   211	            "realtime": realtime,
+   212	            "signals": signals,
+   213	        }
+   214	
+   215	    @staticmethod
+   216	    def _number(value: Any, default: float | None) -> float | None:
+   217	        if value is None:
+   218	            return default
+   219	        try:
+   220	            parsed = float(value)
+   221	        except (TypeError, ValueError):
+   222	            return default
+   223	        return parsed if math.isfinite(parsed) else default
+   224	
+   225	    @staticmethod
+   226	    def _scale(value: float | None, scale: float) -> float:
+   227	        if value is None:
+   228	            return 0.0
+   229	        return value * scale
+   230	
+   231	    @staticmethod
+   232	    def _mux(group: int, payload: float) -> float:
+   233	        clamped = max(0.0, min(999.0, float(payload)))
+   234	        return group + (clamped / 1000.0)
+   235	
+   236	    @staticmethod
+   237	    def _derive_severity(risk: float, ttc: float | None, driver_state: str) -> str:
+   238	        if risk >= 75 or (ttc is not None and ttc <= 1.5) or driver_state == "microsleep":
+   239	            return "CRITICAL"
+   240	        if risk >= 40 or (ttc is not None and ttc <= 3.0) or driver_state in {"drowsy", "yawning", "distracted"}:
+   241	            return "WARNING"
+   242	        return "SAFE"
+   243	
+   244	    @staticmethod
+   245	    def _derive_action(snapshot: Mapping[str, Any], ttc: float | None, driver_state: str, severity: str) -> str:

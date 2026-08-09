@@ -1,0 +1,150 @@
+$ nl -ba SE/FE/server.ts | sed -n '390,430p'; nl -ba SE/FE/server.ts | sed -n '720,760p'; nl -ba SE/FE/server.ts | sed -n '925,990p'
+
+   390	    trip_insights: {},
+   391	    policy_version: "report-canonical-v1",
+   392	    ai_status: "pending",
+   393	    diagnostics: {
+   394	      provider: "bedrock",
+   395	      region: BEDROCK_REGION,
+   396	      modelId: BEDROCK_MODEL_ID,
+   397	      reason: "background-inflight",
+   398	      ...diagnostics,
+   399	    },
+   400	  };
+   401	}
+   402	
+   403	const BEDROCK_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-southeast-2";
+   404	const BEDROCK_MODEL_ID = process.env.BEDROCK_MODEL_ID || "deepseek.v3.2";
+   405	
+   406	function cleanBearerToken(raw?: string): string {
+   407	  return (raw || "").replace(/\n/g, "").replace(/ /g, "").trim();
+   408	}
+   409	
+   410	function getBedrockBearerToken(): string {
+   411	  return cleanBearerToken(process.env.AWS_BEARER_TOKEN_BEDROCK || process.env.BEDROCK_API_KEY);
+   412	}
+   413	
+   414	async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, timeoutMs = 3500, externalSignal?: AbortSignal): Promise<string> {
+   415	  const token = getBedrockBearerToken();
+   416	  if (!token) throw new Error("AWS_BEARER_TOKEN_BEDROCK is not configured");
+   417	
+   418	  const endpoint = `https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com/model/${encodeURIComponent(modelId)}/converse`;
+   419	  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+   420	  const signal = externalSignal ? AbortSignal.any([timeoutSignal, externalSignal]) : timeoutSignal;
+   421	  const response = await fetch(endpoint, {
+   422	    method: "POST",
+   423	    headers: {
+   424	      "Content-Type": "application/json",
+   425	      "Accept": "application/json",
+   426	      "Authorization": `Bearer ${token}`,
+   427	    },
+   428	    signal,
+   429	    body: JSON.stringify({
+   430	      messages: [
+   720	    res.status(500).json({ error: "Failed to delete trip" });
+   721	  }
+   722	});
+   723	
+   724	// AI Copilot endpoint
+   725	app.post("/api/copilot", async (req, res) => {
+   726	  const { message, chatHistory, vehicles: rawVehicles = [] } = req.body as {
+   727	    message?: string;
+   728	    chatHistory?: ChatHistoryItem[];
+   729	    vehicles?: TripSummary[];
+   730	  };
+   731	  const vehicles = resolveCopilotVehicles(rawVehicles);
+   732	
+   733	  if (!message || typeof message !== "string") {
+   734	    res.status(400).json({ error: "Thông điệp không hợp lệ" });
+   735	    return;
+   736	  }
+   737	
+   738	  if (vehicles.length === 0) {
+   739	    res.json({
+   740	      reply: "Chưa có chuyến đi nào hoàn thành (status = completed). AI Copilot chỉ phân tích dữ liệu các chuyến đi đã kết thúc."
+   741	    });
+   742	    return;
+   743	  }
+   744	
+   745	  const reportRequest = detectReportType(message);
+   746	  if (reportRequest) {
+   747	    const mentionedTripIds = findMentionedTripIds(message, vehicles);
+   748	    const selectedTripIds = reportRequest.type === "compare"
+   749	      ? mentionedTripIds.slice(0, reportRequest.requestedCount)
+   750	      : (mentionedTripIds.length ? mentionedTripIds : availableTripIds(vehicles).slice(0, reportRequest.requestedCount));
+   751	
+   752	    if (reportRequest.type === "compare" && selectedTripIds.length < reportRequest.requestedCount) {
+   753	      res.json({
+   754	        reply: [
+   755	          `Bạn muốn so sánh ${reportRequest.requestedCount} trip, nhưng hiện mới thấy ${selectedTripIds.length ? selectedTripIds.join(", ") : "chưa có trip_id nào"}.`,
+   756	          `Bạn gửi thêm ${reportRequest.requestedCount - selectedTripIds.length} trip_id còn thiếu nha.`,
+   757	          `Trip hiện có: ${availableTripIds(vehicles).join(", ") || "chưa có trip nào từ Dashboard"}.`,
+   758	        ].join("\n"),
+   759	      });
+   760	      return;
+   925	    `Dashboard hiện có ${vehicles.length} trip completed từ JSON/local AI: ${availableTripIds(vehicles).join(", ") || "chưa có"}.`,
+   926	    "Bạn có thể mở report card để xem số liệu deterministic từ JSON/local AI; phần insight sẽ chờ AI provider phản hồi.",
+   927	  ].join("\n");
+   928	
+   929	  res.json({ reply: replyFallback });
+   930	});
+   931	
+   932	app.post("/api/copilot/report", async (req, res) => {
+   933	  const { reportMode, canonicalInput, tripIds = [] } = req.body as {
+   934	    reportMode?: string;
+   935	    canonicalInput?: {
+   936	      request_id?: string;
+   937	      policy_version?: string;
+   938	      input_signature?: string;
+   939	      fleet_summary?: unknown;
+   940	      trips?: CopilotTripInput[];
+   941	    };
+   942	    tripIds?: string[];
+   943	  };
+   944	
+   945	  const trips = (canonicalInput?.trips ?? []).filter((trip) => trip && trip.tripId);
+   946	  const startedAt = Date.now();
+   947	  if (trips.length === 0) {
+   948	    res.json({
+   949	      insight: "Chưa có canonical JSON/local AI input để lập AI Copilot insight.",
+   950	      fleet_insight: "Chưa có canonical JSON/local AI input để lập AI Copilot insight.",
+   951	      trip_insights: {},
+   952	      policy_version: "report-canonical-v1",
+   953	      ai_status: "unavailable",
+   954	    });
+   955	    return;
+   956	  }
+   957	
+   958	  const clientAbortController = new AbortController();
+   959	  let responseFinished = false;
+   960	  res.on("finish", () => {
+   961	    responseFinished = true;
+   962	  });
+   963	  req.on("aborted", () => {
+   964	    clientAbortController.abort();
+   965	  });
+   966	  res.on("close", () => {
+   967	    if (!responseFinished) clientAbortController.abort();
+   968	  });
+   969	
+   970	  const cacheKey = canonicalInput?.input_signature || `${reportMode || "unknown"}:${trips.map((trip) => trip.tripId).join(",")}`;
+   971	  const cached = reportInsightCache.get(cacheKey);
+   972	  if (cached && cached.expiresAt > Date.now()) {
+   973	    res.json({
+   974	      ...cached.payload,
+   975	      diagnostics: {
+   976	        ...cached.payload.diagnostics,
+   977	        cache: "hit",
+   978	        durationMs: Date.now() - startedAt,
+   979	      },
+   980	    });
+   981	    return;
+   982	  }
+   983	
+   984	  const inflight = reportInsightInflight.get(cacheKey);
+   985	  if (inflight) {
+   986	    res.json(buildPendingInsight({
+   987	      cache: "inflight",
+   988	      durationMs: Date.now() - startedAt,
+   989	    }));
+   990	    return;

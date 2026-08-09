@@ -1,0 +1,27 @@
+$ grep -RInE 'Decision events|No DecisionEvent|VehicleLiveView|TripDetailView|ranking-analysis|performance insights|saved_trips' SE/FE/src SE/FE/server.ts | head -120
+
+SE/FE/src/App.tsx:8:import { VehicleLiveView } from './components/VehicleLiveView';
+SE/FE/src/App.tsx:9:import { TripDetailView } from './components/TripDetailView';
+SE/FE/src/App.tsx:57:  // Ref: historical trips loaded from server disk (data/saved_trips/).
+SE/FE/src/App.tsx:251:  if (standaloneView === 'ranking-analysis') {
+SE/FE/src/App.tsx:310:              ? <VehicleLiveView
+SE/FE/src/App.tsx:321:              ? <TripDetailView
+SE/FE/src/components/DriverRankingView.tsx:403:        view: 'ranking-analysis',
+SE/FE/src/components/VehicleLiveView.tsx:6:interface VehicleLiveViewProps {
+SE/FE/src/components/VehicleLiveView.tsx:46:export const VehicleLiveView: React.FC<VehicleLiveViewProps> = ({
+SE/FE/src/components/VehicleLiveView.tsx:202:              <div className="flex h-full items-center justify-center p-5 text-center text-xs text-slate-500">No DecisionEvent received for this trip.</div>
+SE/FE/src/components/TripDetailView.tsx:8:interface TripDetailViewProps {
+SE/FE/src/components/TripDetailView.tsx:75:export const TripDetailView: React.FC<TripDetailViewProps> = ({
+SE/FE/src/components/TripDetailView.tsx:206:          <div className="shrink-0 rounded-xl border border-[#1E293B] bg-[#0B0F19] p-4"><span className="mb-2 block text-[10px] font-bold uppercase text-slate-300">Decision events · current session</span>{eventCounts.length === 0 ? <p className="text-[10px] text-slate-500">No DecisionEvent received.</p> : <div className="flex max-h-24 flex-col gap-1.5 overflow-y-auto text-[10px]">{eventCounts.map(([type, count]) => <div key={type} className="flex justify-between rounded border border-slate-700 bg-slate-900 p-1.5"><span>{type.replaceAll('_', ' ')}</span><b className="font-mono">×{count}</b></div>)}</div>}</div>
+SE/FE/src/data/saved_trips/README.md:1:# src/data/saved_trips/
+SE/FE/src/data/saved_trips/README.md:3:Completed trip JSON files (`{trip_id}.json`) are persisted directly under `src/data/saved_trips/`.
+SE/FE/src/data/saved_trips/README.md:7:1. **Auto-save on Completion**: When a live trip status changes to `completed`, `App.tsx` calls `POST /api/trips/save` to save the full `TripData` JSON object into `src/data/saved_trips/{trip_id}.json`.
+SE/FE/src/data/saved_trips/README.md:8:2. **AI Copilot Tracing**: The Express server (`server.ts`) reads all completed trip JSON files in `src/data/saved_trips/` so AI Copilot can trace and analyze historical completed trips.
+SE/FE/src/data/btcTripData.ts:4: * btcTripData holds completed trip records saved in `src/data/saved_trips/`.
+SE/FE/src/data/btcTripData.ts:6: * the frontend auto-persists the full TripData to `src/data/saved_trips/{trip_id}.json`.
+SE/FE/src/data/btcTripData.ts:7: * Both the Dashboard and AI Copilot read from `src/data/saved_trips/` to trace completed trips.
+SE/FE/server.ts:28:// Saved completed trips live in <project>/src/data/saved_trips/{trip_id}.json
+SE/FE/server.ts:29:const SAVED_TRIPS_DIR = path.join(process.cwd(), "src", "data", "saved_trips");
+SE/FE/server.ts:634: * Saves to data/saved_trips/{trip_id}.json so future Copilot sessions
+SE/FE/server.ts:658: * Returns list of all persisted trip IDs (files in data/saved_trips/).
+SE/FE/server.ts:693: * Clears ALL saved completed trip JSON files in data/saved_trips/.

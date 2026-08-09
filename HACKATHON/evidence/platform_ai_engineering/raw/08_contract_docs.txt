@@ -1,0 +1,277 @@
+$ nl -ba SE/BE/docs/AI_CONTRACT_AND_CHANGELOG.md | sed -n '1,180p'; nl -ba AI/core/decision_engine/README.md | sed -n '1,95p'
+
+     1	# AI Output Contract, Compatibility và Change Log
+     2	
+     3	> Đây là nguồn context chuẩn cho Backend, Frontend, CarSky và AI coding agent. Đọc file này trước khi sửa schema, mapper, WebSocket hoặc HMI. Phase CarSky liên quan: [`PHASE_05_2`](phases/PHASE_05_2_CARSKY_HMI_ACTION_CHECKLIST.md).
+     4	
+     5	File này là **decision memory** của contract, không phải runtime log. Khi AI output thay đổi,
+     6	agent phải đọc file này và chỉ sửa phần bị ảnh hưởng; không triển khai lại toàn bộ các phase.
+     7	
+     8	## 1. Contract version hiện hành
+     9	
+    10	```text
+    11	AI_CONTRACT_VERSION=1.0.0
+    12	COMPATIBILITY_POLICY=additive
+    13	OWNER=AI team + Backend owner
+    14	```
+    15	
+    16	Payload canonical là một trip:
+    17	
+    18	```json
+    19	{
+    20	  "trip_id": "T01d",
+    21	  "metadata": {
+    22	    "trip_id": "T01d",
+    23	    "description": "DEBUG 30s: highway evening",
+    24	    "duration_sec": 90,
+    25	    "fps": 20,
+    26	    "map": "Town01",
+    27	    "driver_profile": "normal",
+    28	    "carla_version": "0.9.15",
+    29	    "random_seed": 1001,
+    30	    "speed_limit_kmh": 80
+    31	  },
+    32	  "frames": [
+    33	    {
+    34	      "frame_id": 0,
+    35	      "timestamp": 0.0,
+    36	      "ego": {
+    37	        "speed_kmh": 0.0,
+    38	        "longitudinal_accel": 0.0,
+    39	        "lateral_accel": 0.0,
+    40	        "geolocation": {"lat": -0.00123, "lon": -0.000485, "alt": 0.16}
+    41	      },
+    42	      "driver": {
+    43	        "state": "distracted",
+    44	        "alertness_score": 0.45,
+    45	        "eye_state": "open",
+    46	        "head_pose": "side",
+    47	        "mouth_state": "normal",
+    48	        "nthu_subject_id": "14"
+    49	      },
+    50	      "min_ttc": "Infinity",
+    51	      "headway_sec": "Infinity",
+    52	      "behavior_flags": {
+    53	        "harsh_brake": false,
+    54	        "harsh_accel": false,
+    55	        "harsh_corner": false,
+    56	        "speeding": false,
+    57	        "tailgating": false
+    58	      },
+    59	      "risk": {
+    60	        "base_risk": 0.0,
+    61	        "driver_factor": 2.2,
+    62	        "final_risk_score": 0.0
+    63	      }
+    64	    }
+    65	  ]
+    66	}
+    67	```
+    68	
+    69	JSON boundary phải dùng chuỗi `"Infinity"`; literal JavaScript `Infinity` không phải JSON hợp lệ.
+    70	
+    71	## 2. Phân loại field
+    72	
+    73	### Bắt buộc ở trip
+    74	
+    75	- `trip_id`
+    76	- `metadata.trip_id`
+    77	- `metadata.duration_sec`
+    78	- `metadata.fps`
+    79	- `metadata.speed_limit_kmh`
+    80	- `frames`
+    81	
+    82	### Bắt buộc ở mỗi frame
+    83	
+    84	- `frame_id`
+    85	- `timestamp`
+    86	- `ego.speed_kmh`
+    87	- `driver.state`
+    88	- `driver.alertness_score`
+    89	- `risk.final_risk_score`
+    90	
+    91	### Optional/degradable
+    92	
+    93	- `ego.longitudinal_accel`, `ego.lateral_accel`, `ego.geolocation`
+    94	- `driver.eye_state`, `driver.head_pose`, `driver.mouth_state`, `driver.nthu_subject_id`
+    95	- `min_ttc`, `headway_sec`
+    96	- từng `behavior_flags`
+    97	- `risk.base_risk`, `risk.driver_factor`
+    98	- metadata mô tả simulator
+    99	
+   100	Schema Python Phase 01 hiện còn strict hơn danh sách compatibility này. Khi AI bắt đầu gửi thiếu optional field, Backend phải nới schema bằng default `None` trước khi nhận production payload.
+   101	
+   102	## 3. Quy tắc thay đổi tương thích
+   103	
+   104	| AI thay đổi | Backend xử lý | Có cần làm lại CarSky? |
+   105	|---|---|---|
+   106	| Thêm field, không đổi tên field cũ | Giữ nguyên nhờ `extra=allow`, ghi audit | Không |
+   107	| Thiếu optional field | Nhận frame, đặt unavailable, ẩn widget tương ứng | Không |
+   108	| Thiếu required field | Từ chối frame, giữ last-known-good có TTL, báo DEGRADED | Không |
+   109	| Đổi kiểu nhưng chuyển đổi an toàn được | Normalize ở adapter, ghi warning | Không |
+   110	| Đổi tên field | Breaking change; thêm alias/versioned mapper | Chỉ sửa mapping bị ảnh hưởng |
+   111	| Thêm field cần hiển thị | Thêm mapping, VSS path/version và HMI component | Update artifact/Blueprint, không dựng lại từ đầu |
+   112	| Bỏ field đang hiển thị | HMI ẩn giá trị, Backend báo unavailable | Không nếu VSS path vẫn giữ |
+   113	
+   114	Field mới mặc định không tự xuất hiện trên HMI. Chỉ đưa lên HMI khi có quyết định UX rõ ràng.
+   115	
+   116	## 4. Quy tắc dữ liệu đặc biệt
+   117	
+   118	- `driver.state`: `alert|drowsy|yawning|distracted|microsleep`.
+   119	- `alertness_score`: `0..1`.
+   120	- risk scores: `0..100`.
+   121	- `min_ttc`/`headway_sec`: số không âm hoặc `"Infinity"`/`"inf"` khi input.
+   122	- Từ chối `NaN` và `-Infinity`.
+   123	- Không bao giờ biến Infinity thành `0`.
+   124	- Không tính lại hoặc ghi đè `risk.final_risk_score`.
+   125	- Root `trip_id` phải bằng `metadata.trip_id`.
+   126	- Extra fields phải được giữ khi round-trip.
+   127	
+   128	## 5. Mapping AI → CarSky HMI v1
+   129	
+   130	| AI/Backend source | VSS path | Khi thiếu/Infinity |
+   131	|---|---|---|
+   132	| `driver.state` | `Vehicle.Driver.State` | frame invalid nếu thiếu |
+   133	| `driver.alertness_score` | `Vehicle.Driver.AlertnessScore` | frame invalid nếu thiếu |
+   134	| `ego.speed_kmh` | `Vehicle.Speed` | frame invalid nếu thiếu |
+   135	| `metadata.speed_limit_kmh` | `Vehicle.SpeedLimit` | unavailable |
+   136	| `min_ttc` | `Vehicle.ADAS.MinTTC` | không publish value; HMI ẩn TTC |
+   137	| `headway_sec` | `Vehicle.ADAS.Headway` | không publish value; HMI ẩn headway |
+   138	| `risk.final_risk_score` | `Vehicle.ADAS.FinalRiskScore` | frame invalid nếu thiếu |
+   139	| enrichment | `Vehicle.ADAS.CriticalAlert` | `false` khi no active episode |
+   140	| enrichment | `Vehicle.ADAS.DisplaySeverity` | `SAFE|WARNING|CRITICAL|RECOVERY` |
+   141	| enrichment | `Vehicle.ADAS.AlertReasonCode` | enum deterministic |
+   142	| enrichment | `Vehicle.ADAS.RecommendedActionCode` | enum deterministic |
+   143	| enrichment | `Vehicle.ADAS.EventTransition` | `NONE|START|UPDATE|END` |
+   144	| source state | `Vehicle.ADAS.AIStatus` | `ONLINE|DEGRADED|OFFLINE` |
+   145	| receive time | `Vehicle.ADAS.DataAgeMs` | integer không âm |
+   146	
+   147	CarSky không nhận toàn bộ raw AI frame. Backend chỉ gửi signal dành cho người lái và lifecycle cảnh báo.
+   148	
+   149	## 6. Runtime audit log
+   150	
+   151	Audit chạy thật dùng JSON Lines, không dùng Markdown:
+   152	
+   153	```json
+   154	{"timestamp":"2026-07-25T12:00:00Z","trip_id":"T01d","frame_id":0,"contract_version":"1.0.0","missing_optional_fields":[],"extra_fields":[],"invalid_fields":[],"status":"accepted","carsky_publish_status":"not_requested"}
+   155	```
+   156	
+   157	Các status:
+   158	
+   159	- `accepted`
+   160	- `accepted_with_warnings`
+   161	- `rejected_required_field`
+   162	- `rejected_invalid_value`
+   163	- `carsky_queued`
+   164	- `carsky_delivered`
+   165	- `carsky_degraded`
+   166	
+   167	Không ghi ảnh cabin, secret, access token hoặc payload chứa dữ liệu không cần thiết vào audit log.
+   168	
+   169	## 7. Checklist khi AI output thay đổi
+   170	
+   171	1. Lưu một fixture payload mới đã ẩn dữ liệu nhạy cảm.
+   172	2. So với contract v1 và liệt kê added/removed/type-changed fields.
+   173	3. Xác định required hay optional.
+   174	4. Sửa `app/domain/schemas/ai_contract.py` nếu schema nhận dữ liệu thay đổi.
+   175	5. Sửa CarSky mapper chỉ khi field dùng cho HMI thay đổi.
+   176	6. Thêm VSS artifact version nếu có path/type mới.
+   177	7. Sửa HMI chỉ khi người lái cần thấy field mới.
+   178	8. Chạy contract round-trip, invalid value và mapper tests.
+   179	9. Ghi một dòng trong Change Log dưới đây.
+   180	
+     1	# Decision Engine & Vigilance-Lapse Research Plan
+     2	
+     3	Tài liệu này là kế hoạch cho công đoạn sản phẩm cuối cùng của FPTU DMS Vision:
+     4	quyết định **khi nào một tín hiệu AI đủ tin cậy để trở thành cảnh báo**, sau đó
+     5	phát sự kiện cho hai luồng tích hợp: Fleet Dashboard và màn hình xe CarSky.
+     6	
+     7	Trạng thái hiện tại: **core policy v1, JSONL integration và FastAPI reference
+     8	contract đã triển khai; chưa nối endpoint production của SE/CarSky**.
+     9	
+    10	## 1. Các quyết định đã chốt
+    11	
+    12	1. Decision Engine nằm **sau Challenge 3 / Fusion(2)**.
+    13	2. Pipeline CSV của BTC vẫn giữ nguyên; Decision Engine không sửa 5 cột dự
+    14	   đoán và không tác động ngược vào điểm Challenge 1–3.
+    15	3. Decision Engine sản phẩm được quyền đọc đồng thời:
+    16	   - output Challenge 1;
+    17	   - output Challenge 2;
+    18	   - snapshot Challenge 3;
+    19	   - telemetry và trạng thái chất lượng cảm biến.
+    20	4. Có hai audience độc lập:
+    21	   - `fleet_dashboard`: sự kiện chi tiết để Fleet Manager theo dõi;
+    22	   - `driver_display`: cảnh báo ngắn, tức thời cho tài xế qua CarSky.
+    23	5. Team AI chỉ sở hữu pipeline suy luận, Decision Engine và canonical
+    24	   `DecisionEvent`. Team SE sở hữu FastAPI, OIDC, endpoint mapping, network
+    25	   delivery và adapter của Fleet Dashboard/CarSky.
+    26	6. “Giấc ngủ trắng” không được thêm thành nhãn CSV thi. Đây là một hướng
+    27	   nghiên cứu cảnh báo sản phẩm riêng.
+    28	7. Hệ thống dùng `driver_id`, không nhận diện khuôn mặt và không gửi raw cabin
+    29	   frame lên dashboard theo mặc định.
+    30	
+    31	## 2. Vị trí trong kiến trúc
+    32	
+    33	```text
+    34	Road cameras ──> Challenge 1: TTC ────────┐
+    35	                                          ├─> Challenge 3: BTC risk/safe score
+    36	Telemetry ────────────────────────────────┘
+    37	
+    38	Face camera ──> Challenge 2: driver state ───────────────┐
+    39	Challenge 1: TTC + road quality ─────────────────────────┤
+    40	Challenge 3: running risk/safe score ────────────────────┤
+    41	Telemetry + sensor quality ──────────────────────────────┤
+    42	Optional research signals: lane/gaze/steering/response ──┘
+    43	                                                         │
+    44	                                                         v
+    45	                                                  DECISION ENGINE
+    46	                                              quality gate + temporal rules
+    47	                                              event state machine + evidence
+    48	                                                         │
+    49	                                                         v
+    50	                                              Canonical DecisionEvent
+    51	                                              (AI/SE integration boundary)
+    52	                                                         │
+    53	                                  ┌──────────────────────┴──────────────────┐
+    54	                                  v                                         v
+    55	                         audience: driver_display                  audience: fleet_dashboard
+    56	                                  │                                         │
+    57	                                  └────────────── TEAM SE ──────────────────┘
+    58	                                              │                    │
+    59	                                              v                    v
+    60	                                       CarSky adapter       FastAPI/Fleet adapter
+    61	                                              │                    │
+    62	                                              v                    v
+    63	                                       CarSky truck UI       Fleet Dashboard
+    64	```
+    65	
+    66	Challenge 3 hiện tại bám đúng public evaluator BTC: TTC của Challenge 1 cộng
+    67	telemetry để tính penalty và safe score; nó **không dùng driver state**.
+    68	Decision Engine là lớp sản phẩm phía sau nên có thể kết hợp lại C1, C2 và C3
+    69	mà không làm sai contract cuộc thi.
+    70	
+    71	## 3. Decision Engine làm gì?
+    72	
+    73	Decision Engine không chạy lại detector và không tự tạo primitive feature. Nó:
+    74	
+    75	- kiểm tra timestamp và chất lượng từng nguồn;
+    76	- tích lũy bằng chứng theo thời gian thay vì quyết định từ một frame;
+    77	- áp dụng motion context: đang chạy, tốc độ thấp hay đang dừng;
+    78	- nhận biết rủi ro kép, ví dụ TTC thấp đồng thời tài xế mất tập trung;
+    79	- chống cảnh báo rung bằng persistence, hysteresis và cooldown;
+    80	- gộp các frame liên tiếp thành một event duy nhất;
+    81	- nâng/hạ severity và phát sự kiện `open`, `update`, `resolved`;
+    82	- lưu reason/evidence để các giao diện giải thích được cảnh báo;
+    83	- gắn đúng `audiences` và trả `DecisionEvent` qua integration boundary.
+    84	
+    85	Nó không:
+    86	
+    87	- thay đổi output CSV của BTC;
+    88	- dùng safe score tích lũy làm bằng chứng duy nhất cho cảnh báo khẩn cấp;
+    89	- quy kết lỗi tài xế khi camera đang mất tín hiệu;
+    90	- gửi một request cho mỗi frame;
+    91	- tự đăng nhập OIDC hoặc tự gọi API CarSky/Fleet Dashboard;
+    92	- lưu hoặc truyền ảnh khuôn mặt nếu chưa có yêu cầu và chính sách riêng.
+    93	
+    94	## 4. Input contract dự kiến
+    95	

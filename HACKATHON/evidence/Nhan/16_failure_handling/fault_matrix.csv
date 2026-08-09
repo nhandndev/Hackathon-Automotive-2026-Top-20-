@@ -1,0 +1,6 @@
+failure_case,expected_safe_behavior,evidence,status
+Bedrock token timeout or invalid,Keep JSON/local baseline and do not render fake insight,FE report runtime screenshot,TBD
+Custom CarSky VSS path missing,Fallback to Vehicle.Speed speed-mux,carsky_phase05.py output fallback_reason,TBD
+Camera offline,Show offline/unknown state; do not infer safe,HMI/Dashboard screenshot,TBD
+Backend restart,Document in-memory state loss and saved-trip replay behavior,restart_test.md,TBD
+

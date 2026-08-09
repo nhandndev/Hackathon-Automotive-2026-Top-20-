@@ -1,0 +1,1713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Platform + AI Engineering Evidence</title>
+<style>
+  body { margin: 0; background: #07111f; color: #e5eefb; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 42px; }
+  h1 { font-size: 34px; margin: 0 0 10px; }
+  h2 { margin-top: 34px; color: #67e8f9; }
+  p, li { color: #cbd5e1; line-height: 1.55; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .card { background: #0f1b2d; border: 1px solid #27405f; border-radius: 14px; padding: 18px; }
+  .card b { color: #f8fafc; }
+  pre { background: #020617; border: 1px solid #1f3b57; border-radius: 12px; padding: 16px; overflow: auto; max-height: 430px; color: #dbeafe; font-size: 12px; line-height: 1.45; }
+  code { color: #67e8f9; }
+  .ok { color: #86efac; font-weight: 700; }
+  .warn { color: #fda4af; font-weight: 700; }
+</style>
+</head>
+<body><main>
+<h1>Platform Utilization + AI Engineering Evidence</h1>
+<p>This HTML is generated from real repository source, tests and artifacts. It is intended for screenshots/video evidence.</p>
+<div class="grid">
+  <div class="card"><b>Backend consumer</b><p><code>/api/v1/alerts</code> consumes canonical <code>DecisionEvent</code>.</p></div>
+  <div class="card"><b>CarSky consumer</b><p><code>CarSkySignalMapper</code> maps AI/DMS state into <code>Vehicle.Speed</code> speed-mux.</p></div>
+  <div class="card"><b>Report consumer</b><p><code>/api/copilot/report</code> and Word/DOC export expose AI explanation artifacts.</p></div>
+  <div class="card"><b>Maintainer consumer</b><p>Contract docs and pytest suite verify interface compatibility.</p></div>
+</div>
+<h2>01_decision_event_schema.txt</h2>
+<pre>
+$ nl -ba AI/core/decision_engine/schemas.py | sed -n '90,150p'
+
+    90	    @classmethod
+    91	    def finite_numbers(cls, value: float) -&gt; float:
+    92	        if not math.isfinite(value):
+    93	            raise ValueError("field must be finite")
+    94	        return value
+    95	
+    96	    @field_validator("predicted_ttc_sec")
+    97	    @classmethod
+    98	    def valid_ttc(cls, value: float) -&gt; float:
+    99	        if math.isnan(value) or value &lt; 0:
+   100	            raise ValueError("predicted_ttc_sec must be non-negative or inf")
+   101	        return value
+   102	
+   103	
+   104	class DecisionEvent(StrictModel):
+   105	    schema_version: Literal["1.0"] = "1.0"
+   106	    event_id: str = Field(min_length=1)
+   107	    idempotency_key: str = Field(min_length=1)
+   108	    trip_id: str = Field(min_length=1)
+   109	    driver_id: str | None = None
+   110	    frame_id: int = Field(ge=0)
+   111	    trip_timestamp_ms: int = Field(ge=0)
+   112	    timestamp_utc: datetime = Field(
+   113	        default_factory=lambda: datetime.now(timezone.utc)
+   114	    )
+   115	    status: EventStatus
+   116	    alert_type: str = Field(min_length=1)
+   117	    severity: Severity
+   118	    confidence: float = Field(ge=0, le=1)
+   119	    audiences: list[Audience]
+   120	    driver_message: DriverMessage | None = None
+   121	    evidence: dict[str, Any] = Field(default_factory=dict)
+   122	    recommended_action: str = Field(min_length=1)
+   123	    model_versions: dict[str, str] = Field(default_factory=dict)
+   124	
+   125	    def transport_dict(self) -&gt; dict[str, Any]:
+   126	        """JSON-safe payload; non-finite internal values become null."""
+   127	
+   128	        def clean(value: Any) -&gt; Any:
+   129	            if isinstance(value, float) and not math.isfinite(value):
+   130	                return None
+   131	            if isinstance(value, dict):
+   132	                return {key: clean(item) for key, item in value.items()}
+   133	            if isinstance(value, (list, tuple)):
+   134	                return [clean(item) for item in value]
+   135	            return value
+   136	
+   137	        return clean(self.model_dump(mode="json"))
+</pre>
+<h2>02_ai_backend_boundary_router.txt</h2>
+<pre>
+$ nl -ba SE/BE/app/modules/ai_alerts/router.py | sed -n '1,230p'
+
+     1	from __future__ import annotations
+     2	
+     3	from collections import deque
+     4	from datetime import datetime
+     5	import time
+     6	from typing import Any, Literal
+     7	
+     8	from fastapi import (
+     9	    APIRouter,
+    10	    Body,
+    11	    Header,
+    12	    HTTPException,
+    13	    Request,
+    14	    Response,
+    15	    WebSocket,
+    16	    WebSocketDisconnect,
+    17	    status,
+    18	)
+    19	from pydantic import BaseModel, ConfigDict, Field
+    20	
+    21	from app.integrations.carsky.mapper import CarSkySignalMapper
+    22	from app.integrations.carsky.service import DeliveryKind
+    23	
+    24	
+    25	class DecisionEventPayload(BaseModel):
+    26	    model_config = ConfigDict(extra="allow")
+    27	
+    28	    schema_version: Literal["1.0"] = "1.0"
+    29	    event_id: str = Field(min_length=1)
+    30	    idempotency_key: str = Field(min_length=1)
+    31	    trip_id: str = Field(min_length=1)
+    32	    driver_id: str | None = None
+    33	    frame_id: int = Field(ge=0)
+    34	    trip_timestamp_ms: int = Field(ge=0)
+    35	    timestamp_utc: datetime
+    36	    status: Literal["open", "update", "resolved"]
+    37	    alert_type: str = Field(min_length=1)
+    38	    severity: Literal["info", "warning", "critical"]
+    39	    confidence: float = Field(ge=0, le=1)
+    40	    audiences: list[Literal["driver_display", "fleet_dashboard"]]
+    41	    evidence: dict[str, Any] = Field(default_factory=dict)
+    42	    recommended_action: str = Field(min_length=1)
+    43	
+    44	
+    45	class LiveSnapshotPayload(BaseModel):
+    46	    model_config = ConfigDict(extra="forbid")
+    47	
+    48	    schema_version: Literal["1.0"] = "1.0"
+    49	    trip_id: str = Field(min_length=1)
+    50	    frame_id: int = Field(ge=0)
+    51	    trip_timestamp_ms: int = Field(ge=0)
+    52	    speed_kmh: float = Field(ge=0)
+    53	    predicted_ttc_sec: float | None = Field(default=None, ge=0)
+    54	    risk_score: float = Field(ge=0, le=100)
+    55	    driver_state: str = Field(min_length=1)
+    56	    driver_confidence: float = Field(ge=0, le=1)
+    57	    alertness_score: float = Field(ge=0, le=1)
+    58	    eye_state: str = "unknown"
+    59	    head_pose: str = "unknown"
+    60	    mouth_state: str = "normal"
+    61	    longitudinal_accel: float = 0.0
+    62	    lateral_accel: float = 0.0
+    63	    speed_limit_kmh: float = 0.0
+    64	    safe_driving_score: float = Field(default=100.0, ge=0, le=100)
+    65	    penalty_points: float = Field(default=0.0, ge=0)
+    66	    harsh_brake: bool = False
+    67	    harsh_accel: bool = False
+    68	    harsh_corner: bool = False
+    69	    speeding: bool = False
+    70	    tailgating: bool = False
+    71	    harsh_brake_count: int = Field(default=0, ge=0)
+    72	    harsh_accel_count: int = Field(default=0, ge=0)
+    73	    harsh_corner_count: int = Field(default=0, ge=0)
+    74	    near_miss_count: int = Field(default=0, ge=0)
+    75	    microsleep_count: int = Field(default=0, ge=0)
+    76	    speeding_pct_time: float = Field(default=0.0, ge=0, le=100)
+    77	    tailgating_pct_time: float = Field(default=0.0, ge=0, le=100)
+    78	    avg_headway_sec: float = Field(default=0.0, ge=0)
+    79	
+    80	
+    81	class TripRegistration(BaseModel):
+    82	    model_config = ConfigDict(extra="forbid")
+    83	
+    84	    trip_id: str = Field(min_length=1)
+    85	    metadata: dict[str, Any] = Field(default_factory=dict)
+    86	
+    87	
+    88	class TripRegistrationPayload(BaseModel):
+    89	    model_config = ConfigDict(extra="forbid")
+    90	
+    91	    trips: list[TripRegistration] = Field(min_length=1)
+    92	    reset_existing: bool = False
+    93	
+    94	
+    95	router = APIRouter(prefix="/alerts", tags=["AI Decision Alerts"])
+    96	live_clients: set[WebSocket] = set()
+    97	carsky_mapper = CarSkySignalMapper()
+    98	MAX_CABIN_FRAME_BYTES = 2 * 1024 * 1024
+    99	CARSKY_SNAPSHOT_MIN_INTERVAL_SEC = 0.25
+   100	
+   101	
+   102	async def _broadcast(document: dict[str, Any]) -&gt; None:
+   103	    stale: list[WebSocket] = []
+   104	    for client in tuple(live_clients):
+   105	        try:
+   106	            await client.send_json(document)
+   107	        except Exception:
+   108	            stale.append(client)
+   109	    for client in stale:
+   110	        live_clients.discard(client)
+   111	
+   112	
+   113	def _store(request: Request) -&gt; tuple[deque[dict[str, Any]], set[str]]:
+   114	    if not hasattr(request.app.state, "decision_alerts"):
+   115	        request.app.state.decision_alerts = deque(maxlen=1000)
+   116	        request.app.state.decision_alert_keys = set()
+   117	    return request.app.state.decision_alerts, request.app.state.decision_alert_keys
+   118	
+   119	
+   120	def _trip_store(request: Request) -&gt; dict[str, dict[str, Any]]:
+   121	    if not hasattr(request.app.state, "live_trip_sessions"):
+   122	        request.app.state.live_trip_sessions = {}
+   123	    return request.app.state.live_trip_sessions
+   124	
+   125	
+   126	def _ensure_trip(
+   127	    request: Request,
+   128	    trip_id: str,
+   129	    metadata: dict[str, Any] | None = None,
+   130	) -&gt; dict[str, Any]:
+   131	    sessions = _trip_store(request)
+   132	    session = sessions.setdefault(
+   133	        trip_id,
+   134	        {
+   135	            "trip_id": trip_id,
+   136	            "status": "pending",
+   137	            "metadata": {},
+   138	            "latest_snapshot": None,
+   139	            "snapshot_history": deque(maxlen=2400),
+   140	        },
+   141	    )
+   142	    if metadata:
+   143	        session["metadata"] = {**session["metadata"], **metadata}
+   144	    return session
+   145	
+   146	
+   147	def _public_session(session: dict[str, Any]) -&gt; dict[str, Any]:
+   148	    return {
+   149	        **session,
+   150	        "snapshot_history": list(session["snapshot_history"]),
+   151	    }
+   152	
+   153	
+   154	@router.post("", status_code=status.HTTP_202_ACCEPTED)
+   155	async def receive_alert(
+   156	    payload: DecisionEventPayload,
+   157	    request: Request,
+   158	    idempotency_key: str = Header(alias="Idempotency-Key"),
+   159	) -&gt; dict[str, Any]:
+   160	    if idempotency_key != payload.idempotency_key:
+   161	        raise HTTPException(status_code=400, detail="Idempotency-Key mismatch")
+   162	    alerts, keys = _store(request)
+   163	    duplicate = idempotency_key in keys
+   164	    if not duplicate:
+   165	        document = payload.model_dump(mode="json")
+   166	        _ensure_trip(request, payload.trip_id)
+   167	        alerts.append(document)
+   168	        keys.add(idempotency_key)
+   169	        await _broadcast(document)
+   170	        publisher = getattr(request.app.state, "carsky_publisher", None)
+   171	        if publisher is not None and "driver_display" in payload.audiences:
+   172	            await publisher.enqueue(
+   173	                carsky_mapper.map_decision_event(document),
+   174	                dedup_key=payload.idempotency_key,
+   175	                kind=DeliveryKind.TRANSITION,
+   176	            )
+   177	    return {
+   178	        "accepted": True,
+   179	        "duplicate": duplicate,
+   180	        "event_id": payload.event_id,
+   181	    }
+   182	
+   183	
+   184	@router.get("/recent")
+   185	async def recent_alerts(request: Request, limit: int = 100) -&gt; dict[str, Any]:
+   186	    alerts, _ = _store(request)
+   187	    safe_limit = min(max(limit, 1), 1000)
+   188	    values = list(alerts)[-safe_limit:]
+   189	    return {"count": len(values), "items": values}
+   190	
+   191	
+   192	@router.post("/trips/register", status_code=status.HTTP_202_ACCEPTED)
+   193	async def register_live_trips(
+   194	    payload: TripRegistrationPayload,
+   195	    request: Request,
+   196	) -&gt; dict[str, Any]:
+   197	    sessions = _trip_store(request)
+   198	    if payload.reset_existing:
+   199	        reset_ids = {trip.trip_id for trip in payload.trips}
+   200	        for trip_id in reset_ids:
+   201	            sessions.pop(trip_id, None)
+   202	        for attribute in ("latest_cabin_frames", "latest_road_frames"):
+   203	            frames = getattr(request.app.state, attribute, {})
+   204	            for trip_id in reset_ids:
+   205	                frames.pop(trip_id, None)
+   206	        alerts, keys = _store(request)
+   207	        retained = [
+   208	            item for item in alerts if item.get("trip_id") not in reset_ids
+   209	        ]
+   210	        alerts.clear()
+   211	        alerts.extend(retained)
+   212	        keys.clear()
+   213	        keys.update(item["idempotency_key"] for item in retained)
+   214	    for trip in payload.trips:
+   215	        _ensure_trip(request, trip.trip_id, trip.metadata)
+   216	    return {
+   217	        "accepted": True,
+   218	        "count": len(payload.trips),
+   219	        "trip_ids": [trip.trip_id for trip in payload.trips],
+   220	    }
+   221	
+   222	
+   223	@router.post("/trips/{trip_id}/complete")
+   224	async def complete_live_trip(trip_id: str, request: Request) -&gt; dict[str, Any]:
+   225	    session = _ensure_trip(request, trip_id)
+   226	    session["status"] = "completed"
+   227	    return {"accepted": True, "trip_id": trip_id, "status": "completed"}
+   228	
+   229	
+   230	@router.get("/trips")
+</pre>
+<h2>03_backend_to_carsky_mapper.txt</h2>
+<pre>
+$ nl -ba SE/BE/app/integrations/carsky/mapper.py | sed -n '1,245p'
+
+     1	from __future__ import annotations
+     2	
+     3	import math
+     4	from dataclasses import dataclass
+     5	from enum import Enum
+     6	from typing import Any, Mapping
+     7	
+     8	from app.domain.schemas.ai_contract import AIFrame, TripMetadata
+     9	
+    10	
+    11	class CarSkyHMIState(str, Enum):
+    12	    SAFE = "SAFE"
+    13	    WARNING = "WARNING"
+    14	    CRITICAL = "CRITICAL"
+    15	    RECOVERY = "RECOVERY"
+    16	
+    17	
+    18	class EventTransition(str, Enum):
+    19	    NONE = "NONE"
+    20	    START = "START"
+    21	    UPDATE = "UPDATE"
+    22	    END = "END"
+    23	
+    24	
+    25	class AIStatus(str, Enum):
+    26	    ONLINE = "ONLINE"
+    27	    DEGRADED = "DEGRADED"
+    28	    OFFLINE = "OFFLINE"
+    29	
+    30	
+    31	@dataclass(frozen=True)
+    32	class CarSkySignalMap:
+    33	    driver_state: str = "Vehicle.Driver.State"
+    34	    alertness_score: str = "Vehicle.Driver.AlertnessScore"
+    35	    speed: str = "Vehicle.Speed"
+    36	    speed_limit: str = "Vehicle.SpeedLimit"
+    37	    min_ttc: str = "Vehicle.ADAS.MinTTC"
+    38	    headway: str = "Vehicle.ADAS.Headway"
+    39	    final_risk_score: str = "Vehicle.ADAS.FinalRiskScore"
+    40	    critical_alert: str = "Vehicle.ADAS.CriticalAlert"
+    41	    display_severity: str = "Vehicle.ADAS.DisplaySeverity"
+    42	    alert_reason: str = "Vehicle.ADAS.AlertReasonCode"
+    43	    recommended_action: str = "Vehicle.ADAS.RecommendedActionCode"
+    44	    event_transition: str = "Vehicle.ADAS.EventTransition"
+    45	    ai_status: str = "Vehicle.ADAS.AIStatus"
+    46	    data_age_ms: str = "Vehicle.ADAS.DataAgeMs"
+    47	    speed_mux: str = "Vehicle.Speed"
+    48	
+    49	    @property
+    50	    def required_paths(self) -&gt; tuple[str, ...]:
+    51	        return tuple(self.__dict__.values())
+    52	
+    53	
+    54	class CarSkySignalMapper:
+    55	    def __init__(self, signal_map: CarSkySignalMap | None = None) -&gt; None:
+    56	        self.paths = signal_map or CarSkySignalMap()
+    57	
+    58	    def map_frame(
+    59	        self,
+    60	        frame: AIFrame,
+    61	        metadata: TripMetadata,
+    62	        *,
+    63	        severity: CarSkyHMIState = CarSkyHMIState.SAFE,
+    64	        reason_code: str = "NONE",
+    65	        action_code: str = "NONE",
+    66	        transition: EventTransition = EventTransition.NONE,
+    67	        ai_status: AIStatus = AIStatus.ONLINE,
+    68	        data_age_ms: int = 0,
+    69	    ) -&gt; dict[str, list[dict[str, Any]]]:
+    70	        if data_age_ms &lt; 0:
+    71	            raise ValueError("data_age_ms must not be negative")
+    72	
+    73	        payload = {
+    74	            "driver_state": frame.driver.state.value,
+    75	            "alertness_score": frame.driver.alertness_score,
+    76	            "speed_kmh": frame.ego.speed_kmh,
+    77	            "speed_limit_kmh": metadata.speed_limit_kmh,
+    78	            "predicted_ttc_sec": frame.min_ttc if math.isfinite(frame.min_ttc) else None,
+    79	            "risk_score": frame.risk.final_risk_score,
+    80	            "severity": severity.value,
+    81	            "critical_alert": severity is CarSkyHMIState.CRITICAL,
+    82	            "recommended_action": action_code,
+    83	            "ai_status": ai_status.value,
+    84	        }
+    85	        return self.map_live_snapshot(payload, data_age_ms=data_age_ms, realtime=False)
+    86	
+    87	    def map_decision_event(
+    88	        self,
+    89	        event: Mapping[str, Any],
+    90	        *,
+    91	        data_age_ms: int = 0,
+    92	    ) -&gt; dict[str, list[dict[str, Any]]]:
+    93	        """Map the AI-owned DecisionEvent without recomputing its decision.
+    94	
+    95	        Only evidence already emitted by AI is forwarded. Missing telemetry is
+    96	        omitted instead of fabricated. Alert type/severity/lifecycle remain
+    97	        owned by AI; Backend only translates them to the stable VSS vocabulary.
+    98	        """
+    99	        if data_age_ms &lt; 0:
+   100	            raise ValueError("data_age_ms must not be negative")
+   101	        status = str(event.get("status", "update")).lower()
+   102	        severity = str(event.get("severity", "warning")).lower()
+   103	        alert_type = str(event.get("alert_type", "unknown"))
+   104	        evidence = event.get("evidence") or {}
+   105	        if not isinstance(evidence, Mapping):
+   106	            evidence = {}
+   107	
+   108	        hmi_state = (
+   109	            CarSkyHMIState.RECOVERY
+   110	            if status == "resolved"
+   111	            else CarSkyHMIState.CRITICAL
+   112	            if severity == "critical"
+   113	            else CarSkyHMIState.WARNING
+   114	        )
+   115	        transition = {
+   116	            "open": EventTransition.START,
+   117	            "update": EventTransition.UPDATE,
+   118	            "resolved": EventTransition.END,
+   119	        }.get(status, EventTransition.UPDATE)
+   120	        reason_code = {
+   121	            "collision_risk": "TTC_CRITICAL",
+   122	            "microsleep": "MICROSLEEP",
+   123	            "driver_drowsiness": "DROWSY",
+   124	            "driver_distraction": "DISTRACTED",
+   125	            "yawning": "YAWNING",
+   126	            "tailgating": "TAILGATING",
+   127	            "speeding": "SPEEDING",
+   128	            "harsh_brake": "HARSH_BRAKE",
+   129	            "harsh_accel": "HARSH_ACCEL",
+   130	            "harsh_corner": "HARSH_CORNER",
+   131	        }.get(alert_type, "NONE")
+   132	        action_code = {
+   133	            "collision_risk": "BRAKE_SAFE",
+   134	            "microsleep": "TAKE_BREAK",
+   135	            "driver_drowsiness": "TAKE_BREAK",
+   136	            "driver_distraction": "FOCUS_FORWARD",
+   137	            "speeding": "REDUCE_SPEED",
+   138	        }.get(alert_type, "NONE")
+   139	
+   140	        payload = {
+   141	            "driver_state": evidence.get("driver_state"),
+   142	            "alertness_score": evidence.get("alertness_score"),
+   143	            "speed_kmh": evidence.get("speed_kmh"),
+   144	            "predicted_ttc_sec": evidence.get("predicted_ttc_sec"),
+   145	            "risk_score": evidence.get("c3_risk_score"),
+   146	            "severity": hmi_state.value,
+   147	            "critical_alert": hmi_state is CarSkyHMIState.CRITICAL,
+   148	            "recommended_action": action_code,
+   149	            "ai_status": AIStatus.ONLINE.value,
+   150	        }
+   151	        return self.map_live_snapshot(
+   152	            payload,
+   153	            data_age_ms=data_age_ms,
+   154	            transition=transition.value,
+   155	            realtime=False,
+   156	        )
+   157	
+   158	    def map_live_snapshot(
+   159	        self,
+   160	        snapshot: Mapping[str, Any],
+   161	        *,
+   162	        data_age_ms: int = 0,
+   163	        transition: str | None = None,
+   164	        realtime: bool = True,
+   165	    ) -&gt; dict[str, list[dict[str, Any]]]:
+   166	        """Map live dashboard telemetry to the BTC-compatible speed-mux VHAL path.
+   167	
+   168	        Current CarSky/AAOS only accepts standard Vehicle.Speed. The APK V2.2
+   169	        decodes decimal groups 41..50 from this one property.
+   170	        """
+   171	        if data_age_ms &lt; 0:
+   172	            raise ValueError("data_age_ms must not be negative")
+   173	
+   174	        risk = self._number(snapshot.get("risk_score"), None)
+   175	        ttc = self._number(snapshot.get("predicted_ttc_sec"), None)
+   176	        driver_state = str(snapshot.get("driver_state") or "alert").lower()
+   177	        alertness = self._number(snapshot.get("alertness_score"), None)
+   178	        speed = self._number(snapshot.get("speed_kmh"), None)
+   179	        safe_score = self._number(snapshot.get("safe_driving_score"), None)
+   180	
+   181	        severity = str(snapshot.get("severity") or "").upper()
+   182	        if severity not in {"SAFE", "WARNING", "CRITICAL", "RECOVERY"}:
+   183	            severity = self._derive_severity(risk or 0.0, ttc, driver_state)
+   184	
+   185	        action = str(snapshot.get("recommended_action") or "")
+   186	        if action not in {"NONE", "FOCUS_FORWARD", "TAKE_BREAK", "BRAKE_SAFE", "REDUCE_SPEED"}:
+   187	            action = self._derive_action(snapshot, ttc, driver_state, severity)
+   188	
+   189	        values: list[float] = [
+   190	            self._mux(42, self._severity_code(severity)),
+   191	            self._mux(43, self._driver_state_code(driver_state)),
+   192	            self._mux(46, 1 if severity == "CRITICAL" or bool(snapshot.get("critical_alert")) else 0),
+   193	            self._mux(47, self._ai_status_code(str(snapshot.get("ai_status") or "ONLINE"))),
+   194	            self._mux(48, self._action_code(action)),
+   195	        ]
+   196	        if risk is not None and math.isfinite(risk):
+   197	            values.insert(0, self._mux(41, risk))
+   198	        if alertness is not None and math.isfinite(alertness):
+   199	            values.append(self._mux(44, self._scale(alertness, 100)))
+   200	        if ttc is not None and math.isfinite(ttc):
+   201	            values.append(self._mux(45, self._scale(ttc, 10)))
+   202	        if speed is not None and math.isfinite(speed):
+   203	            values.append(self._mux(49, speed))
+   204	        if safe_score is not None and math.isfinite(safe_score):
+   205	            values.append(self._mux(50, safe_score))
+   206	
+   207	        signals = [{"path": self.paths.speed_mux, "value": value} for value in values]
+   208	        return {
+   209	            "transport": "vehicle-speed-mux",
+   210	            "transition": transition,
+   211	            "realtime": realtime,
+   212	            "signals": signals,
+   213	        }
+   214	
+   215	    @staticmethod
+   216	    def _number(value: Any, default: float | None) -&gt; float | None:
+   217	        if value is None:
+   218	            return default
+   219	        try:
+   220	            parsed = float(value)
+   221	        except (TypeError, ValueError):
+   222	            return default
+   223	        return parsed if math.isfinite(parsed) else default
+   224	
+   225	    @staticmethod
+   226	    def _scale(value: float | None, scale: float) -&gt; float:
+   227	        if value is None:
+   228	            return 0.0
+   229	        return value * scale
+   230	
+   231	    @staticmethod
+   232	    def _mux(group: int, payload: float) -&gt; float:
+   233	        clamped = max(0.0, min(999.0, float(payload)))
+   234	        return group + (clamped / 1000.0)
+   235	
+   236	    @staticmethod
+   237	    def _derive_severity(risk: float, ttc: float | None, driver_state: str) -&gt; str:
+   238	        if risk &gt;= 75 or (ttc is not None and ttc &lt;= 1.5) or driver_state == "microsleep":
+   239	            return "CRITICAL"
+   240	        if risk &gt;= 40 or (ttc is not None and ttc &lt;= 3.0) or driver_state in {"drowsy", "yawning", "distracted"}:
+   241	            return "WARNING"
+   242	        return "SAFE"
+   243	
+   244	    @staticmethod
+   245	    def _derive_action(snapshot: Mapping[str, Any], ttc: float | None, driver_state: str, severity: str) -&gt; str:
+</pre>
+<h2>04_carsky_phase05_script.txt</h2>
+<pre>
+$ nl -ba SE/BE/scripts/carsky_phase05.py | sed -n '1,230p'
+
+     1	#!/usr/bin/env python3
+     2	"""Operate an existing CarSky deployment without creating/deleting resources.
+     3	
+     4	This helper is for preflight and fallback scenarios. The real end-to-end path
+     5	is AI DecisionEvent -&gt; Backend /api/v1/alerts -&gt; CarSkyPublisher.
+     6	"""
+     7	from __future__ import annotations
+     8	
+     9	import argparse
+    10	import base64
+    11	import json
+    12	import sys
+    13	import time
+    14	from pathlib import Path
+    15	from typing import Any
+    16	
+    17	import httpx
+    18	
+    19	BACKEND_ROOT = Path(__file__).resolve().parents[1]
+    20	if str(BACKEND_ROOT) not in sys.path:
+    21	    sys.path.insert(0, str(BACKEND_ROOT))
+    22	
+    23	from app.core.config import settings
+    24	
+    25	SCENARIOS: dict[str, dict[str, list[dict[str, Any]]]] = {
+    26	    "normal": {"signals": [
+    27	        {"path": "Vehicle.Driver.State", "value": "alert"},
+    28	        {"path": "Vehicle.Driver.AlertnessScore", "value": 0.95},
+    29	        {"path": "Vehicle.ADAS.MinTTC", "value": 10.0},
+    30	        {"path": "Vehicle.ADAS.FinalRiskScore", "value": 5.0},
+    31	        {"path": "Vehicle.ADAS.CriticalAlert", "value": False},
+    32	        {"path": "Vehicle.ADAS.DisplaySeverity", "value": "SAFE"},
+    33	        {"path": "Vehicle.ADAS.AlertReasonCode", "value": "NONE"},
+    34	        {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "NONE"},
+    35	        {"path": "Vehicle.ADAS.EventTransition", "value": "END"},
+    36	        {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+    37	        {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+    38	    ]},
+    39	    "warning": {"signals": [
+    40	        {"path": "Vehicle.Driver.State", "value": "distracted"},
+    41	        {"path": "Vehicle.Driver.AlertnessScore", "value": 0.45},
+    42	        {"path": "Vehicle.ADAS.MinTTC", "value": 3.0},
+    43	        {"path": "Vehicle.ADAS.FinalRiskScore", "value": 55.0},
+    44	        {"path": "Vehicle.ADAS.CriticalAlert", "value": False},
+    45	        {"path": "Vehicle.ADAS.DisplaySeverity", "value": "WARNING"},
+    46	        {"path": "Vehicle.ADAS.AlertReasonCode", "value": "DISTRACTED"},
+    47	        {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "FOCUS_FORWARD"},
+    48	        {"path": "Vehicle.ADAS.EventTransition", "value": "START"},
+    49	        {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+    50	        {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+    51	    ]},
+    52	    "critical": {"signals": [
+    53	        {"path": "Vehicle.Driver.State", "value": "microsleep"},
+    54	        {"path": "Vehicle.Driver.AlertnessScore", "value": 0.15},
+    55	        {"path": "Vehicle.ADAS.MinTTC", "value": 1.2},
+    56	        {"path": "Vehicle.ADAS.FinalRiskScore", "value": 88.0},
+    57	        {"path": "Vehicle.ADAS.CriticalAlert", "value": True},
+    58	        {"path": "Vehicle.ADAS.DisplaySeverity", "value": "CRITICAL"},
+    59	        {"path": "Vehicle.ADAS.AlertReasonCode", "value": "TTC_CRITICAL"},
+    60	        {"path": "Vehicle.ADAS.RecommendedActionCode", "value": "BRAKE_SAFE"},
+    61	        {"path": "Vehicle.ADAS.EventTransition", "value": "START"},
+    62	        {"path": "Vehicle.ADAS.AIStatus", "value": "ONLINE"},
+    63	        {"path": "Vehicle.ADAS.DataAgeMs", "value": 40},
+    64	    ]},
+    65	}
+    66	
+    67	SPEED_MUX_SCENARIOS: dict[str, list[float]] = {
+    68	    # Decimal speed-mux contract decoded by APK V2.2:
+    69	    # 41.xxx risk, 42.xxx severity, 43.xxx driver, 44.xxx alertness,
+    70	    # 45.xxx TTC, 46.xxx critical, 47.xxx AI status, 48.xxx action,
+    71	    # 49.xxx real display speed in km/h.
+    72	    "normal": [43.000, 44.095, 45.100, 41.005, 46.000, 42.000, 48.000, 47.000, 49.045],
+    73	    "warning": [43.003, 44.045, 45.030, 41.055, 46.000, 42.001, 48.001, 47.000, 49.035],
+    74	    "critical": [43.004, 44.015, 45.012, 41.088, 46.001, 42.002, 48.003, 47.000, 49.029],
+    75	}
+    76	
+    77	
+    78	class Phase05Operator:
+    79	    def __init__(self) -&gt; None:
+    80	        required = {
+    81	            "CARSKY_BASE_URL": settings.CARSKY_BASE_URL,
+    82	            "CARSKY_API_KEY": settings.CARSKY_API_KEY,
+    83	            "CARSKY_ROOM_ID": settings.CARSKY_ROOM_ID,
+    84	            "CARSKY_NODE_KEY": settings.CARSKY_NODE_KEY,
+    85	        }
+    86	        missing = [name for name, value in required.items() if not value]
+    87	        if missing:
+    88	            raise SystemExit(f"Missing required .env values: {', '.join(missing)}")
+    89	        self.base_url = settings.CARSKY_BASE_URL.rstrip("/")
+    90	        self.room_id = settings.CARSKY_ROOM_ID
+    91	        self.signal_node = settings.CARSKY_NODE_KEY
+    92	        self.android_node = settings.CARSKY_ANDROID_NODE_KEY
+    93	        header = "X-API-Key" if settings.CARSKY_AUTH_MODE == "x-api-key" else "Authorization"
+    94	        token = settings.CARSKY_API_KEY if header == "X-API-Key" else f"Bearer {settings.CARSKY_API_KEY}"
+    95	        self.client = httpx.Client(timeout=30, headers={header: token})
+    96	
+    97	    def close(self) -&gt; None:
+    98	        self.client.close()
+    99	
+   100	    def request(self, method: str, path: str, **kwargs: Any) -&gt; httpx.Response:
+   101	        attempts = max(1, settings.CARSKY_MAX_RETRIES + 1)
+   102	        for attempt in range(attempts):
+   103	            try:
+   104	                response = self.client.request(method, f"{self.base_url}{path}", **kwargs)
+   105	                response.raise_for_status()
+   106	                return response
+   107	            except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+   108	                retryable = isinstance(exc, httpx.TransportError) or (
+   109	                    isinstance(exc, httpx.HTTPStatusError)
+   110	                    and (exc.response.status_code == 429 or exc.response.status_code &gt;= 500)
+   111	                )
+   112	                if retryable and attempt &lt; attempts - 1:
+   113	                    time.sleep(0.25 * (2**attempt))
+   114	                    continue
+   115	                if isinstance(exc, httpx.HTTPStatusError):
+   116	                    try:
+   117	                        details = exc.response.json()
+   118	                    except ValueError:
+   119	                        details = exc.response.text[:500]
+   120	                    raise RuntimeError(
+   121	                        f"CarSky {exc.response.status_code} for {path} "
+   122	                        f"after {attempt + 1} attempt(s): {details}"
+   123	                    ) from exc
+   124	                raise RuntimeError(
+   125	                    f"CarSky transport failure for {path} "
+   126	                    f"after {attempt + 1} attempt(s): {exc}"
+   127	                ) from exc
+   128	        raise RuntimeError("Unreachable CarSky retry state")
+   129	
+   130	    def status(self) -&gt; Any:
+   131	        return self.request("GET", f"/api/v1/deployments/{self.room_id}/status").json()
+   132	
+   133	    def nodes(self) -&gt; Any:
+   134	        return self.request("GET", f"/api/v1/deployments/{self.room_id}/nodes").json()
+   135	
+   136	    def adb_tunnel(self) -&gt; Any:
+   137	        return self.request(
+   138	            "GET", f"/api/v1/deployments/{self.room_id}/adb-tunnel"
+   139	        ).json()
+   140	
+   141	    def actuate_signals(self, signals: list[dict[str, Any]]) -&gt; Any:
+   142	        return self.request(
+   143	            "POST", f"/api/v1/signals/{self.room_id}/{self.signal_node}/actuate",
+   144	            json={"signals": signals},
+   145	        ).json()
+   146	
+   147	    def scenario(self, name: str) -&gt; Any:
+   148	        signals = SCENARIOS[name]["signals"]
+   149	        sent = 0
+   150	        responses: list[Any] = []
+   151	        try:
+   152	            for signal in signals:
+   153	                responses.append(self.actuate_signals([signal]))
+   154	                sent += 1
+   155	                time.sleep(0.16)
+   156	        except RuntimeError as exc:
+   157	            if "Unknown signal path" not in str(exc):
+   158	                raise
+   159	            return self.scenario_speed_mux(name, fallback_reason=str(exc))
+   160	
+   161	        # Pulse the most visible HMI fields again. CarSky AAOS may only expose
+   162	        # PERF_VEHICLE_SPEED reliably, so Android polling can miss a rapid
+   163	        # multiplex burst if the final value is AIStatus/DataAge.
+   164	        visible_paths = {
+   165	            "Vehicle.ADAS.FinalRiskScore",
+   166	            "Vehicle.ADAS.DisplaySeverity",
+   167	            "Vehicle.ADAS.RecommendedActionCode",
+   168	            "Vehicle.ADAS.CriticalAlert",
+   169	        }
+   170	        visible = [signal for signal in signals if signal["path"] in visible_paths]
+   171	        for signal in visible:
+   172	            responses.append(self.actuate_signals([signal]))
+   173	            sent += 1
+   174	            time.sleep(0.22)
+   175	        return {"ok": True, "sent": sent, "responses": responses[-3:]}
+   176	
+   177	    def scenario_speed_mux(self, name: str, *, fallback_reason: str | None = None) -&gt; Any:
+   178	        sent = 0
+   179	        responses: list[Any] = []
+   180	        for value in SPEED_MUX_SCENARIOS[name]:
+   181	            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+   182	            sent += 1
+   183	            time.sleep(0.22)
+   184	        # Pulse visible fields again so Android polling catches the important values.
+   185	        for value in [41.088 if name == "critical" else SPEED_MUX_SCENARIOS[name][3],
+   186	                      46.001 if name == "critical" else SPEED_MUX_SCENARIOS[name][4],
+   187	                      42.002 if name == "critical" else SPEED_MUX_SCENARIOS[name][5],
+   188	                      48.003 if name == "critical" else SPEED_MUX_SCENARIOS[name][6],
+   189	                      49.029 if name == "critical" else SPEED_MUX_SCENARIOS[name][8]]:
+   190	            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+   191	            sent += 1
+   192	            time.sleep(0.28)
+   193	        result = {"ok": True, "mode": "vehicle-speed-mux", "sent": sent, "responses": responses[-3:]}
+   194	        if fallback_reason:
+   195	            result["fallback_reason"] = fallback_reason[:300]
+   196	        return result
+   197	
+   198	    def adb(self, command: str, *, binary: bool = False) -&gt; httpx.Response:
+   199	        if not self.android_node:
+   200	            raise SystemExit("CARSKY_ANDROID_NODE_KEY is required for ADB commands")
+   201	        return self.request(
+   202	            "POST", f"/api/v1/deployments/{self.room_id}/adb-exec/{self.android_node}",
+   203	            json={"command": command, "binary": binary},
+   204	        )
+   205	
+   206	    def install_apk(self, apk: Path) -&gt; list[Any]:
+   207	        encoded = base64.b64encode(apk.read_bytes()).decode("ascii")
+   208	        output: list[Any] = []
+   209	        output.append(self.adb(
+   210	            "rm -f /data/local/tmp/dms-hmi.part.* "
+   211	            "/data/local/tmp/dms-hmi.b64 /data/local/tmp/dms-hmi.apk"
+   212	        ).json())
+   213	        for index, offset in enumerate(range(0, len(encoded), 1800)):
+   214	            chunk = encoded[offset:offset + 1800]
+   215	            output.append(self.adb(
+   216	                f"printf '%s' '{chunk}' &gt; /data/local/tmp/dms-hmi.part.{index:04d}"
+   217	            ).json())
+   218	        output.append(self.adb(
+   219	            "cat /data/local/tmp/dms-hmi.part.* &gt; /data/local/tmp/dms-hmi.b64"
+   220	        ).json())
+   221	        output.append(self.adb("base64 -d /data/local/tmp/dms-hmi.b64 &gt; /data/local/tmp/dms-hmi.apk").json())
+   222	        output.append(self.adb("pm install -r -d -t /data/local/tmp/dms-hmi.apk").json())
+   223	        output.append(self.adb("am start -n vn.fpt.dms.hmi/.MainActivity").json())
+   224	        return output
+   225	
+   226	
+   227	def main() -&gt; None:
+   228	    parser = argparse.ArgumentParser(description=__doc__)
+   229	    sub = parser.add_subparsers(dest="command", required=True)
+   230	    sub.add_parser("status")
+</pre>
+<h2>05_copilot_report_api.txt</h2>
+<pre>
+$ nl -ba SE/FE/server.ts | sed -n '390,430p'; nl -ba SE/FE/server.ts | sed -n '720,760p'; nl -ba SE/FE/server.ts | sed -n '925,990p'
+
+   390	    trip_insights: {},
+   391	    policy_version: "report-canonical-v1",
+   392	    ai_status: "pending",
+   393	    diagnostics: {
+   394	      provider: "bedrock",
+   395	      region: BEDROCK_REGION,
+   396	      modelId: BEDROCK_MODEL_ID,
+   397	      reason: "background-inflight",
+   398	      ...diagnostics,
+   399	    },
+   400	  };
+   401	}
+   402	
+   403	const BEDROCK_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-southeast-2";
+   404	const BEDROCK_MODEL_ID = process.env.BEDROCK_MODEL_ID || "deepseek.v3.2";
+   405	
+   406	function cleanBearerToken(raw?: string): string {
+   407	  return (raw || "").replace(/\n/g, "").replace(/ /g, "").trim();
+   408	}
+   409	
+   410	function getBedrockBearerToken(): string {
+   411	  return cleanBearerToken(process.env.AWS_BEARER_TOKEN_BEDROCK || process.env.BEDROCK_API_KEY);
+   412	}
+   413	
+   414	async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, timeoutMs = 3500, externalSignal?: AbortSignal): Promise&lt;string&gt; {
+   415	  const token = getBedrockBearerToken();
+   416	  if (!token) throw new Error("AWS_BEARER_TOKEN_BEDROCK is not configured");
+   417	
+   418	  const endpoint = `https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com/model/${encodeURIComponent(modelId)}/converse`;
+   419	  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+   420	  const signal = externalSignal ? AbortSignal.any([timeoutSignal, externalSignal]) : timeoutSignal;
+   421	  const response = await fetch(endpoint, {
+   422	    method: "POST",
+   423	    headers: {
+   424	      "Content-Type": "application/json",
+   425	      "Accept": "application/json",
+   426	      "Authorization": `Bearer ${token}`,
+   427	    },
+   428	    signal,
+   429	    body: JSON.stringify({
+   430	      messages: [
+   720	    res.status(500).json({ error: "Failed to delete trip" });
+   721	  }
+   722	});
+   723	
+   724	// AI Copilot endpoint
+   725	app.post("/api/copilot", async (req, res) =&gt; {
+   726	  const { message, chatHistory, vehicles: rawVehicles = [] } = req.body as {
+   727	    message?: string;
+   728	    chatHistory?: ChatHistoryItem[];
+   729	    vehicles?: TripSummary[];
+   730	  };
+   731	  const vehicles = resolveCopilotVehicles(rawVehicles);
+   732	
+   733	  if (!message || typeof message !== "string") {
+   734	    res.status(400).json({ error: "Thông điệp không hợp lệ" });
+   735	    return;
+   736	  }
+   737	
+   738	  if (vehicles.length === 0) {
+   739	    res.json({
+   740	      reply: "Chưa có chuyến đi nào hoàn thành (status = completed). AI Copilot chỉ phân tích dữ liệu các chuyến đi đã kết thúc."
+   741	    });
+   742	    return;
+   743	  }
+   744	
+   745	  const reportRequest = detectReportType(message);
+   746	  if (reportRequest) {
+   747	    const mentionedTripIds = findMentionedTripIds(message, vehicles);
+   748	    const selectedTripIds = reportRequest.type === "compare"
+   749	      ? mentionedTripIds.slice(0, reportRequest.requestedCount)
+   750	      : (mentionedTripIds.length ? mentionedTripIds : availableTripIds(vehicles).slice(0, reportRequest.requestedCount));
+   751	
+   752	    if (reportRequest.type === "compare" &amp;&amp; selectedTripIds.length &lt; reportRequest.requestedCount) {
+   753	      res.json({
+   754	        reply: [
+   755	          `Bạn muốn so sánh ${reportRequest.requestedCount} trip, nhưng hiện mới thấy ${selectedTripIds.length ? selectedTripIds.join(", ") : "chưa có trip_id nào"}.`,
+   756	          `Bạn gửi thêm ${reportRequest.requestedCount - selectedTripIds.length} trip_id còn thiếu nha.`,
+   757	          `Trip hiện có: ${availableTripIds(vehicles).join(", ") || "chưa có trip nào từ Dashboard"}.`,
+   758	        ].join("\n"),
+   759	      });
+   760	      return;
+   925	    `Dashboard hiện có ${vehicles.length} trip completed từ JSON/local AI: ${availableTripIds(vehicles).join(", ") || "chưa có"}.`,
+   926	    "Bạn có thể mở report card để xem số liệu deterministic từ JSON/local AI; phần insight sẽ chờ AI provider phản hồi.",
+   927	  ].join("\n");
+   928	
+   929	  res.json({ reply: replyFallback });
+   930	});
+   931	
+   932	app.post("/api/copilot/report", async (req, res) =&gt; {
+   933	  const { reportMode, canonicalInput, tripIds = [] } = req.body as {
+   934	    reportMode?: string;
+   935	    canonicalInput?: {
+   936	      request_id?: string;
+   937	      policy_version?: string;
+   938	      input_signature?: string;
+   939	      fleet_summary?: unknown;
+   940	      trips?: CopilotTripInput[];
+   941	    };
+   942	    tripIds?: string[];
+   943	  };
+   944	
+   945	  const trips = (canonicalInput?.trips ?? []).filter((trip) =&gt; trip &amp;&amp; trip.tripId);
+   946	  const startedAt = Date.now();
+   947	  if (trips.length === 0) {
+   948	    res.json({
+   949	      insight: "Chưa có canonical JSON/local AI input để lập AI Copilot insight.",
+   950	      fleet_insight: "Chưa có canonical JSON/local AI input để lập AI Copilot insight.",
+   951	      trip_insights: {},
+   952	      policy_version: "report-canonical-v1",
+   953	      ai_status: "unavailable",
+   954	    });
+   955	    return;
+   956	  }
+   957	
+   958	  const clientAbortController = new AbortController();
+   959	  let responseFinished = false;
+   960	  res.on("finish", () =&gt; {
+   961	    responseFinished = true;
+   962	  });
+   963	  req.on("aborted", () =&gt; {
+   964	    clientAbortController.abort();
+   965	  });
+   966	  res.on("close", () =&gt; {
+   967	    if (!responseFinished) clientAbortController.abort();
+   968	  });
+   969	
+   970	  const cacheKey = canonicalInput?.input_signature || `${reportMode || "unknown"}:${trips.map((trip) =&gt; trip.tripId).join(",")}`;
+   971	  const cached = reportInsightCache.get(cacheKey);
+   972	  if (cached &amp;&amp; cached.expiresAt &gt; Date.now()) {
+   973	    res.json({
+   974	      ...cached.payload,
+   975	      diagnostics: {
+   976	        ...cached.payload.diagnostics,
+   977	        cache: "hit",
+   978	        durationMs: Date.now() - startedAt,
+   979	      },
+   980	    });
+   981	    return;
+   982	  }
+   983	
+   984	  const inflight = reportInsightInflight.get(cacheKey);
+   985	  if (inflight) {
+   986	    res.json(buildPendingInsight({
+   987	      cache: "inflight",
+   988	      durationMs: Date.now() - startedAt,
+   989	    }));
+   990	    return;
+</pre>
+<h2>06_copilot_doc_export.txt</h2>
+<pre>
+$ nl -ba SE/FE/src/components/CopilotFleetReportPage.tsx | sed -n '1080,1235p'
+
+  1080	        y += 34;
+  1081	      });
+  1082	
+  1083	      section('AI Copilot / Bedrock Insight');
+  1084	      bulletLines(copilotInsight || aiLoadingCopy.fleet, 9);
+  1085	
+  1086	      if (rows.length === 1) {
+  1087	        const row = rows[0];
+  1088	        const tripAi = aiTripInsights[row.trip_id];
+  1089	        const model = reportForRow(reportModels, row.trip_id);
+  1090	        const evalText = reportType === 'maintenance'
+  1091	          ? `Inspection triage: ${model?.maintenance.priority ?? 'NORMAL'}. Recommended - not created; workshop inspection is required before confirmed repair.`
+  1092	          : (tripAi?.evaluation ?? tripAi?.recommendation ?? `Safety review result: ${row.trip_id} ranking score ${displayScore(row.score)}/100, risk ${row.riskLevel}.`);
+  1093	        section('Final Recommendation');
+  1094	        bulletLines(evalText, 9);
+  1095	      }
+  1096	
+  1097	      const totalPages = doc.getNumberOfPages();
+  1098	      for (let page = 1; page &lt;= totalPages; page += 1) {
+  1099	        doc.setPage(page);
+  1100	        doc.setFontSize(8);
+  1101	        doc.setTextColor(148, 163, 184);
+  1102	        doc.text(`DMS Fleet Report - page ${page}/${totalPages}`, margin, pageHeight - 6);
+  1103	      }
+  1104	      doc.save(fileName);
+  1105	      setDownloadSuccess(`Da tai xuong bao cao PDF (${fileName}) thanh cong!`);
+  1106	    } catch (err) {
+  1107	      console.error('PDF document export error:', err);
+  1108	      setDownloadSuccess('Xuat PDF bi loi. Hay bam Export Report va thu lai.');
+  1109	    } finally {
+  1110	      window.setTimeout(() =&gt; setIsExporting(false), 500);
+  1111	      window.setTimeout(() =&gt; setDownloadSuccess(null), 6000);
+  1112	    }
+  1113	  };
+  1114	
+  1115	  const handleExportWord = () =&gt; {
+  1116	    if (isExporting) return;
+  1117	    setIsExporting(true);
+  1118	    setShowExportMenu(false);
+  1119	    const sourceHTML = buildOfficeReportHTML();
+  1120	
+  1121	    try {
+  1122	      const blob = new Blob(['\ufeff', sourceHTML], {
+  1123	        type: 'application/msword;charset=utf-8'
+  1124	      });
+  1125	
+  1126	      const tripLabel = rows.length === 1 ? rows[0].trip_id : 'Fleet';
+  1127	      const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.doc`;
+  1128	      const url = URL.createObjectURL(blob);
+  1129	      const a = document.createElement('a');
+  1130	      a.href = url;
+  1131	      a.download = fileName;
+  1132	      document.body.appendChild(a);
+  1133	      a.click();
+  1134	      document.body.removeChild(a);
+  1135	      setTimeout(() =&gt; URL.revokeObjectURL(url), 1000);
+  1136	
+  1137	      setDownloadSuccess(`Da tai xuong bao cao Word (${fileName}) thanh cong!`);
+  1138	    } catch (err) {
+  1139	      console.error('Word export error:', err);
+  1140	      setDownloadSuccess('Xuat Word bi loi. Hay bam Export Report va thu lai.');
+  1141	    } finally {
+  1142	      setTimeout(() =&gt; {
+  1143	        setIsExporting(false);
+  1144	        setDownloadSuccess(null);
+  1145	      }, 4000);
+  1146	    }
+  1147	  };
+  1148	
+  1149	  return (
+  1150	    &lt;div id="copilot-report-print-target" className="min-h-screen overflow-y-auto bg-[#070A12] px-6 py-7 text-slate-100"&gt;
+  1151	      &lt;div className="mx-auto max-w-7xl space-y-5"&gt;
+  1152	        {downloadSuccess &amp;&amp; (
+  1153	          &lt;div className="flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-950/80 px-4 py-3 text-sm font-bold text-emerald-200 shadow-lg"&gt;
+  1154	            &lt;Check className="h-5 w-5 text-emerald-400" /&gt;
+  1155	            {downloadSuccess}
+  1156	          &lt;/div&gt;
+  1157	        )}
+  1158	
+  1159	        &lt;header className="flex items-center justify-between gap-4 border-b border-[#1E293B] pb-5"&gt;
+  1160	          &lt;div className="flex items-start gap-4"&gt;
+  1161	            &lt;a
+  1162	              href="/?view=MAP"
+  1163	              className="flex items-center gap-2 rounded-xl bg-slate-800/80 px-3.5 py-3 text-xs font-bold text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all shadow-md shrink-0"
+  1164	              title="Quay lại Dashboard Trang Chủ"
+  1165	            &gt;
+  1166	              &lt;Eye className="h-4 w-4 text-sky-400" /&gt;
+  1167	              &lt;span&gt;Trang Chủ Command&lt;/span&gt;
+  1168	            &lt;/a&gt;
+  1169	            &lt;div className="grid h-12 w-12 place-items-center rounded-xl bg-sky-500/10 text-sky-300 shrink-0"&gt;
+  1170	              {reportType === 'maintenance' ? &lt;Wrench className="h-7 w-7" /&gt; : &lt;Shield className="h-7 w-7" /&gt;}
+  1171	            &lt;/div&gt;
+  1172	            &lt;div&gt;
+  1173	              &lt;h1 className="text-3xl font-black tracking-tight"&gt;{reportTitle}&lt;/h1&gt;
+  1174	              &lt;p className="mt-1 text-sm text-slate-400"&gt;{subtitle}&lt;/p&gt;
+  1175	            &lt;/div&gt;
+  1176	          &lt;/div&gt;
+  1177	          &lt;div className="flex items-center gap-3"&gt;
+  1178	            &lt;div className={`${panel} flex items-center gap-3 px-4 py-2 text-sm text-slate-300`}&gt;
+  1179	              &lt;CalendarDays className="h-4 w-4 text-slate-500" /&gt;
+  1180	              {reportDateRange}
+  1181	            &lt;/div&gt;
+  1182	            &lt;button
+  1183	              onClick={() =&gt; setBedrockRequested(true)}
+  1184	              disabled={aiHasReturned || aiIsLoading || !canRequestBedrockInsight}
+  1185	              className={`${panel} ${aiButtonClass} flex items-center gap-2 px-4 py-2 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-80`}
+  1186	              title={
+  1187	                aiHasReturned
+  1188	                  ? 'Bedrock đã trả insight hợp lệ cho report này'
+  1189	                  : canRequestBedrockInsight
+  1190	                    ? 'Gọi Bedrock AI Copilot cho report đang chọn'
+  1191	                    : 'Canonical trip data is not ready yet'
+  1192	              }
+  1193	            &gt;
+  1194	              {aiHasReturned ? &lt;Check className="h-4 w-4 text-emerald-300" /&gt; : &lt;FileText className="h-4 w-4 text-sky-400" /&gt;}
+  1195	              {aiButtonLabel}
+  1196	            &lt;/button&gt;
+  1197	            &lt;div className="relative" ref={menuRef}&gt;
+  1198	              &lt;button 
+  1199	                onClick={() =&gt; setShowExportMenu(!showExportMenu)}
+  1200	                disabled={isExporting}
+  1201	                className={`${panel} flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 active:scale-95`}
+  1202	              &gt;
+  1203	                &lt;Download className="h-4 w-4 text-sky-400" /&gt;
+  1204	                {isExporting ? 'Exporting...' : 'Export Report'}
+  1205	              &lt;/button&gt;
+  1206	
+  1207	              {showExportMenu &amp;&amp; (
+  1208	                &lt;div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-[#1E293B] bg-[#0F172A] p-1 shadow-2xl backdrop-blur-md"&gt;
+  1209	                  &lt;button
+  1210	                    onClick={handleExportWord}
+  1211	                    disabled={isExporting}
+  1212	                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400 disabled:cursor-wait disabled:opacity-60"
+  1213	                  &gt;
+  1214	                    &lt;FileCode className="h-4 w-4 text-blue-400" /&gt;
+  1215	                    &lt;span&gt;Tải báo cáo Word đầy đủ (.doc)&lt;/span&gt;
+  1216	                  &lt;/button&gt;
+  1217	                &lt;/div&gt;
+  1218	              )}
+  1219	            &lt;/div&gt;
+  1220	          &lt;/div&gt;
+  1221	        &lt;/header&gt;
+  1222	
+  1223	        {isSafetyOverview &amp;&amp; (
+  1224	          &lt;section className={`${panel} p-5 space-y-4 border-red-500/30 bg-red-950/10`}&gt;
+  1225	            &lt;div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"&gt;
+  1226	              &lt;div&gt;
+  1227	                &lt;div className="text-xs font-black uppercase tracking-widest text-red-300"&gt;Fleet Summary&lt;/div&gt;
+  1228	                &lt;h2 className="mt-1 text-xl font-black text-slate-100"&gt;Fleet Status: {fleetStatus}&lt;/h2&gt;
+  1229	                &lt;p className="mt-1 max-w-4xl text-sm leading-relaxed text-slate-400"&gt;
+  1230	                  Review priority shows lowest score / highest risk first. Relative rank shows highest Ranking Score first, so #1 does not mean safe when Trip Safety Risk is CRITICAL.
+  1231	                &lt;/p&gt;
+  1232	              &lt;/div&gt;
+  1233	              &lt;span className={`w-fit rounded border px-3 py-1 text-xs font-black ${severityClass(fleetStatus)}`}&gt;
+  1234	                TRIP RISK OVERVIEW: {fleetStatus}
+  1235	              &lt;/span&gt;
+</pre>
+<h2>07_fleet_dashboard_consumers.txt</h2>
+<pre>
+$ grep -RInE 'Decision events|No DecisionEvent|VehicleLiveView|TripDetailView|ranking-analysis|performance insights|saved_trips' SE/FE/src SE/FE/server.ts | head -120
+
+SE/FE/src/App.tsx:8:import { VehicleLiveView } from './components/VehicleLiveView';
+SE/FE/src/App.tsx:9:import { TripDetailView } from './components/TripDetailView';
+SE/FE/src/App.tsx:57:  // Ref: historical trips loaded from server disk (data/saved_trips/).
+SE/FE/src/App.tsx:251:  if (standaloneView === 'ranking-analysis') {
+SE/FE/src/App.tsx:310:              ? &lt;VehicleLiveView
+SE/FE/src/App.tsx:321:              ? &lt;TripDetailView
+SE/FE/src/components/DriverRankingView.tsx:403:        view: 'ranking-analysis',
+SE/FE/src/components/VehicleLiveView.tsx:6:interface VehicleLiveViewProps {
+SE/FE/src/components/VehicleLiveView.tsx:46:export const VehicleLiveView: React.FC&lt;VehicleLiveViewProps&gt; = ({
+SE/FE/src/components/VehicleLiveView.tsx:202:              &lt;div className="flex h-full items-center justify-center p-5 text-center text-xs text-slate-500"&gt;No DecisionEvent received for this trip.&lt;/div&gt;
+SE/FE/src/components/TripDetailView.tsx:8:interface TripDetailViewProps {
+SE/FE/src/components/TripDetailView.tsx:75:export const TripDetailView: React.FC&lt;TripDetailViewProps&gt; = ({
+SE/FE/src/components/TripDetailView.tsx:206:          &lt;div className="shrink-0 rounded-xl border border-[#1E293B] bg-[#0B0F19] p-4"&gt;&lt;span className="mb-2 block text-[10px] font-bold uppercase text-slate-300"&gt;Decision events · current session&lt;/span&gt;{eventCounts.length === 0 ? &lt;p className="text-[10px] text-slate-500"&gt;No DecisionEvent received.&lt;/p&gt; : &lt;div className="flex max-h-24 flex-col gap-1.5 overflow-y-auto text-[10px]"&gt;{eventCounts.map(([type, count]) =&gt; &lt;div key={type} className="flex justify-between rounded border border-slate-700 bg-slate-900 p-1.5"&gt;&lt;span&gt;{type.replaceAll('_', ' ')}&lt;/span&gt;&lt;b className="font-mono"&gt;×{count}&lt;/b&gt;&lt;/div&gt;)}&lt;/div&gt;}&lt;/div&gt;
+SE/FE/src/data/saved_trips/README.md:1:# src/data/saved_trips/
+SE/FE/src/data/saved_trips/README.md:3:Completed trip JSON files (`{trip_id}.json`) are persisted directly under `src/data/saved_trips/`.
+SE/FE/src/data/saved_trips/README.md:7:1. **Auto-save on Completion**: When a live trip status changes to `completed`, `App.tsx` calls `POST /api/trips/save` to save the full `TripData` JSON object into `src/data/saved_trips/{trip_id}.json`.
+SE/FE/src/data/saved_trips/README.md:8:2. **AI Copilot Tracing**: The Express server (`server.ts`) reads all completed trip JSON files in `src/data/saved_trips/` so AI Copilot can trace and analyze historical completed trips.
+SE/FE/src/data/btcTripData.ts:4: * btcTripData holds completed trip records saved in `src/data/saved_trips/`.
+SE/FE/src/data/btcTripData.ts:6: * the frontend auto-persists the full TripData to `src/data/saved_trips/{trip_id}.json`.
+SE/FE/src/data/btcTripData.ts:7: * Both the Dashboard and AI Copilot read from `src/data/saved_trips/` to trace completed trips.
+SE/FE/server.ts:28:// Saved completed trips live in &lt;project&gt;/src/data/saved_trips/{trip_id}.json
+SE/FE/server.ts:29:const SAVED_TRIPS_DIR = path.join(process.cwd(), "src", "data", "saved_trips");
+SE/FE/server.ts:634: * Saves to data/saved_trips/{trip_id}.json so future Copilot sessions
+SE/FE/server.ts:658: * Returns list of all persisted trip IDs (files in data/saved_trips/).
+SE/FE/server.ts:693: * Clears ALL saved completed trip JSON files in data/saved_trips/.
+</pre>
+<h2>08_contract_docs.txt</h2>
+<pre>
+$ nl -ba SE/BE/docs/AI_CONTRACT_AND_CHANGELOG.md | sed -n '1,180p'; nl -ba AI/core/decision_engine/README.md | sed -n '1,95p'
+
+     1	# AI Output Contract, Compatibility và Change Log
+     2	
+     3	&gt; Đây là nguồn context chuẩn cho Backend, Frontend, CarSky và AI coding agent. Đọc file này trước khi sửa schema, mapper, WebSocket hoặc HMI. Phase CarSky liên quan: [`PHASE_05_2`](phases/PHASE_05_2_CARSKY_HMI_ACTION_CHECKLIST.md).
+     4	
+     5	File này là **decision memory** của contract, không phải runtime log. Khi AI output thay đổi,
+     6	agent phải đọc file này và chỉ sửa phần bị ảnh hưởng; không triển khai lại toàn bộ các phase.
+     7	
+     8	## 1. Contract version hiện hành
+     9	
+    10	```text
+    11	AI_CONTRACT_VERSION=1.0.0
+    12	COMPATIBILITY_POLICY=additive
+    13	OWNER=AI team + Backend owner
+    14	```
+    15	
+    16	Payload canonical là một trip:
+    17	
+    18	```json
+    19	{
+    20	  "trip_id": "T01d",
+    21	  "metadata": {
+    22	    "trip_id": "T01d",
+    23	    "description": "DEBUG 30s: highway evening",
+    24	    "duration_sec": 90,
+    25	    "fps": 20,
+    26	    "map": "Town01",
+    27	    "driver_profile": "normal",
+    28	    "carla_version": "0.9.15",
+    29	    "random_seed": 1001,
+    30	    "speed_limit_kmh": 80
+    31	  },
+    32	  "frames": [
+    33	    {
+    34	      "frame_id": 0,
+    35	      "timestamp": 0.0,
+    36	      "ego": {
+    37	        "speed_kmh": 0.0,
+    38	        "longitudinal_accel": 0.0,
+    39	        "lateral_accel": 0.0,
+    40	        "geolocation": {"lat": -0.00123, "lon": -0.000485, "alt": 0.16}
+    41	      },
+    42	      "driver": {
+    43	        "state": "distracted",
+    44	        "alertness_score": 0.45,
+    45	        "eye_state": "open",
+    46	        "head_pose": "side",
+    47	        "mouth_state": "normal",
+    48	        "nthu_subject_id": "14"
+    49	      },
+    50	      "min_ttc": "Infinity",
+    51	      "headway_sec": "Infinity",
+    52	      "behavior_flags": {
+    53	        "harsh_brake": false,
+    54	        "harsh_accel": false,
+    55	        "harsh_corner": false,
+    56	        "speeding": false,
+    57	        "tailgating": false
+    58	      },
+    59	      "risk": {
+    60	        "base_risk": 0.0,
+    61	        "driver_factor": 2.2,
+    62	        "final_risk_score": 0.0
+    63	      }
+    64	    }
+    65	  ]
+    66	}
+    67	```
+    68	
+    69	JSON boundary phải dùng chuỗi `"Infinity"`; literal JavaScript `Infinity` không phải JSON hợp lệ.
+    70	
+    71	## 2. Phân loại field
+    72	
+    73	### Bắt buộc ở trip
+    74	
+    75	- `trip_id`
+    76	- `metadata.trip_id`
+    77	- `metadata.duration_sec`
+    78	- `metadata.fps`
+    79	- `metadata.speed_limit_kmh`
+    80	- `frames`
+    81	
+    82	### Bắt buộc ở mỗi frame
+    83	
+    84	- `frame_id`
+    85	- `timestamp`
+    86	- `ego.speed_kmh`
+    87	- `driver.state`
+    88	- `driver.alertness_score`
+    89	- `risk.final_risk_score`
+    90	
+    91	### Optional/degradable
+    92	
+    93	- `ego.longitudinal_accel`, `ego.lateral_accel`, `ego.geolocation`
+    94	- `driver.eye_state`, `driver.head_pose`, `driver.mouth_state`, `driver.nthu_subject_id`
+    95	- `min_ttc`, `headway_sec`
+    96	- từng `behavior_flags`
+    97	- `risk.base_risk`, `risk.driver_factor`
+    98	- metadata mô tả simulator
+    99	
+   100	Schema Python Phase 01 hiện còn strict hơn danh sách compatibility này. Khi AI bắt đầu gửi thiếu optional field, Backend phải nới schema bằng default `None` trước khi nhận production payload.
+   101	
+   102	## 3. Quy tắc thay đổi tương thích
+   103	
+   104	| AI thay đổi | Backend xử lý | Có cần làm lại CarSky? |
+   105	|---|---|---|
+   106	| Thêm field, không đổi tên field cũ | Giữ nguyên nhờ `extra=allow`, ghi audit | Không |
+   107	| Thiếu optional field | Nhận frame, đặt unavailable, ẩn widget tương ứng | Không |
+   108	| Thiếu required field | Từ chối frame, giữ last-known-good có TTL, báo DEGRADED | Không |
+   109	| Đổi kiểu nhưng chuyển đổi an toàn được | Normalize ở adapter, ghi warning | Không |
+   110	| Đổi tên field | Breaking change; thêm alias/versioned mapper | Chỉ sửa mapping bị ảnh hưởng |
+   111	| Thêm field cần hiển thị | Thêm mapping, VSS path/version và HMI component | Update artifact/Blueprint, không dựng lại từ đầu |
+   112	| Bỏ field đang hiển thị | HMI ẩn giá trị, Backend báo unavailable | Không nếu VSS path vẫn giữ |
+   113	
+   114	Field mới mặc định không tự xuất hiện trên HMI. Chỉ đưa lên HMI khi có quyết định UX rõ ràng.
+   115	
+   116	## 4. Quy tắc dữ liệu đặc biệt
+   117	
+   118	- `driver.state`: `alert|drowsy|yawning|distracted|microsleep`.
+   119	- `alertness_score`: `0..1`.
+   120	- risk scores: `0..100`.
+   121	- `min_ttc`/`headway_sec`: số không âm hoặc `"Infinity"`/`"inf"` khi input.
+   122	- Từ chối `NaN` và `-Infinity`.
+   123	- Không bao giờ biến Infinity thành `0`.
+   124	- Không tính lại hoặc ghi đè `risk.final_risk_score`.
+   125	- Root `trip_id` phải bằng `metadata.trip_id`.
+   126	- Extra fields phải được giữ khi round-trip.
+   127	
+   128	## 5. Mapping AI → CarSky HMI v1
+   129	
+   130	| AI/Backend source | VSS path | Khi thiếu/Infinity |
+   131	|---|---|---|
+   132	| `driver.state` | `Vehicle.Driver.State` | frame invalid nếu thiếu |
+   133	| `driver.alertness_score` | `Vehicle.Driver.AlertnessScore` | frame invalid nếu thiếu |
+   134	| `ego.speed_kmh` | `Vehicle.Speed` | frame invalid nếu thiếu |
+   135	| `metadata.speed_limit_kmh` | `Vehicle.SpeedLimit` | unavailable |
+   136	| `min_ttc` | `Vehicle.ADAS.MinTTC` | không publish value; HMI ẩn TTC |
+   137	| `headway_sec` | `Vehicle.ADAS.Headway` | không publish value; HMI ẩn headway |
+   138	| `risk.final_risk_score` | `Vehicle.ADAS.FinalRiskScore` | frame invalid nếu thiếu |
+   139	| enrichment | `Vehicle.ADAS.CriticalAlert` | `false` khi no active episode |
+   140	| enrichment | `Vehicle.ADAS.DisplaySeverity` | `SAFE|WARNING|CRITICAL|RECOVERY` |
+   141	| enrichment | `Vehicle.ADAS.AlertReasonCode` | enum deterministic |
+   142	| enrichment | `Vehicle.ADAS.RecommendedActionCode` | enum deterministic |
+   143	| enrichment | `Vehicle.ADAS.EventTransition` | `NONE|START|UPDATE|END` |
+   144	| source state | `Vehicle.ADAS.AIStatus` | `ONLINE|DEGRADED|OFFLINE` |
+   145	| receive time | `Vehicle.ADAS.DataAgeMs` | integer không âm |
+   146	
+   147	CarSky không nhận toàn bộ raw AI frame. Backend chỉ gửi signal dành cho người lái và lifecycle cảnh báo.
+   148	
+   149	## 6. Runtime audit log
+   150	
+   151	Audit chạy thật dùng JSON Lines, không dùng Markdown:
+   152	
+   153	```json
+   154	{"timestamp":"2026-07-25T12:00:00Z","trip_id":"T01d","frame_id":0,"contract_version":"1.0.0","missing_optional_fields":[],"extra_fields":[],"invalid_fields":[],"status":"accepted","carsky_publish_status":"not_requested"}
+   155	```
+   156	
+   157	Các status:
+   158	
+   159	- `accepted`
+   160	- `accepted_with_warnings`
+   161	- `rejected_required_field`
+   162	- `rejected_invalid_value`
+   163	- `carsky_queued`
+   164	- `carsky_delivered`
+   165	- `carsky_degraded`
+   166	
+   167	Không ghi ảnh cabin, secret, access token hoặc payload chứa dữ liệu không cần thiết vào audit log.
+   168	
+   169	## 7. Checklist khi AI output thay đổi
+   170	
+   171	1. Lưu một fixture payload mới đã ẩn dữ liệu nhạy cảm.
+   172	2. So với contract v1 và liệt kê added/removed/type-changed fields.
+   173	3. Xác định required hay optional.
+   174	4. Sửa `app/domain/schemas/ai_contract.py` nếu schema nhận dữ liệu thay đổi.
+   175	5. Sửa CarSky mapper chỉ khi field dùng cho HMI thay đổi.
+   176	6. Thêm VSS artifact version nếu có path/type mới.
+   177	7. Sửa HMI chỉ khi người lái cần thấy field mới.
+   178	8. Chạy contract round-trip, invalid value và mapper tests.
+   179	9. Ghi một dòng trong Change Log dưới đây.
+   180	
+     1	# Decision Engine &amp; Vigilance-Lapse Research Plan
+     2	
+     3	Tài liệu này là kế hoạch cho công đoạn sản phẩm cuối cùng của FPTU DMS Vision:
+     4	quyết định **khi nào một tín hiệu AI đủ tin cậy để trở thành cảnh báo**, sau đó
+     5	phát sự kiện cho hai luồng tích hợp: Fleet Dashboard và màn hình xe CarSky.
+     6	
+     7	Trạng thái hiện tại: **core policy v1, JSONL integration và FastAPI reference
+     8	contract đã triển khai; chưa nối endpoint production của SE/CarSky**.
+     9	
+    10	## 1. Các quyết định đã chốt
+    11	
+    12	1. Decision Engine nằm **sau Challenge 3 / Fusion(2)**.
+    13	2. Pipeline CSV của BTC vẫn giữ nguyên; Decision Engine không sửa 5 cột dự
+    14	   đoán và không tác động ngược vào điểm Challenge 1–3.
+    15	3. Decision Engine sản phẩm được quyền đọc đồng thời:
+    16	   - output Challenge 1;
+    17	   - output Challenge 2;
+    18	   - snapshot Challenge 3;
+    19	   - telemetry và trạng thái chất lượng cảm biến.
+    20	4. Có hai audience độc lập:
+    21	   - `fleet_dashboard`: sự kiện chi tiết để Fleet Manager theo dõi;
+    22	   - `driver_display`: cảnh báo ngắn, tức thời cho tài xế qua CarSky.
+    23	5. Team AI chỉ sở hữu pipeline suy luận, Decision Engine và canonical
+    24	   `DecisionEvent`. Team SE sở hữu FastAPI, OIDC, endpoint mapping, network
+    25	   delivery và adapter của Fleet Dashboard/CarSky.
+    26	6. “Giấc ngủ trắng” không được thêm thành nhãn CSV thi. Đây là một hướng
+    27	   nghiên cứu cảnh báo sản phẩm riêng.
+    28	7. Hệ thống dùng `driver_id`, không nhận diện khuôn mặt và không gửi raw cabin
+    29	   frame lên dashboard theo mặc định.
+    30	
+    31	## 2. Vị trí trong kiến trúc
+    32	
+    33	```text
+    34	Road cameras ──&gt; Challenge 1: TTC ────────┐
+    35	                                          ├─&gt; Challenge 3: BTC risk/safe score
+    36	Telemetry ────────────────────────────────┘
+    37	
+    38	Face camera ──&gt; Challenge 2: driver state ───────────────┐
+    39	Challenge 1: TTC + road quality ─────────────────────────┤
+    40	Challenge 3: running risk/safe score ────────────────────┤
+    41	Telemetry + sensor quality ──────────────────────────────┤
+    42	Optional research signals: lane/gaze/steering/response ──┘
+    43	                                                         │
+    44	                                                         v
+    45	                                                  DECISION ENGINE
+    46	                                              quality gate + temporal rules
+    47	                                              event state machine + evidence
+    48	                                                         │
+    49	                                                         v
+    50	                                              Canonical DecisionEvent
+    51	                                              (AI/SE integration boundary)
+    52	                                                         │
+    53	                                  ┌──────────────────────┴──────────────────┐
+    54	                                  v                                         v
+    55	                         audience: driver_display                  audience: fleet_dashboard
+    56	                                  │                                         │
+    57	                                  └────────────── TEAM SE ──────────────────┘
+    58	                                              │                    │
+    59	                                              v                    v
+    60	                                       CarSky adapter       FastAPI/Fleet adapter
+    61	                                              │                    │
+    62	                                              v                    v
+    63	                                       CarSky truck UI       Fleet Dashboard
+    64	```
+    65	
+    66	Challenge 3 hiện tại bám đúng public evaluator BTC: TTC của Challenge 1 cộng
+    67	telemetry để tính penalty và safe score; nó **không dùng driver state**.
+    68	Decision Engine là lớp sản phẩm phía sau nên có thể kết hợp lại C1, C2 và C3
+    69	mà không làm sai contract cuộc thi.
+    70	
+    71	## 3. Decision Engine làm gì?
+    72	
+    73	Decision Engine không chạy lại detector và không tự tạo primitive feature. Nó:
+    74	
+    75	- kiểm tra timestamp và chất lượng từng nguồn;
+    76	- tích lũy bằng chứng theo thời gian thay vì quyết định từ một frame;
+    77	- áp dụng motion context: đang chạy, tốc độ thấp hay đang dừng;
+    78	- nhận biết rủi ro kép, ví dụ TTC thấp đồng thời tài xế mất tập trung;
+</pre>
+<h2>09_test_source_proves_consumers.txt</h2>
+<pre>
+$ nl -ba SE/BE/tests/test_ai_alerts.py | sed -n '1,260p'; nl -ba SE/BE/tests/test_carsky.py | sed -n '1,180p'; nl -ba SE/BE/tests/test_contract.py | sed -n '1,220p'
+
+     1	from fastapi.testclient import TestClient
+     2	
+     3	
+     4	class FakePublisher:
+     5	    def __init__(self):
+     6	        self.deliveries = []
+     7	
+     8	    async def enqueue(self, payload, *, dedup_key, kind):
+     9	        self.deliveries.append((payload, dedup_key, kind))
+    10	        return True
+    11	
+    12	    async def stop(self):
+    13	        return None
+    14	
+    15	
+    16	def test_ai_alert_is_idempotent(client: TestClient):
+    17	    payload = {
+    18	        "schema_version": "1.0",
+    19	        "event_id": "evt-1",
+    20	        "idempotency_key": "evt-1-open-100",
+    21	        "trip_id": "T01-Sample",
+    22	        "driver_id": "driver_001",
+    23	        "frame_id": 2,
+    24	        "trip_timestamp_ms": 100,
+    25	        "timestamp_utc": "2026-08-02T00:00:00Z",
+    26	        "status": "open",
+    27	        "alert_type": "collision_risk",
+    28	        "severity": "critical",
+    29	        "confidence": 1.0,
+    30	        "audiences": ["driver_display", "fleet_dashboard"],
+    31	        "evidence": {"predicted_ttc_sec": 1.0},
+    32	        "recommended_action": "Brake safely",
+    33	    }
+    34	    headers = {"Idempotency-Key": payload["idempotency_key"]}
+    35	    first = client.post("/api/v1/alerts", json=payload, headers=headers)
+    36	    second = client.post("/api/v1/alerts", json=payload, headers=headers)
+    37	    assert first.status_code == 202
+    38	    assert first.json()["duplicate"] is False
+    39	    assert second.status_code == 202
+    40	    assert second.json()["duplicate"] is True
+    41	    recent = client.get("/api/v1/alerts/recent")
+    42	    assert recent.status_code == 200
+    43	    assert recent.json()["count"] == 1
+    44	
+    45	
+    46	def test_driver_alert_is_forwarded_to_carsky_once(client: TestClient):
+    47	    publisher = FakePublisher()
+    48	    client.app.state.carsky_publisher = publisher
+    49	    payload = {
+    50	        "schema_version": "1.0",
+    51	        "event_id": "evt-c1",
+    52	        "idempotency_key": "evt-c1-open-100",
+    53	        "trip_id": "T01-Sample",
+    54	        "frame_id": 2,
+    55	        "trip_timestamp_ms": 100,
+    56	        "timestamp_utc": "2026-08-02T00:00:00Z",
+    57	        "status": "open",
+    58	        "alert_type": "collision_risk",
+    59	        "severity": "critical",
+    60	        "confidence": 1.0,
+    61	        "audiences": ["driver_display", "fleet_dashboard"],
+    62	        "evidence": {
+    63	            "driver_state": "drowsy",
+    64	            "speed_kmh": 60,
+    65	            "predicted_ttc_sec": 1.0,
+    66	            "c3_risk_score": 40,
+    67	        },
+    68	        "recommended_action": "Brake safely",
+    69	    }
+    70	    headers = {"Idempotency-Key": payload["idempotency_key"]}
+    71	    assert client.post("/api/v1/alerts", json=payload, headers=headers).status_code == 202
+    72	    assert client.post("/api/v1/alerts", json=payload, headers=headers).json()["duplicate"] is True
+    73	    assert len(publisher.deliveries) == 1
+    74	    signals = {
+    75	        item["path"]: item["value"]
+    76	        for item in publisher.deliveries[0][0]["signals"]
+    77	    }
+    78	    assert set(signals) == {"Vehicle.Speed"}
+    79	    values = [item["value"] for item in publisher.deliveries[0][0]["signals"]]
+    80	    assert 42.002 in values
+    81	    assert 45.01 in values
+    82	    assert 49.06 in values
+    83	
+    84	
+    85	def test_live_trip_registry_keeps_completed_trip_history(client: TestClient):
+    86	    registration = {
+    87	        "trips": [
+    88	            {"trip_id": "T01-Sample", "metadata": {"fps": 20}},
+    89	            {"trip_id": "T02-Sample", "metadata": {"fps": 20}},
+    90	        ]
+    91	    }
+    92	    assert client.post(
+    93	        "/api/v1/alerts/trips/register", json=registration
+    94	    ).status_code == 202
+    95	
+    96	    def snapshot(trip_id: str, frame_id: int) -&gt; dict:
+    97	        return {
+    98	            "schema_version": "1.0",
+    99	            "trip_id": trip_id,
+   100	            "frame_id": frame_id,
+   101	            "trip_timestamp_ms": frame_id * 50,
+   102	            "speed_kmh": 30,
+   103	            "predicted_ttc_sec": 2.5,
+   104	            "risk_score": 40,
+   105	            "driver_state": "alert",
+   106	            "driver_confidence": 0.9,
+   107	            "alertness_score": 0.9,
+   108	        }
+   109	
+   110	    assert client.post(
+   111	        "/api/v1/alerts/snapshot", json=snapshot("T01-Sample", 1)
+   112	    ).status_code == 202
+   113	    assert client.post(
+   114	        "/api/v1/alerts/trips/T01-Sample/complete"
+   115	    ).status_code == 200
+   116	    assert client.post(
+   117	        "/api/v1/alerts/snapshot", json=snapshot("T02-Sample", 2)
+   118	    ).status_code == 202
+   119	
+   120	    sessions = client.get("/api/v1/alerts/trips").json()["items"]
+   121	    by_id = {item["trip_id"]: item for item in sessions}
+   122	    assert by_id["T01-Sample"]["status"] == "completed"
+   123	    assert by_id["T01-Sample"]["latest_snapshot"]["frame_id"] == 1
+   124	    assert len(by_id["T01-Sample"]["snapshot_history"]) == 1
+   125	    assert by_id["T02-Sample"]["status"] == "running"
+   126	    assert client.get(
+   127	        "/api/v1/alerts/snapshot?trip_id=T01-Sample"
+   128	    ).json()["frame_id"] == 1
+   129	
+   130	
+   131	def test_live_snapshot_is_forwarded_to_carsky(client: TestClient):
+   132	    publisher = FakePublisher()
+   133	    client.app.state.carsky_publisher = publisher
+   134	    payload = {
+   135	        "schema_version": "1.0",
+   136	        "trip_id": "T01-Sample",
+   137	        "frame_id": 10,
+   138	        "trip_timestamp_ms": 500,
+   139	        "speed_kmh": 48,
+   140	        "predicted_ttc_sec": 1.2,
+   141	        "risk_score": 88,
+   142	        "safe_driving_score": 12,
+   143	        "driver_state": "microsleep",
+   144	        "driver_confidence": 0.9,
+   145	        "alertness_score": 0.2,
+   146	    }
+   147	    response = client.post("/api/v1/alerts/snapshot", json=payload)
+   148	    assert response.status_code == 202
+   149	    assert len(publisher.deliveries) == 1
+   150	    values = [item["value"] for item in publisher.deliveries[0][0]["signals"]]
+   151	    assert 41.088 in values
+   152	    assert 42.002 in values
+   153	    assert 43.004 in values
+   154	    assert 45.012 in values
+   155	    assert 49.048 in values
+   156	    assert 50.012 in values
+     1	from __future__ import annotations
+     2	
+     3	import json
+     4	
+     5	import httpx
+     6	import pytest
+     7	
+     8	from app.domain.schemas.ai_contract import AIFrame, TripMetadata
+     9	from app.integrations.carsky.client import CarSkyClient, CarSkyDeliveryError
+    10	from app.integrations.carsky.mapper import (
+    11	    CarSkyHMIState,
+    12	    CarSkySignalMapper,
+    13	    EventTransition,
+    14	)
+    15	from app.integrations.carsky.service import CarSkyPublisher, DeliveryKind
+    16	
+    17	
+    18	def test_decision_event_maps_without_recomputing_ai_severity():
+    19	    payload = CarSkySignalMapper().map_decision_event({
+    20	        "status": "open",
+    21	        "severity": "critical",
+    22	        "alert_type": "collision_risk",
+    23	        "evidence": {
+    24	            "driver_state": "drowsy",
+    25	            "alertness_score": 0.3,
+    26	            "speed_kmh": 62.0,
+    27	            "predicted_ttc_sec": 1.2,
+    28	            "c3_risk_score": 55.0,
+    29	        },
+    30	    })
+    31	    values = [item["value"] for item in payload["signals"]]
+    32	    assert {item["path"] for item in payload["signals"]} == {"Vehicle.Speed"}
+    33	    assert 41.055 in values
+    34	    assert 42.002 in values
+    35	    assert 43.001 in values
+    36	    assert 45.012 in values
+    37	    assert 48.003 in values
+    38	    assert 49.062 in values
+    39	
+    40	
+    41	def make_metadata() -&gt; TripMetadata:
+    42	    return TripMetadata(
+    43	        trip_id="T01d",
+    44	        description="mock",
+    45	        duration_sec=90,
+    46	        fps=20,
+    47	        map="Town01",
+    48	        driver_profile="normal",
+    49	        carla_version="0.9.15",
+    50	        random_seed=1001,
+    51	        speed_limit_kmh=80,
+    52	    )
+    53	
+    54	
+    55	def make_frame() -&gt; AIFrame:
+    56	    return AIFrame.model_validate(
+    57	        {
+    58	            "frame_id": 0,
+    59	            "timestamp": 0,
+    60	            "ego": {
+    61	                "speed_kmh": 75,
+    62	                "longitudinal_accel": 0,
+    63	                "lateral_accel": 0,
+    64	                "geolocation": {"lat": 0, "lon": 0, "alt": 0},
+    65	            },
+    66	            "driver": {
+    67	                "state": "distracted",
+    68	                "alertness_score": 0.45,
+    69	                "eye_state": "open",
+    70	                "head_pose": "side",
+    71	                "mouth_state": "normal",
+    72	                "nthu_subject_id": "14",
+    73	            },
+    74	            "min_ttc": "Infinity",
+    75	            "headway_sec": "Infinity",
+    76	            "behavior_flags": {
+    77	                "harsh_brake": False,
+    78	                "harsh_accel": False,
+    79	                "harsh_corner": False,
+    80	                "speeding": False,
+    81	                "tailgating": False,
+    82	            },
+    83	            "risk": {"base_risk": 20, "driver_factor": 2.2, "final_risk_score": 55},
+    84	        }
+    85	    )
+    86	
+    87	
+    88	def test_mapper_omits_infinite_ttc_and_preserves_ai_risk() -&gt; None:
+    89	    payload = CarSkySignalMapper().map_frame(
+    90	        make_frame(),
+    91	        make_metadata(),
+    92	        severity=CarSkyHMIState.WARNING,
+    93	        reason_code="DISTRACTED",
+    94	        action_code="FOCUS_FORWARD",
+    95	        transition=EventTransition.START,
+    96	    )
+    97	    mapped = {item["path"]: item["value"] for item in payload["signals"]}
+    98	    assert set(mapped) == {"Vehicle.Speed"}
+    99	    values = [item["value"] for item in payload["signals"]]
+   100	    assert 41.055 in values
+   101	    assert 42.001 in values
+   102	    assert 43.003 in values
+</pre>
+<h2>10_pytest_contract_carsky_alerts.txt</h2>
+<pre>
+$ cd SE/BE &amp;&amp; .venv/bin/python -m pytest tests/test_contract.py tests/test_ai_alerts.py tests/test_carsky.py
+
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE
+plugins: asyncio-1.4.0, anyio-4.14.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 17 items
+
+tests/test_contract.py ........                                          [ 47%]
+tests/test_ai_alerts.py ....                                             [ 70%]
+tests/test_carsky.py .....                                               [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+  /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 17 passed, 1 warning in 0.09s =========================
+</pre>
+<h2>11_apk_hmi_artifact.txt</h2>
+<pre>
+$ ls -lh SE/HMI/release/dms-hmi-realtime-vhal.apk; shasum -a 256 SE/HMI/release/dms-hmi-realtime-vhal.apk; unzip -p SE/HMI/release/dms-hmi-realtime-vhal.apk classes.dex | strings | grep -E 'DMS_HMI|PERF_VEHICLE_SPEED|CarPropertyManager|SAFE|CRITICAL|TTC|km/h' | head -80
+
+-rw-r--r--@ 1 lilnhan  staff    16K Aug  9 18:25 SE/HMI/release/dms-hmi-realtime-vhal.apk
+51a44e1570551c16abc83db7fa9f167f3ae40a62cd1b57bde5dc465adb91cbb0  SE/HMI/release/dms-hmi-realtime-vhal.apk
+,%.0f km/h     Risk %.0f     Alertness %.0f%%
+$-- km/h     Risk --     Alertness --
+BRAKE_SAFE
+CRITICAL
+DMS_HMI
+PERF_VEHICLE_SPEED
+PROP_CRITICAL_ALERT
+PROP_MIN_TTC
+SAFE
+Iandroid.car.hardware.property.CarPropertyManager$CarPropertyEventCallback
+</pre>
+</main></body></html>

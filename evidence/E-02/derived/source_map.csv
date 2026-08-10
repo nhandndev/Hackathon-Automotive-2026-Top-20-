@@ -1,4 +1,4 @@
-arrow,owner,source,function_or_symbol,status,evidence_output,caveat
+﻿arrow,owner,source,function_or_symbol,status,evidence_output,caveat
 AI/local Decision Engine -> canonical DecisionEvent,"AI / Hùng support, Nhân review",HACKATHON/AI/core/decision_engine/schemas.py:104,DecisionEvent,SOURCE_VERIFIED,raw/source_snippets/01_decision_event_schema.log,Schema evidence only; not model factuality evidence.
 DecisionEvent -> Backend REST ingestion boundary,SE Backend / Nhân,"HACKATHON/SE/BE/app/modules/ai_alerts/router.py:25,154","DecisionEventPayload, receive_alert()",SOURCE_AND_TEST_VERIFIED,raw/source_snippets/02_backend_alert_boundary.log,Runtime request trace should be attached in E-04/E-14.
 Backend alert boundary -> Fleet Dashboard live/saved context,Fleet Dashboard / Nhân,"HACKATHON/SE/FE/src/App.tsx, HACKATHON/SE/FE/server.ts",Dashboard live/saved trip flow,SOURCE_VERIFIED,raw/source_snippets/03_fleet_dashboard_flow.log,Use dashboard runtime video for user-facing proof.

@@ -1,4 +1,4 @@
-step,boundary,artifact,evidence,status
+﻿step,boundary,artifact,evidence,status
 1,Backend scenario script,raw/carsky_scenario_critical_command.json,Real command output from scripts/carsky_phase05.py scenario critical,RUNTIME_COMMAND_VERIFIED
 2,Backend -> CarSky Signal API,raw/carsky_scenario_critical_parsed.json,"ok=True, mode=vehicle-speed-mux, sent=14",RUNTIME_COMMAND_VERIFIED
 3,Custom signal fallback -> Vehicle.Speed speed-mux,raw/carsky_scenario_critical_parsed.json,"CarSky 400 for /api/v1/signals/97fg4ghsgeo9w4bvze3qq/dms-signal-broker/actuate after 1 attempt(s): {'error': 'VALIDATION_ERROR', 'message': 'Signal source: Unknown signal path: Vehicle.Driver.State'}",FALLBACK_REASON_CAPTURED

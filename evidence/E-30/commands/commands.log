@@ -1,0 +1,23 @@
+# commands.log — E-30
+# Record of actual operations performed to organize evidence E-30
+# Date: 2026-08-10
+
+# --- Step 1: Create main report file (reports/) ---
+# Content: the entire file E-30_BOM_Pricing_Estimated.md, kept 100% intact
+# Source: C:\Users\TUF\Downloads\E-30_BOM_Pricing_Estimated.md
+# Destination: evidence/E-30/reports/source_report.md
+write_to_file evidence/E-30/reports/source_report.md  # [DONE] 2026-08-10T03:00:40Z
+
+# --- Step 2: Extract BOM table to CSV (derived/) ---
+# Extract "BOM for 1 device kit" table + software/cloud table
+# into independent CSV files for reuse without reading the whole report
+# Destination: evidence/E-30/derived/bom_pricing_table.csv
+write_to_file evidence/E-30/derived/bom_pricing_table.csv  # [DONE] 2026-08-10T03:04:10Z
+
+# --- Step 3: Create list of source references (raw/) ---
+# Extracted exactly from "Source" and "Date queried" columns in the BOM table
+# Destination: evidence/E-30/raw/source_references.md
+write_to_file evidence/E-30/raw/source_references.md  # [DONE] 2026-08-10T03:05:49Z
+
+# --- Step 4: Create this file (commands/) ---
+write_to_file evidence/E-30/commands/commands.log  # [DONE] 2026-08-10

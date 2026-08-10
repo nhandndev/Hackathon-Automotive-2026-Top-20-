@@ -1,4 +1,4 @@
-workflow_step,source_locator,evidence_level,status_note
+﻿workflow_step,source_locator,evidence_level,status_note
 saved/live trip context,"SE/FE/src/data/btcTripData.ts; SE/FE/src/App.tsx; SE/FE/server.ts",SOURCE_VERIFIED,"Saved trip parser/loading source located; runtime media pending"
 fleet map/list,"SE/FE/src/components/FleetMapView.tsx",SOURCE_VERIFIED,"No trip data state and selected trip display source located"
 trip detail,"SE/FE/src/components/TripDetailView.tsx",SOURCE_VERIFIED,"Trip Detail component source located; screenshot/video pending"

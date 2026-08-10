@@ -1,0 +1,6 @@
+﻿Giai đoạn,Thời lượng,Quy mô,Mục tiêu,Lưu ý trạng thái
+Offline replay,1 tuần,Dữ liệu lịch sử/dataset có sẵn,Tune threshold trước khi chạy live,PLANNED — chưa bắt đầu; cần dataset lịch sử từ đối tác
+Shadow mode,2 tuần,5–10 xe,Hệ thống ghi nhận nhưng KHÔNG can thiệp — đo precision/recall/FAR so với nhãn người quan sát,PLANNED — chưa bắt đầu; cần đối tác fleet xác nhận
+Assisted pilot,4 tuần,Cùng 5–10 xe,Cảnh báo/coaching có human approval trước khi gửi tài xế,PLANNED — chưa bắt đầu; phụ thuộc kết quả Shadow mode
+Đánh giá & quyết định,1 tuần,—,"Tổng hợp KPI, quyết định mở rộng/pivot/dừng",PLANNED — chưa bắt đầu; phụ thuộc toàn bộ 3 giai đoạn trước
+Tổng,~8 tuần,—,—,Có thể điều chỉnh theo đối tác pilot thật khi có

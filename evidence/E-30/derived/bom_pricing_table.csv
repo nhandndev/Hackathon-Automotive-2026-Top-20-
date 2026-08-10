@@ -1,0 +1,7 @@
+﻿Hạng mục,Model tham khảo,Giá thị trường công khai,Nguồn,Ngày tra cứu,Ghi chú
+Edge compute,NVIDIA Jetson Orin Nano Super Developer Kit (8GB),$249 USD (giá niêm yết chính thức NVIDIA - giảm từ $499),developer.nvidia.com/blog; nvidia.com,10/8/2026,Giá bán lẻ chính thức — độ tin cậy cao; có thể trích dẫn trực tiếp
+Road camera,USB stereo/mono camera công nghiệp (ELP hoặc tương đương; USB2.0/3.0; industrial-grade),~$40–90 USD (khoảng giá phổ biến cho module camera công nghiệp USB tùy độ phân giải/global shutter),"Khảo sát nhiều nhà cung cấp (ELP, e-con Systems, Leopard Imaging)",10/8/2026,Chưa phải báo giá đàm phán — cần xin quote thật trước khi đưa vào hợp đồng
+Driver camera (cabin),Tương tự road camera hoặc webcam công nghiệp thấp hơn,~$25–60 USD,Cùng nguồn trên,10/8/2026,Chưa phải báo giá đàm phán — cần xin quote thật trước khi đưa vào hợp đồng
+Mount/dây nối/phụ kiện,Ước tính chung,~$20–40 USD,Ước tính nội bộ (chưa có báo giá),—,Chưa có nguồn bên ngoài
+Tổng BOM/1 xe (prototype),,(tổng hợp) ≈ $335–$440 USD,Tổng hợp các dòng trên,10/8/2026,Chưa tính: lắp đặt / calibration / vận chuyển / thuế nhập khẩu
+AWS Bedrock — deepseek.v3.2 (ap-southeast-2),,"Input ~$0.0008/1,000 tokens; Output ~$0.0016/1,000 tokens",Bedrock Converse API pricing — đã đo trong [E-20],,VERIFIED/MEASURED — khác với các dòng BOM phần cứng ở trên

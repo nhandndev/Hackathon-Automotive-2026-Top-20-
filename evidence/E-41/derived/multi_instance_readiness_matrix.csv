@@ -1,4 +1,4 @@
-component,file,evidence,multi_instance_implication
+﻿component,file,evidence,multi_instance_implication
 BE ai_alerts router,SE/BE/app/modules/ai_alerts/router.py,app.state in-memory store,not durable/shared across instances
 FE server copilot cache,SE/FE/server.ts,no app.state marker,manual review required
 FE server copilot cache,SE/FE/server.ts,process-local reportInsightCache/reportInsightInflight,requests on different FE server instances will not share cache/inflight state

@@ -1,4 +1,4 @@
-fault,observed_status,safe_state,evidence,status
+﻿fault,observed_status,safe_state,evidence,status
 malformed_decision_event_missing_event_id,422,rejected; no accepted alert fabricated,raw/failure_trace.jsonl,VERIFIED
 idempotency_key_mismatch,400,rejected before store/broadcast,raw/failure_trace.jsonl,VERIFIED
 missing_live_snapshot,404,404; frontend can fall back to saved frame/offline state,raw/failure_trace.jsonl,VERIFIED

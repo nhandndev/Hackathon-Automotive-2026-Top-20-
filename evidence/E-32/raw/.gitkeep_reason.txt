@@ -1,0 +1,15 @@
+Trống vì chưa chạy pilot. Đây là trạng thái đúng ở giai đoạn hiện tại, không phải thiếu sót.
+
+Lý do cụ thể: E-32 là protocol được viết TRƯỚC khi có pilot (pre-registration), đúng nguyên
+tắc nghiên cứu khoa học. Dữ liệu thô của E-32 chỉ có thể được tạo ra sau khi:
+
+1. Tìm được đối tác fleet đồng ý tham gia pilot
+2. Ký thỏa thuận dữ liệu và consent với tài xế
+3. Bắt đầu giai đoạn Offline replay (tuần 1 của protocol)
+
+Các file sẽ được thêm vào raw/ theo từng giai đoạn:
+- Offline replay: dataset log lịch sử
+- Shadow mode: alert log, precision/recall log, observer labels
+- Assisted pilot: coaching log, driver feedback survey
+
+Việc tạo file giả để lấp đầy raw/ sẽ vi phạm nguyên tắc trung thực của bộ evidence.

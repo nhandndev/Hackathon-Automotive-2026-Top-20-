@@ -1,4 +1,4 @@
-file,check,found
+﻿file,check,found
 SE/FE/server.ts,server_env_from_be,True
 SE/FE/server.ts,statuses,True
 SE/FE/server.ts,validator,True

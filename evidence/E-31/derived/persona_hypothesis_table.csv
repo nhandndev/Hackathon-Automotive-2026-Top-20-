@@ -1,0 +1,4 @@
+﻿Persona,Pain giả thuyết,Vai trò,Điều kiện phù hợp pilot,Lưu ý trạng thái
+Fleet manager (logistics/vận tải),"Fatigue, distraction, near-miss không phát hiện kịp; coaching phân tán, tốn thời gian tổng hợp báo cáo thủ công",Người mua & người dùng chính,"Đã có camera/telemetry sẵn, có người phụ trách an toàn",HYPOTHESIS — suy luận từ đặc điểm ngành; CHƯA xác nhận qua phỏng vấn thật
+Đội xe nội bộ doanh nghiệp,Thiếu quy trình safety analytics chuẩn hóa,Người mua (operations/HSE),"Quy mô vừa, route/shift lặp lại",HYPOTHESIS — suy luận từ đặc điểm ngành; CHƯA xác nhận qua phỏng vấn thật
+OEM/Tier-1 (dài hạn),Cần prototype tích hợp HMI/vehicle API để đánh giá,Người mua (R&D/product),Có sandbox HMI/vehicle API để thử nghiệm,HYPOTHESIS — dài hạn; CHƯA có liên hệ thực tế với OEM/Tier-1 nào

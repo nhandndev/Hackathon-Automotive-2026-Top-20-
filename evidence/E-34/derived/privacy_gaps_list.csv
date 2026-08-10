@@ -1,0 +1,7 @@
+﻿STT,Gap chưa giải quyết,Danh mục,Hành động cần thực hiện,Người chịu trách nhiệm,Thời điểm cần hoàn thành
+1,Chưa có ai được chỉ định làm approver cho policy này,Quản trị,Chỉ định approver có thẩm quyền ký duyệt chính sách,Ban lãnh đạo dự án,Trước khi pilot bắt đầu
+2,Chưa có buổi họp tabletop review chính thức,Quy trình,Tổ chức họp tabletop review với các bên liên quan,Trưởng nhóm dự án,Trước khi pilot bắt đầu
+3,Chưa chốt số ngày retention cụ thể (mới là đề xuất tham khảo),Kỹ thuật & pháp lý,"Xác nhận với đối tác pilot/tư vấn pháp lý: 90 ngày metadata, 30 ngày raw video",Pháp lý + Kỹ thuật,Tại buổi tabletop review
+4,RBAC chưa implement trong hệ thống thật (đã ghi nhận là backlog mục 14.3.5),Kỹ thuật,Implement RBAC — phân quyền theo vai trò Driver / Fleet Manager / Admin,Đội kỹ thuật,Trước hoặc ngay đầu giai đoạn Assisted pilot
+5,Chưa có form consent hoàn chỉnh (mới là nguyên tắc),Pháp lý & vận hành,Soạn văn bản consent form cụ thể; xác định ai soạn (pháp lý hay đội sản phẩm),Pháp lý,Trước khi bắt đầu Shadow mode
+6,Chưa có xác nhận pháp lý chuyên môn về phạm vi áp dụng Nghị định 13/2023/NĐ-CP,Pháp lý,Tham vấn chuyên gia pháp lý về nghĩa vụ cụ thể; đặc biệt nếu có xử lý dữ liệu cross-border qua AWS,Tư vấn pháp lý bên ngoài,Trước khi pilot bắt đầu

@@ -1,0 +1,24 @@
+# commands.log — E-33
+# Record of actual operations performed to organize evidence E-33
+# Date: 2026-08-10
+
+# --- Step 1: Create main report file (reports/) ---
+# Content: the entire file E-33_ROI_Model_Nguon_Goc.md, kept 100% intact
+# Source: C:\Users\TUF\Downloads\E-33_ROI_Model_Nguon_Goc.md
+# Destination: evidence/E-33/reports/source_report.md
+write_to_file evidence/E-33/reports/source_report.md  # [DONE] 2026-08-10T03:02:28Z
+
+# --- Step 2: Extract 3 ROI scenarios table to CSV (derived/) ---
+# Extract "Scenario B — 3 levels Conservative/Base/Optimistic" table (section 3 of original file)
+# Add "Assumption source" and "Mandatory presentation note" columns to preserve warnings
+# Keep the warning: MODEL HYPOTHESIS — no pilot validation
+# Destination: evidence/E-33/derived/roi_scenarios_table.csv
+write_to_file evidence/E-33/derived/roi_scenarios_table.csv  # [DONE] 2026-08-10T03:04:59Z
+
+# --- Step 3: Create list of source references (raw/) ---
+# Note links to E-30 (BOM) and FMCSA/NSC/ATRI benchmarks used as ROI model inputs
+# Destination: evidence/E-33/raw/source_references.md
+write_to_file evidence/E-33/raw/source_references.md  # [DONE] 2026-08-10T03:05:49Z
+
+# --- Step 4: Create this file (commands/) ---
+write_to_file evidence/E-33/commands/commands.log  # [DONE] 2026-08-10

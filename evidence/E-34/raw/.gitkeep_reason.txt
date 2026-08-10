@@ -1,0 +1,15 @@
+Trống vì chưa có approver ký duyệt và chưa có biên bản họp tabletop review. Đây là trạng thái đúng ở giai đoạn hiện tại, không phải thiếu sót.
+
+Lý do cụ thể: E-34 là draft policy chuẩn bị sẵn, chưa qua quy trình phê duyệt chính thức.
+Dữ liệu thô của E-34 chỉ có thể được tạo ra sau khi:
+
+1. Có approver được chỉ định chính thức bởi ban lãnh đạo dự án
+2. Tổ chức họp tabletop review và có biên bản họp (meeting minutes)
+3. Approver ký duyệt policy (chữ ký + ngày tháng rõ ràng)
+
+Các file sẽ được thêm vào raw/ khi có:
+- meeting_minutes_tabletop_review.md — biên bản cuộc họp
+- policy_approval_signed.pdf — bản policy đã ký duyệt
+- consent_form_final.pdf — form consent hoàn chỉnh sau khi pháp lý duyệt
+
+Việc tạo file giả để lấp đầy raw/ sẽ vi phạm nguyên tắc trung thực của bộ evidence.

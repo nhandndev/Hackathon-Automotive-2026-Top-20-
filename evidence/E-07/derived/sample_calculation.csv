@@ -1,4 +1,4 @@
-frame,predicted_ttc,speed_kmh,speed_limit_kmh,longitudinal_accel,lateral_accel,event_added,harsh_brake_count,harsh_accel_count,harsh_corner_count,near_miss_count,speeding_frames,speeding_pct_time,penalty_points,safe_driving_score,risk_score
+﻿frame,predicted_ttc,speed_kmh,speed_limit_kmh,longitudinal_accel,lateral_accel,event_added,harsh_brake_count,harsh_accel_count,harsh_corner_count,near_miss_count,speeding_frames,speeding_pct_time,penalty_points,safe_driving_score,risk_score
 0,inf,80,80,0.0,0.0,none,0,0,0,0,0,0.000,0.000,100.000,0.000
 1,1.2,90,80,0.0,0.0,near_miss+speeding,0,0,0,1,1,50.000,12.500,87.500,12.500
 2,2.0,80,80,-4.0,0.0,harsh_brake,1,0,0,1,1,33.333,13.000,87.000,13.000

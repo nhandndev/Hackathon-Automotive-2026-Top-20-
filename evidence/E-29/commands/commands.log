@@ -1,0 +1,6 @@
+- CREATE reports/source_report.md — copy nguyên văn nội dung E-29_Competitive_Matrix.md
+- CREATE derived/competitor_sources_table.csv — tách từ bảng mục 1 của source_report.md
+- CREATE derived/competitor_feature_matrix.csv — tách từ bảng mục 2 của source_report.md
+- CREATE raw/source_references.md — copy danh sách URL/ngày truy cập, phân biệt rõ nguồn chính thức vendor (M1, M3) và nguồn bên thứ ba/ước lượng (M1-p, M2, M2-p, M3-p, M4, M5)
+- Phương thức thực hiện: ghi file trực tiếp qua API, không qua lệnh shell.
+- UPDATE derived/*.csv — chạy script Python chèn định dạng UTF-8 BOM để khắc phục lỗi font hiển thị.

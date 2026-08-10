@@ -1,0 +1,4 @@
+﻿Kịch bản,ROI,Thời gian hoàn vốn,Giả định chính,Nguồn giả định,Lưu ý bắt buộc khi trình bày
+Conservative,56%,12 tháng,Không tránh được tai nạn nào — lợi ích chỉ từ tiết kiệm chi phí vận hành,Benchmark FMCSA/NSC/ATRI; BOM từ E-30,MODEL HYPOTHESIS — chưa có pilot validate; không dùng để cam kết với khách hàng
+Base (Realistic),285%,5 tháng,Ngăn 1 tai nạn/năm ($91k–$148k theo FMCSA/NSC) + giảm 10% bảo hiểm (giả định theo thị trường Mỹ),Benchmark FMCSA/NSC/ATRI; BOM từ E-30,MODEL HYPOTHESIS — chưa có pilot validate; mức giảm bảo hiểm 10% chưa được xác nhận bởi đối tác bảo hiểm VN
+Optimistic,495%,3 tháng,Ngăn 2 tai nạn/năm + tối ưu thêm (bảo hiểm + vận hành),Benchmark FMCSA/NSC/ATRI; BOM từ E-30,MODEL HYPOTHESIS — chưa có pilot validate; kịch bản trần cần thận trọng khi trình bày

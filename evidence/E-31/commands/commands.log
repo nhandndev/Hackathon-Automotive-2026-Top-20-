@@ -1,0 +1,23 @@
+# commands.log — E-31
+# Record of actual operations performed to organize evidence E-31
+# Date: 2026-08-10
+
+# --- Step 1: Create main report file (reports/) ---
+# Content: the entire file E-31_Customer_Hypothesis_Only.md, kept 100% intact
+# Source: C:\Users\TUF\Downloads\E-31_Customer_Hypothesis_Only.md
+# Destination: evidence/E-31/reports/source_report.md
+write_to_file evidence/E-31/reports/source_report.md  # [DONE] 2026-08-10T03:01:06Z
+
+# --- Step 2: Extract persona/hypothesis table to CSV (derived/) ---
+# Extract "Persona hypothesis" table (section 1 of original file) to independent CSV
+# Keep the "Status note" column (HYPOTHESIS — not verified)
+# Destination: evidence/E-31/derived/persona_hypothesis_table.csv
+write_to_file evidence/E-31/derived/persona_hypothesis_table.csv  # [DONE] 2026-08-10T03:04:10Z
+
+# --- Step 3: Leave raw/ empty — create explanation file ---
+# Do not create any data files in raw/ because no real interviews exist yet
+# Create .gitkeep_reason.txt to record the reason for being empty — reflecting the true state
+write_to_file evidence/E-31/raw/.gitkeep_reason.txt  # [DONE] 2026-08-10T03:44:51Z
+
+# --- Step 4: Create this file (commands/) ---
+write_to_file evidence/E-31/commands/commands.log  # [DONE] 2026-08-10

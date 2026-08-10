@@ -1,0 +1,6 @@
+- CREATE reports/source_report.md — copy nguyên văn nội dung E-28_Market_Sources.md
+- CREATE derived/market_sources_table.csv — tách từ bảng mục 1 của source_report.md
+- CREATE derived/discrepancy_log.csv — tách từ bảng mục 2 của source_report.md (claim 45–50 tỷ USD trong báo cáo chính vs số liệu xác minh 40–42 tỷ USD)
+- CREATE raw/source_references.md — copy danh sách URL/ngày truy cập từ mục 1 và mục 4 của source_report.md
+- Phương thức thực hiện: ghi file trực tiếp qua API, không qua lệnh shell.
+- UPDATE derived/*.csv — chạy script Python chèn định dạng UTF-8 BOM để khắc phục lỗi font hiển thị.

@@ -1,0 +1,12 @@
+Trống vì chưa có phỏng vấn thật. Đây là trạng thái đúng ở giai đoạn hiện tại, không phải thiếu sót.
+
+Lý do cụ thể: E-31 là bộ hypothesis/persona được xây dựng dựa trên phân tích thị trường
+(desk research), chưa phải kết quả từ phỏng vấn người dùng thực tế. Do đó:
+
+- Chưa có transcript phỏng vấn
+- Chưa có ghi chú (field notes) từ buổi gặp mặt
+- Chưa có consent form đã ký của người tham gia
+
+Việc tạo file giả để lấp đầy raw/ sẽ vi phạm nguyên tắc trung thực của bộ evidence.
+Thư mục này sẽ được điền sau khi nhóm dự án thực hiện phỏng vấn thật với fleet manager,
+theo kế hoạch đã ghi trong E-31 (mục 2) và gắn liền với giai đoạn chuẩn bị pilot (E-32).

@@ -1,0 +1,5 @@
+﻿KPI,Cách đo,Ngưỡng thành công đề xuất,Căn cứ ngưỡng,Lưu ý trạng thái
+False alert rate,Số cảnh báo sai / tổng giờ lái,≤ 2 lần/giờ,Theo mục 20 báo cáo chính,TARGET — chưa đo; là ngưỡng pre-defined trước pilot
+Driver acceptance,Khảo sát ngắn sau mỗi tuần,≥ 70% tài xế không phản đối tiếp tục dùng,Tham khảo thực hành ngành,TARGET — chưa đo; là ngưỡng pre-defined trước pilot
+Manager acknowledge time,Thời gian từ alert đến khi manager xác nhận,≤ 20 giây,Theo target đã đề xuất mục 20 báo cáo chính,TARGET — chưa đo; là ngưỡng pre-defined trước pilot
+Coaching completion rate,% sự kiện có coaching hoàn tất,≥ 80%,Tham khảo thực hành ngành,TARGET — chưa đo; là ngưỡng pre-defined trước pilot

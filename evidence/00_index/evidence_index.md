@@ -38,7 +38,7 @@
 | E-34 | Safety/privacy gates | Nhân/Dân | | | | |
 | E-35 | Evidence index | Nhân/Thiện | | | | |
 | E-36 | Long-run load test | Nhân | | | | |
-| E-37 | Calibration quality | Hùng/Dân | | | | |
+| E-37 | Calibration quality | Hùng/Dân | evidence/06_calibration_quality/{baseline_distribution.csv,epipolar_montage.png,calibration_quality_report.md} | f2e6641785701b70acda02ae6174382099508258a84d2d05159f01a66ea00ddd | 2026-08-10 | ✨ Done — baseline 0.300000m, std=0.0 across all 4200 per-frame calib files (7 trips); epipolar montage confirms zero vertical disparity. Corrects an earlier scan that missed Practice_Dataset/*/kitti/ manifests |
 | E-38 | CARLA scenario matrix | Dân/Hùng | | | | |
 | E-39 | HMI usability (alert fatigue) | Thiện/Dân | | | | |
 | E-40 | Copilot improves review time | Nhân/Thiện | | | | |

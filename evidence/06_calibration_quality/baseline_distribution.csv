@@ -1,0 +1,8 @@
+trip_id,baseline_m,fov_deg,image_width,image_height
+T01-Sample,0.3,90,640,360
+T02-Sample,0.3,90,640,360
+T03-Sample,0.3,90,640,360
+T04-Sample,0.3,90,640,360
+T05-Sample,0.3,90,640,360
+T06-Sample,0.3,90,640,360
+T01-Sample-leadbrake,0.3,90,640,360

@@ -47,6 +47,6 @@ Supporting: Nhân
 
 ## E-37: Calibration quality (Hùng)
 Supporting: Dân
-- [ ] **Hành động:** Parse manifest, tính baseline distribution, tạo epipolar montage.
-- [ ] **Kết quả mong đợi:** Baseline distribution, epipolar montage
-- **Ghi chú của Owner:**
+- [x] **Hành động:** Parse manifest, tính baseline distribution, tạo epipolar montage.
+- [x] **Kết quả mong đợi:** Baseline distribution, epipolar montage
+- **Ghi chú của Owner:** (Tâm làm phần này) Manifest thật nằm ở `Practice_Dataset/*/kitti/calibration_info.txt` + `kitti/calib/*.txt` (per-frame) — ghi chú "không tìm thấy manifest" trước đó là do scan không mở vào Practice_Dataset. Baseline = 0.3m, std=0.0 qua toàn bộ 4200 file calib (7 trip). Epipolar montage xác nhận rectification đúng (không lệch dọc). Giới hạn: không có bằng chứng về script/quy trình **sinh ra** các file calib này. Chi tiết: `evidence/06_calibration_quality/calibration_quality_report.md`.

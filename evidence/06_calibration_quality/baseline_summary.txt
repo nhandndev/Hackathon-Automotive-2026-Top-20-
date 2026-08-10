@@ -1,0 +1,11 @@
+Trips covered: 7
+Per-frame calib files parsed: 4200
+Per-frame baseline_m: mean=0.300000 std=0.000000 min=0.300000 max=0.300000
+Manifest-level baseline_m per trip:
+  T01-Sample: 0.3 m (fov=90 deg, 640x360)
+  T02-Sample: 0.3 m (fov=90 deg, 640x360)
+  T03-Sample: 0.3 m (fov=90 deg, 640x360)
+  T04-Sample: 0.3 m (fov=90 deg, 640x360)
+  T05-Sample: 0.3 m (fov=90 deg, 640x360)
+  T06-Sample: 0.3 m (fov=90 deg, 640x360)
+  T01-Sample-leadbrake: 0.3 m (fov=90 deg, 640x360)

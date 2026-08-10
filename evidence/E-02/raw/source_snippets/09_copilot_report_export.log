@@ -1,0 +1,189 @@
+$ nl -ba SE/FE/server.ts | sed -n '925,990p'; nl -ba SE/FE/src/components/CopilotFleetReportPage.tsx | sed -n '1115,1235p'
+
+   925	    `Dashboard hiện có ${vehicles.length} trip completed từ JSON/local AI: ${availableTripIds(vehicles).join(", ") || "chưa có"}.`,
+   926	    "Bạn có thể mở report card để xem số liệu deterministic từ JSON/local AI; phần insight sẽ chờ AI provider phản hồi.",
+   927	  ].join("\n");
+   928	
+   929	  res.json({ reply: replyFallback });
+   930	});
+   931	
+   932	app.post("/api/copilot/report", async (req, res) => {
+   933	  const { reportMode, canonicalInput, tripIds = [] } = req.body as {
+   934	    reportMode?: string;
+   935	    canonicalInput?: {
+   936	      request_id?: string;
+   937	      policy_version?: string;
+   938	      input_signature?: string;
+   939	      fleet_summary?: unknown;
+   940	      trips?: CopilotTripInput[];
+   941	    };
+   942	    tripIds?: string[];
+   943	  };
+   944	
+   945	  const trips = (canonicalInput?.trips ?? []).filter((trip) => trip && trip.tripId);
+   946	  const startedAt = Date.now();
+   947	  if (trips.length === 0) {
+   948	    res.json({
+   949	      insight: "Chưa có canonical JSON/local AI input để lập AI Copilot insight.",
+   950	      fleet_insight: "Chưa có canonical JSON/local AI input để lập AI Copilot insight.",
+   951	      trip_insights: {},
+   952	      policy_version: "report-canonical-v1",
+   953	      ai_status: "unavailable",
+   954	    });
+   955	    return;
+   956	  }
+   957	
+   958	  const clientAbortController = new AbortController();
+   959	  let responseFinished = false;
+   960	  res.on("finish", () => {
+   961	    responseFinished = true;
+   962	  });
+   963	  req.on("aborted", () => {
+   964	    clientAbortController.abort();
+   965	  });
+   966	  res.on("close", () => {
+   967	    if (!responseFinished) clientAbortController.abort();
+   968	  });
+   969	
+   970	  const cacheKey = canonicalInput?.input_signature || `${reportMode || "unknown"}:${trips.map((trip) => trip.tripId).join(",")}`;
+   971	  const cached = reportInsightCache.get(cacheKey);
+   972	  if (cached && cached.expiresAt > Date.now()) {
+   973	    res.json({
+   974	      ...cached.payload,
+   975	      diagnostics: {
+   976	        ...cached.payload.diagnostics,
+   977	        cache: "hit",
+   978	        durationMs: Date.now() - startedAt,
+   979	      },
+   980	    });
+   981	    return;
+   982	  }
+   983	
+   984	  const inflight = reportInsightInflight.get(cacheKey);
+   985	  if (inflight) {
+   986	    res.json(buildPendingInsight({
+   987	      cache: "inflight",
+   988	      durationMs: Date.now() - startedAt,
+   989	    }));
+   990	    return;
+  1115	  const handleExportWord = () => {
+  1116	    if (isExporting) return;
+  1117	    setIsExporting(true);
+  1118	    setShowExportMenu(false);
+  1119	    const sourceHTML = buildOfficeReportHTML();
+  1120	
+  1121	    try {
+  1122	      const blob = new Blob(['\ufeff', sourceHTML], {
+  1123	        type: 'application/msword;charset=utf-8'
+  1124	      });
+  1125	
+  1126	      const tripLabel = rows.length === 1 ? rows[0].trip_id : 'Fleet';
+  1127	      const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.doc`;
+  1128	      const url = URL.createObjectURL(blob);
+  1129	      const a = document.createElement('a');
+  1130	      a.href = url;
+  1131	      a.download = fileName;
+  1132	      document.body.appendChild(a);
+  1133	      a.click();
+  1134	      document.body.removeChild(a);
+  1135	      setTimeout(() => URL.revokeObjectURL(url), 1000);
+  1136	
+  1137	      setDownloadSuccess(`Da tai xuong bao cao Word (${fileName}) thanh cong!`);
+  1138	    } catch (err) {
+  1139	      console.error('Word export error:', err);
+  1140	      setDownloadSuccess('Xuat Word bi loi. Hay bam Export Report va thu lai.');
+  1141	    } finally {
+  1142	      setTimeout(() => {
+  1143	        setIsExporting(false);
+  1144	        setDownloadSuccess(null);
+  1145	      }, 4000);
+  1146	    }
+  1147	  };
+  1148	
+  1149	  return (
+  1150	    <div id="copilot-report-print-target" className="min-h-screen overflow-y-auto bg-[#070A12] px-6 py-7 text-slate-100">
+  1151	      <div className="mx-auto max-w-7xl space-y-5">
+  1152	        {downloadSuccess && (
+  1153	          <div className="flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-950/80 px-4 py-3 text-sm font-bold text-emerald-200 shadow-lg">
+  1154	            <Check className="h-5 w-5 text-emerald-400" />
+  1155	            {downloadSuccess}
+  1156	          </div>
+  1157	        )}
+  1158	
+  1159	        <header className="flex items-center justify-between gap-4 border-b border-[#1E293B] pb-5">
+  1160	          <div className="flex items-start gap-4">
+  1161	            <a
+  1162	              href="/?view=MAP"
+  1163	              className="flex items-center gap-2 rounded-xl bg-slate-800/80 px-3.5 py-3 text-xs font-bold text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all shadow-md shrink-0"
+  1164	              title="Quay lại Dashboard Trang Chủ"
+  1165	            >
+  1166	              <Eye className="h-4 w-4 text-sky-400" />
+  1167	              <span>Trang Chủ Command</span>
+  1168	            </a>
+  1169	            <div className="grid h-12 w-12 place-items-center rounded-xl bg-sky-500/10 text-sky-300 shrink-0">
+  1170	              {reportType === 'maintenance' ? <Wrench className="h-7 w-7" /> : <Shield className="h-7 w-7" />}
+  1171	            </div>
+  1172	            <div>
+  1173	              <h1 className="text-3xl font-black tracking-tight">{reportTitle}</h1>
+  1174	              <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+  1175	            </div>
+  1176	          </div>
+  1177	          <div className="flex items-center gap-3">
+  1178	            <div className={`${panel} flex items-center gap-3 px-4 py-2 text-sm text-slate-300`}>
+  1179	              <CalendarDays className="h-4 w-4 text-slate-500" />
+  1180	              {reportDateRange}
+  1181	            </div>
+  1182	            <button
+  1183	              onClick={() => setBedrockRequested(true)}
+  1184	              disabled={aiHasReturned || aiIsLoading || !canRequestBedrockInsight}
+  1185	              className={`${panel} ${aiButtonClass} flex items-center gap-2 px-4 py-2 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-80`}
+  1186	              title={
+  1187	                aiHasReturned
+  1188	                  ? 'Bedrock đã trả insight hợp lệ cho report này'
+  1189	                  : canRequestBedrockInsight
+  1190	                    ? 'Gọi Bedrock AI Copilot cho report đang chọn'
+  1191	                    : 'Canonical trip data is not ready yet'
+  1192	              }
+  1193	            >
+  1194	              {aiHasReturned ? <Check className="h-4 w-4 text-emerald-300" /> : <FileText className="h-4 w-4 text-sky-400" />}
+  1195	              {aiButtonLabel}
+  1196	            </button>
+  1197	            <div className="relative" ref={menuRef}>
+  1198	              <button 
+  1199	                onClick={() => setShowExportMenu(!showExportMenu)}
+  1200	                disabled={isExporting}
+  1201	                className={`${panel} flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 active:scale-95`}
+  1202	              >
+  1203	                <Download className="h-4 w-4 text-sky-400" />
+  1204	                {isExporting ? 'Exporting...' : 'Export Report'}
+  1205	              </button>
+  1206	
+  1207	              {showExportMenu && (
+  1208	                <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-[#1E293B] bg-[#0F172A] p-1 shadow-2xl backdrop-blur-md">
+  1209	                  <button
+  1210	                    onClick={handleExportWord}
+  1211	                    disabled={isExporting}
+  1212	                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition-colors hover:bg-sky-500/10 hover:text-sky-400 disabled:cursor-wait disabled:opacity-60"
+  1213	                  >
+  1214	                    <FileCode className="h-4 w-4 text-blue-400" />
+  1215	                    <span>Tải báo cáo Word đầy đủ (.doc)</span>
+  1216	                  </button>
+  1217	                </div>
+  1218	              )}
+  1219	            </div>
+  1220	          </div>
+  1221	        </header>
+  1222	
+  1223	        {isSafetyOverview && (
+  1224	          <section className={`${panel} p-5 space-y-4 border-red-500/30 bg-red-950/10`}>
+  1225	            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+  1226	              <div>
+  1227	                <div className="text-xs font-black uppercase tracking-widest text-red-300">Fleet Summary</div>
+  1228	                <h2 className="mt-1 text-xl font-black text-slate-100">Fleet Status: {fleetStatus}</h2>
+  1229	                <p className="mt-1 max-w-4xl text-sm leading-relaxed text-slate-400">
+  1230	                  Review priority shows lowest score / highest risk first. Relative rank shows highest Ranking Score first, so #1 does not mean safe when Trip Safety Risk is CRITICAL.
+  1231	                </p>
+  1232	              </div>
+  1233	              <span className={`w-fit rounded border px-3 py-1 text-xs font-black ${severityClass(fleetStatus)}`}>
+  1234	                TRIP RISK OVERVIEW: {fleetStatus}
+  1235	              </span>

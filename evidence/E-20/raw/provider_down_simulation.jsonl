@@ -1,0 +1,3 @@
+{"label": "quick_chat", "run": 1, "ok": false, "error_class": "URLError", "latency_ms": 8.87, "simulated_condition": "provider_down_localhost_no_external_egress"}
+{"label": "safety_detail", "run": 2, "ok": false, "error_class": "URLError", "latency_ms": 0.15, "simulated_condition": "provider_down_localhost_no_external_egress"}
+{"label": "maintenance_overview", "run": 3, "ok": false, "error_class": "URLError", "latency_ms": 0.14, "simulated_condition": "provider_down_localhost_no_external_egress"}

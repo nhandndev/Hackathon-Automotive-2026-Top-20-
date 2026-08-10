@@ -1,0 +1,9 @@
+{
+  "cmd": "/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/.venv/bin/python scripts/carsky_phase05.py status",
+  "cwd": "/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE",
+  "started_at_utc": "2026-08-10T03:48:46+00:00",
+  "ended_at_utc": "2026-08-10T03:48:47+00:00",
+  "returncode": 0,
+  "stdout": "{\n  \"status\": \"RUNNING\",\n  \"message\": null,\n  \"namespace\": \"room-us1531si\"\n}\n",
+  "stderr": ""
+}

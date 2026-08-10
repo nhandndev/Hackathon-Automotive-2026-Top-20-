@@ -1,0 +1,175 @@
+{
+  "evidence_id": "E-18",
+  "generated_at_utc": "2026-08-10T04:08:30+00:00",
+  "repo_commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "git_dirty": true,
+  "status": "PARTIAL / RELEASE MANIFEST CREATED; WORKTREE NOT CLEAN SO PACKET NOT IMMUTABLE",
+  "files": [
+    {
+      "path": "README.md",
+      "exists": true,
+      "sha256": "8f2e8d2b078cac1c2f679372df1acf872528a8affcb71230c10f02c6667ac7a5",
+      "bytes": 31577
+    },
+    {
+      "path": "scripts/run_product_demo.ps1",
+      "exists": true,
+      "sha256": "2ad7da44c4372ce40ec2655378eee284577fb8d9aed6d8420c4e5ce9c480b9cf",
+      "bytes": 14816
+    },
+    {
+      "path": "AI/requirements.txt",
+      "exists": true,
+      "sha256": "e5438a35590a304387f59a079e528228b82f3799610d2f0d5d44ce91d9294e81",
+      "bytes": 459
+    },
+    {
+      "path": "AI/models/candidate_013.joblib",
+      "exists": true,
+      "sha256": "e5fb2ecf75aaf7b4428ed8fb8a778b3161d584727429e0b799ee4ac6adb0ec62",
+      "bytes": 10194185
+    },
+    {
+      "path": "AI/models/yolov8s_finetuned_carla_v2.pt",
+      "exists": true,
+      "sha256": "9ea7558512d45478d41b194ebbb83754b92c2b597ca0d5e59c890b2fff268060",
+      "bytes": 22557347
+    },
+    {
+      "path": "AI/models/face_detection_yunet_2023mar.onnx",
+      "exists": true,
+      "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+      "bytes": 232589
+    },
+    {
+      "path": "AI/models/face_landmark_468.onnx",
+      "exists": true,
+      "sha256": "4b24319bfea45e5d6ee6086e6e4714bdca48089b2f905735b34e7648ea394085",
+      "bytes": 2432880
+    },
+    {
+      "path": "SE/BE/requirements.txt",
+      "exists": true,
+      "sha256": "a42c4471b7932b4724b421a286e86bb7e3c0de2539818fe92cfa09f207132557",
+      "bytes": 214
+    },
+    {
+      "path": "SE/BE/app/modules/ai_alerts/router.py",
+      "exists": true,
+      "sha256": "7deba4c1444023767054b4c2da92c8d28c0464f9890ca6898f3b0351a6151a0f",
+      "bytes": 16225
+    },
+    {
+      "path": "SE/BE/app/integrations/carsky/mapper.py",
+      "exists": true,
+      "sha256": "b8896053324ed4caea68cdf0976457b00f80697e546d509baeec2f8f0beca233",
+      "bytes": 10637
+    },
+    {
+      "path": "SE/BE/tests/test_ai_alerts.py",
+      "exists": true,
+      "sha256": "38955080bfdf7b8a1f2accece0a06721707162732612958e98fbd6f97d8439f1",
+      "bytes": 5412
+    },
+    {
+      "path": "SE/BE/tests/test_carsky.py",
+      "exists": true,
+      "sha256": "f8a7ff4e075685170ad7b9d926306f1ba29735383a369cebc5ea2dd8acabc15e",
+      "bytes": 5502
+    },
+    {
+      "path": "SE/FE/package.json",
+      "exists": true,
+      "sha256": "e017e1d15811dbeef031e86d098c461269dc7977f860abf599f8b3c1aa64d418",
+      "bytes": 1153
+    },
+    {
+      "path": "SE/FE/package-lock.json",
+      "exists": true,
+      "sha256": "de7e7ae0b396314204f45f5cf47ab39c8633785104981e6261e3455346ff99aa",
+      "bytes": 173157
+    },
+    {
+      "path": "SE/FE/src/App.tsx",
+      "exists": true,
+      "sha256": "03d6f77c73c0cc41974461e2c82fd6a7c0c813b8c339bf9a33aabbf480c80338",
+      "bytes": 15687
+    },
+    {
+      "path": "SE/FE/server.ts",
+      "exists": true,
+      "sha256": "e8d74d779556fb90e5721d1cb9cce096dcdbc513a069358d4bc3a13a00240dcf",
+      "bytes": 49177
+    },
+    {
+      "path": "SE/FE/dist/index.html",
+      "exists": true,
+      "sha256": "a866069edbb07fdae967e9d2c00aee7b7b84653c18c936eb82cb5b6266b457aa",
+      "bytes": 402
+    },
+    {
+      "path": "SE/FE/dist/server.cjs",
+      "exists": true,
+      "sha256": "acdd0ba6b660dc27c7049b9876955db4d7d6ed1a022a7e3ed7583f7640497804",
+      "bytes": 46785
+    },
+    {
+      "path": "SE/HMI/release/dms-hmi-realtime-vhal.apk",
+      "exists": true,
+      "sha256": "51a44e1570551c16abc83db7fa9f167f3ae40a62cd1b57bde5dc465adb91cbb0",
+      "bytes": 16811
+    },
+    {
+      "path": "SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java",
+      "exists": true,
+      "sha256": "bcf55f943c3bca3489d7828e1f18b6b19736a2725bb9e3118048207baf8215b2",
+      "bytes": 28503
+    },
+    {
+      "path": "evidence/E-02/reports/source_report.md",
+      "exists": true,
+      "sha256": "06d59bf126f030d774a8e6f87b2245426f3caf967d1cb0a8aad864e78c8138dc",
+      "bytes": 3107
+    },
+    {
+      "path": "evidence/E-03/reports/source_report.md",
+      "exists": true,
+      "sha256": "f013c966cd5ea9e22fe81b41b89cc82c0ae05507b4e612a5699b9c94c247fe19",
+      "bytes": 1353
+    },
+    {
+      "path": "evidence/E-04/reports/source_report.md",
+      "exists": true,
+      "sha256": "de128621e97a2cd21e0cea30a0b9cf5b35efdb3790391173a9a745d0df22b9e8",
+      "bytes": 1404
+    },
+    {
+      "path": "evidence/E-14/reports/source_report.md",
+      "exists": true,
+      "sha256": "0d98543f573f51788da7adadfd7c5041efdb4a9af3d16d9cb699d98ed8d341cb",
+      "bytes": 1013
+    },
+    {
+      "path": "evidence/E-15/reports/source_report.md",
+      "exists": true,
+      "sha256": "9fcadccacf1972de9de971db298a0b1578786313f932abfc97f714db242acf0c",
+      "bytes": 1053
+    },
+    {
+      "path": "evidence/E-16/reports/source_report.md",
+      "exists": true,
+      "sha256": "dee19349ecd121c42c3630b925b9fc7679450007e34b190f9584f83f8dd87654",
+      "bytes": 1302
+    },
+    {
+      "path": "evidence/E-17/reports/source_report.md",
+      "exists": true,
+      "sha256": "579fba3b6f1bca076b60e6be7b8550612ad809b4c349d32543ef758316589082",
+      "bytes": 1018
+    }
+  ],
+  "notes": [
+    "Manifest records source/artifact hashes only.",
+    "Final immutable release should be cut from clean worktree/tag or archive."
+  ]
+}

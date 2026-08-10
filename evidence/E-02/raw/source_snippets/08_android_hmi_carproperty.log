@@ -1,0 +1,148 @@
+$ nl -ba SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java | sed -n '27,55p;320,405p;660,690p'
+
+    27	 * Backend/AI -> CarSky KUKSA -> dms_hmi_bridge.lua -> VHAL PERF_VEHICLE_SPEED
+    28	 * -> Android CarProperty -> this APK.
+    29	 *
+    30	 * Why multiplex?
+    31	 * The CarSky AAOS image currently exposes PERF_VEHICLE_SPEED reliably, while
+    32	 * custom DMS VHAL properties were not visible in Android CarService during
+    33	 * runtime checks. The bridge therefore encodes DMS state into the standard
+    34	 * speed property and this APK decodes it back into HMI state.
+    35	 */
+    36	public final class MainActivity extends Activity implements TextToSpeech.OnInitListener {
+    37	    private static final String TAG = "DMS_HMI";
+    38	    private static final String BUILD_TAG = "V2.2 SPEED MUX";
+    39	    private static final int PERF_VEHICLE_SPEED = 291504647; // 0x11600207
+    40	    private static final int PROP_FINAL_RISK = 557843456; // 0x21400400
+    41	    private static final int PROP_CRITICAL_ALERT = 555746305; // 0x21200401
+    42	    private static final int PROP_ALERTNESS = 559940610; // 0x21600402
+    43	    private static final int PROP_MIN_TTC = 559940611; // 0x21600403
+    44	    private static final int PROP_AI_STATUS = 557843460; // 0x21400404
+    45	    private static final int PROP_ACTION = 557843461; // 0x21400405
+    46	    private static final int PROP_SEVERITY = 557843465; // 0x21400409
+    47	    private static final int PROP_DRIVER_STATE = 557843466; // 0x2140040A
+    48	    private static final int[] DMS_PROPS = new int[]{
+    49	            PERF_VEHICLE_SPEED
+    50	    };
+    51	    private static final int AREA_GLOBAL = 0;
+    52	    private static final float SENSOR_RATE_HZ = 10.0f;
+    53	    private static final long WATCHDOG_MS = 500;
+    54	    private static final long VHAL_POLL_MS = 250;
+    55	    private static final long OFFLINE_AFTER_MS = 4000;
+   320	        } catch (Throwable error) {
+   321	            Log.w(TAG, "VHAL polling fallback could not read DMS properties", error);
+   322	        }
+   323	    }
+   324	
+   325	    private void registerVehicleCallback() throws Exception {
+   326	        Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");
+   327	        propertyCallback = Proxy.newProxyInstance(
+   328	                callbackClass.getClassLoader(),
+   329	                new Class<?>[]{callbackClass},
+   330	                new VehicleCallbackHandler());
+   331	        Method register = propertyManager.getClass().getMethod("registerCallback", callbackClass, int.class, float.class);
+   332	        for (int propId : DMS_PROPS) {
+   333	            try {
+   334	                Object ok = register.invoke(propertyManager, propertyCallback, propId, SENSOR_RATE_HZ);
+   335	                Log.i(TAG, "register 0x" + Integer.toHexString(propId) + "=" + ok);
+   336	            } catch (Throwable propError) {
+   337	                Log.w(TAG, "register failed 0x" + Integer.toHexString(propId), propError);
+   338	            }
+   339	        }
+   340	    }
+   341	
+   342	    private final class VehicleCallbackHandler implements InvocationHandler {
+   343	        @Override
+   344	        public Object invoke(Object proxy, Method method, Object[] args) {
+   345	            String name = method.getName();
+   346	            if ("hashCode".equals(name)) {
+   347	                return System.identityHashCode(proxy);
+   348	            } else if ("equals".equals(name)) {
+   349	                return args != null && args.length > 0 && proxy == args[0];
+   350	            } else if ("toString".equals(name)) {
+   351	                return "DMS CarPropertyEventCallback";
+   352	            } else if ("onChangeEvent".equals(name) && args != null && args.length > 0) {
+   353	                handleCarPropertyEvent(args[0]);
+   354	            } else if ("onErrorEvent".equals(name)) {
+   355	                Log.e(TAG, "CarProperty callback error");
+   356	            }
+   357	            return null;
+   358	        }
+   359	    }
+   360	
+   361	    private void handleCarPropertyEvent(Object event) {
+   362	        try {
+   363	            Object propertyValue = event;
+   364	            try {
+   365	                propertyValue = event.getClass().getMethod("getCarPropertyValue").invoke(event);
+   366	            } catch (NoSuchMethodException ignored) {
+   367	                // Android AAOS CarPropertyManager callback already passes CarPropertyValue.
+   368	            }
+   369	            Object raw = propertyValue.getClass().getMethod("getValue").invoke(propertyValue);
+   370	            int propId = PERF_VEHICLE_SPEED;
+   371	            try {
+   372	                Object id = propertyValue.getClass().getMethod("getPropertyId").invoke(propertyValue);
+   373	                if (id instanceof Number) propId = ((Number) id).intValue();
+   374	            } catch (Throwable ignored) {
+   375	                // Keep speed-mux fallback for older AAOS APIs.
+   376	            }
+   377	            if (raw != null) {
+   378	                decodeProperty(propId, raw);
+   379	                handler.post(new Runnable() {
+   380	                    @Override
+   381	                    public void run() {
+   382	                        render();
+   383	                    }
+   384	                });
+   385	            }
+   386	        } catch (Throwable error) {
+   387	            Log.e(TAG, "Cannot decode VHAL event", error);
+   388	        }
+   389	    }
+   390	
+   391	    private void decodeProperty(int propId, Object raw) {
+   392	        state.lastUpdateAt = System.currentTimeMillis();
+   393	        if (raw instanceof Number) {
+   394	            float value = ((Number) raw).floatValue();
+   395	            if (propId == PERF_VEHICLE_SPEED) {
+   396	                decodeMultiplex(value);
+   397	            } else if (propId == PROP_FINAL_RISK) {
+   398	                state.risk = value;
+   399	            } else if (propId == PROP_CRITICAL_ALERT) {
+   400	                state.critical = Math.round(value) == 1;
+   401	            } else if (propId == PROP_ALERTNESS) {
+   402	                state.alertness = value > 1.0f ? value / 100.0f : value;
+   403	            } else if (propId == PROP_MIN_TTC) {
+   404	                state.ttc = value;
+   405	            } else if (propId == PROP_AI_STATUS) {
+   660	        if (tts != null) {
+   661	            tts.stop();
+   662	            tts.shutdown();
+   663	        }
+   664	        super.onDestroy();
+   665	    }
+   666	
+   667	    private void unregisterVehicleCallback() {
+   668	        if (propertyManager == null || propertyCallback == null) return;
+   669	        try {
+   670	            Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");
+   671	            propertyManager.getClass().getMethod("unregisterCallback", callbackClass).invoke(propertyManager, propertyCallback);
+   672	        } catch (Throwable ignored) {
+   673	            // Best effort during Activity teardown.
+   674	        }
+   675	    }
+   676	
+   677	    private static final class State {
+   678	        String driverState = "alert";
+   679	        String severity = "SAFE";
+   680	        String aiStatus = "OFFLINE";
+   681	        String recommendedAction = "NONE";
+   682	        float speed = 0f;
+   683	        float risk = 0f;
+   684	        float safeScore = 100f;
+   685	        float alertness = 0f;
+   686	        float ttc = 0f;
+   687	        boolean critical = false;
+   688	        long lastUpdateAt = 0L;
+   689	    }
+   690	}

@@ -1,0 +1,57 @@
+# E-02 AS-IS architecture evidence commands
+
+Run from `HACKATHON/`.
+
+## AI/local Decision Engine -> canonical DecisionEvent
+
+```bash
+nl -ba AI/core/decision_engine/schemas.py | sed -n '104,137p'
+```
+
+## DecisionEvent -> Backend REST ingestion boundary
+
+```bash
+nl -ba SE/BE/app/modules/ai_alerts/router.py | sed -n '25,45p;154,181p'
+```
+
+## Backend alert boundary -> Fleet Dashboard live/saved context
+
+```bash
+grep -RInE 'api/v1/alerts|saved_trips|runtime_status|completed|DecisionEvent' SE/FE/src SE/FE/server.ts | head -120
+```
+
+## Backend alert/live snapshot -> CarSky mapper
+
+```bash
+nl -ba SE/BE/app/integrations/carsky/mapper.py | sed -n '87,214p'
+```
+
+## CarSky mapper -> CarSky REST Signal API
+
+```bash
+grep -RInE 'actuate|/api/v1/signals|vehicle-speed-mux|Authorization|Bearer|enqueue' SE/BE/app/integrations/carsky SE/BE/tests/test_carsky.py
+```
+
+## CarSky Signal Broker/KUKSA Vehicle.Speed -> HMI Bridge Script Node
+
+```bash
+nl -ba SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua | sed -n '1,80p'
+```
+
+## HMI Bridge -> Android VHAL PERF_VEHICLE_SPEED
+
+```bash
+grep -RInE '291504647|0x11600207|PERF_VEHICLE_SPEED|DMS_HMI_SPEED_MUX' SE/BE/carsky SE/HMI/app/src/main/java SE/HMI/README.md
+```
+
+## Android VHAL -> Android HMI APK UI
+
+```bash
+nl -ba SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java | sed -n '27,55p;320,405p;660,690p'
+```
+
+## Backend/FE -> AI Copilot Report -> Word/DOC artifact
+
+```bash
+nl -ba SE/FE/server.ts | sed -n '925,990p'; nl -ba SE/FE/src/components/CopilotFleetReportPage.tsx | sed -n '1115,1235p'
+```

@@ -1,0 +1,131 @@
+$ rg -n VALIDATION_ERROR|Request validation failed|fallback|unavailable|timeout|Bedrock|No live snapshot|OFFLINE|SAVED|camera|VHAL polling fallback|CarSkyDeliveryError|does_not_retry_auth_failure|queue timeout|Không hiển thị insight giả SE/BE/app/core/errors.py SE/BE/app/modules/ai_alerts/router.py SE/BE/tests/test_health.py SE/BE/tests/test_carsky.py SE/FE/server.ts SE/FE/src/components/CopilotFleetReportPage.tsx SE/FE/src/components/LiveCameraFrame.tsx SE/FE/src/components/TripDetailView.tsx SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java
+
+SE/FE/src/components/TripDetailView.tsx:138:  const fallbackSnapshot = useMemo(() => snapshotFromLastFrame(vehicle), [vehicle]);
+SE/FE/src/components/TripDetailView.tsx:139:  const displaySnapshot = snapshot ?? fallbackSnapshot;
+SE/FE/src/components/TripDetailView.tsx:165:        <Status label="Driver camera" value={snapshotConnected ? 'Live' : 'Offline'} active={snapshotConnected} />
+SE/FE/src/components/TripDetailView.tsx:166:        <Status label="Road camera" value={snapshotConnected ? 'Live' : 'Offline'} active={snapshotConnected} />
+SE/FE/src/components/TripDetailView.tsx:175:              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-300">Synchronized AI camera frames</span>
+SE/FE/src/components/TripDetailView.tsx:176:              <span className={`flex items-center gap-1 text-[9px] font-bold ${snapshotConnected ? 'text-emerald-400' : 'text-sky-400'}`}>{snapshotConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}{snapshotConnected ? `LIVE · FRAME ${snapshot?.frame_id}` : `SAVED · FRAME ${displaySnapshot?.frame_id ?? '--'}`}</span>
+SE/FE/src/components/TripDetailView.tsx:179:              <div className="relative aspect-video overflow-hidden rounded-lg border border-slate-800 bg-slate-950"><LiveCameraFrame tripId={vehicle.trip_id} camera="cabin" className="absolute inset-0 h-full w-full object-cover" /></div>
+SE/FE/src/components/TripDetailView.tsx:180:              <div className="relative aspect-video overflow-hidden rounded-lg border border-slate-800 bg-slate-950"><LiveCameraFrame tripId={vehicle.trip_id} camera="road" className="absolute inset-0 h-full w-full object-cover" /></div>
+SE/FE/src/components/TripDetailView.tsx:202:            <div className="mb-2 flex shrink-0 items-center justify-between text-[10px] font-bold uppercase text-sky-400"><span className="flex items-center gap-1.5"><Brain className="h-3.5 w-3.5" />Realtime evidence</span><span className={alertsConnected ? 'text-emerald-400' : 'text-slate-500'}>{alertsConnected ? 'EVENTS LIVE' : 'EVENTS OFFLINE'}</span></div>
+SE/FE/src/components/LiveCameraFrame.tsx:6:  camera: 'road' | 'cabin';
+SE/FE/src/components/LiveCameraFrame.tsx:10:export const LiveCameraFrame: React.FC<LiveCameraFrameProps> = ({ tripId, camera, className = '' }) => {
+SE/FE/src/components/LiveCameraFrame.tsx:13:  const endpoint = camera === 'road'
+SE/FE/src/components/LiveCameraFrame.tsx:21:  }, [camera, tripId]);
+SE/FE/src/components/LiveCameraFrame.tsx:28:  const label = camera === 'road' ? 'BTC ROAD FRAME' : 'LIVE WEBCAM';
+SE/FE/src/components/LiveCameraFrame.tsx:33:      <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-0.5 text-[9px] font-mono text-slate-200"><span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${available ? 'animate-pulse bg-emerald-400' : 'bg-slate-500'}`} />{available ? label : `${camera.toUpperCase()} OFFLINE`}</div>
+SE/BE/tests/test_health.py:84:    assert response.json()["code"] == "VALIDATION_ERROR"
+SE/BE/tests/test_carsky.py:9:from app.integrations.carsky.client import CarSkyClient, CarSkyDeliveryError
+SE/BE/tests/test_carsky.py:129:async def test_client_does_not_retry_auth_failure() -> None:
+SE/BE/tests/test_carsky.py:146:        with pytest.raises(CarSkyDeliveryError):
+SE/FE/src/components/CopilotFleetReportPage.tsx:184:const isValidBedrockPayloadForRows = (payload: any, rows: ReturnType<typeof buildRankingRows>, reportType: string | null) => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:206:  pros: 'AI Copilot đang tạo insight từ Bedrock...',
+SE/FE/src/components/CopilotFleetReportPage.tsx:220:type AiInsightStatus = 'loading' | 'pending' | 'validated' | 'unavailable';
+SE/FE/src/components/CopilotFleetReportPage.tsx:224:    ? 'Kết quả từ Bedrock đã được trả về'
+SE/FE/src/components/CopilotFleetReportPage.tsx:226:      ? 'Đang chờ Bedrock phản hồi hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:227:      : 'Chờ Bedrock hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:326:      'Bedrock đang chạy nền để tạo nhận xét chi tiết. Trong lúc chờ, hệ thống chỉ hiển thị KPI thật từ JSON/local AI và không tự bịa ưu/nhược điểm.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:335:      'Bedrock đang chạy nền để tạo đánh giá thống kê đầy đủ. Trong lúc chờ, hệ thống chỉ hiển thị KPI thật và không hiển thị insight thay thế.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:343:      'Bedrock đang chạy nền để diễn giải triage. Trong lúc chờ, hệ thống không tạo mã lỗi, phụ tùng, work order, chi phí hoặc kết luận hỏng hóc.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:350:    'Bedrock đang chạy nền để bổ sung nhận xét triage. Trong lúc chờ, hệ thống không tạo chẩn đoán, báo giá hoặc action order thay thế.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:355:  const [copilotInsight, setCopilotInsight] = useState('Đang chờ phản hồi AI Copilot từ Bedrock...');
+SE/FE/src/components/CopilotFleetReportPage.tsx:359:  const [bedrockRequested, setBedrockRequested] = useState(false);
+SE/FE/src/components/CopilotFleetReportPage.tsx:454:  const canRequestBedrockInsight = dataReady && reportModels.length > 0 && missingSelectedIds.length === 0;
+SE/FE/src/components/CopilotFleetReportPage.tsx:479:    ? 'Ưu tiên kiểm tra kỹ thuật dựa trên safety telemetry JSON/local AI; Bedrock chỉ diễn giải insight, không chẩn đoán hỏng hóc.'
+SE/FE/src/components/CopilotFleetReportPage.tsx:504:      ? 'Đang chờ Bedrock...'
+SE/FE/src/components/CopilotFleetReportPage.tsx:506:        ? 'Chờ Bedrock hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:515:    setBedrockRequested(canRequestBedrockInsight);
+SE/FE/src/components/CopilotFleetReportPage.tsx:516:  }, [canRequestBedrockInsight, inputSignature]);
+SE/FE/src/components/CopilotFleetReportPage.tsx:533:        && isValidBedrockPayloadForRows(validated.payload, rows, reportType)
+SE/FE/src/components/CopilotFleetReportPage.tsx:540:    const showLocalFallback = (status: AiInsightStatus = 'unavailable', message = localReportNarrative) => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:553:        setCopilotInsight('Đang tải saved trips từ backend trước khi gọi Bedrock...');
+SE/FE/src/components/CopilotFleetReportPage.tsx:557:      if (!canRequestBedrockInsight) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:559:          'unavailable',
+SE/FE/src/components/CopilotFleetReportPage.tsx:561:            ? `Chưa tìm thấy dữ liệu JSON/local AI cho trip: ${missingSelectedIds.join(', ')}. Không gọi Bedrock khi thiếu canonical input.`
+SE/FE/src/components/CopilotFleetReportPage.tsx:569:        if (cachedPayload && isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:585:          if (!cancelled && isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:588:          if (isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) return;
+SE/FE/src/components/CopilotFleetReportPage.tsx:613:        if (payload.ai_status === 'validated' && !payload.vehicle_diagnostics && !payload.action_orders && isValidBedrockPayloadForRows(payload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:640:    canRequestBedrockInsight,
+SE/FE/src/components/CopilotFleetReportPage.tsx:941:        <div class="section-title">5. Khuyến Nghị & Insight Từ AI Copilot (Bedrock Engine)</div>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1042:      line(`Exported: ${new Date().toLocaleString()} | Source: JSON/local AI + validated Bedrock insight when available`, 8, 'normal', [100, 116, 139]);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1083:      section('AI Copilot / Bedrock Insight');
+SE/FE/src/components/CopilotFleetReportPage.tsx:1183:              onClick={() => setBedrockRequested(true)}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1184:              disabled={aiHasReturned || aiIsLoading || !canRequestBedrockInsight}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1188:                  ? 'Bedrock đã trả insight hợp lệ cho report này'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1189:                  : canRequestBedrockInsight
+SE/FE/src/components/CopilotFleetReportPage.tsx:1190:                    ? 'Gọi Bedrock AI Copilot cho report đang chọn'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1764:                AI Copilot đã trả về insight hợp lệ từ Bedrock. Nội dung bên dưới là kết quả AI đã xác thực và sẽ không bị JSON/local fallback ghi đè.
+SE/FE/src/components/CopilotFleetReportPage.tsx:1769:                  ? 'Đánh giá hiện tại lấy từ JSON/local AI. Đang chờ Bedrock phản hồi hợp lệ; chỉ khi AI thật trả về thì phần nhận xét mới được cập nhật.'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1770:                  : 'Đánh giá overview hiện lấy từ JSON/local AI. Bedrock chỉ nhận số liệu tổng hợp fleet, không xử lý lần lượt từng trip; nếu rời trang thì request đang chờ sẽ bị hủy.'}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1889:            ? 'Kết quả từ Bedrock đã được trả về'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1891:              ? 'Đang chờ Bedrock phản hồi hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1892:              : 'Chờ Bedrock hợp lệ';
+SE/FE/server.ts:29:const SAVED_TRIPS_DIR = path.join(process.cwd(), "src", "data", "saved_trips");
+SE/FE/server.ts:30:if (!fs.existsSync(SAVED_TRIPS_DIR)) {
+SE/FE/server.ts:31:  fs.mkdirSync(SAVED_TRIPS_DIR, { recursive: true });
+SE/FE/server.ts:35:  if (!fs.existsSync(SAVED_TRIPS_DIR)) return 0;
+SE/FE/server.ts:36:  const files = fs.readdirSync(SAVED_TRIPS_DIR).filter((f) => f.endsWith(".json"));
+SE/FE/server.ts:38:    fs.unlinkSync(path.join(SAVED_TRIPS_DIR, file));
+SE/FE/server.ts:61:    if (fs.existsSync(SAVED_TRIPS_DIR)) {
+SE/FE/server.ts:62:      const files = fs.readdirSync(SAVED_TRIPS_DIR).filter((f) => f.endsWith(".json"));
+SE/FE/server.ts:65:          const filePath = path.join(SAVED_TRIPS_DIR, file);
+SE/FE/server.ts:158:  ai_status: "validated" | "unavailable" | "pending";
+SE/FE/server.ts:175:function compactTripForBedrock(trip: CopilotTripInput, mode?: string) {
+SE/FE/server.ts:298:      "If DTC is N/A or cost is 0, explicitly say real vehicle-health/workshop data is unavailable and cost remains N/A until inspection.",
+SE/FE/server.ts:337:function validateBedrockInsight(parsed: any, trips: CopilotTripInput[], mode?: string) {
+SE/FE/server.ts:339:  if (!String(parsed?.fleet_insight || "").trim()) throw new Error("Bedrock returned no fleet_insight");
+SE/FE/server.ts:344:      throw new Error("Bedrock safety insight mentioned maintenance-only fields");
+SE/FE/server.ts:363:        throw new Error(`Bedrock contradicted ${trip.tripId}: ${reason}`);
+SE/FE/server.ts:371:    insight: "AI Copilot chưa có phản hồi Bedrock hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:372:    fleet_insight: "AI Copilot chưa có phản hồi Bedrock hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:375:    ai_status: "unavailable",
+SE/FE/server.ts:388:    insight: "AI Copilot đang chờ Bedrock phản hồi hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:389:    fleet_insight: "AI Copilot đang chờ Bedrock phản hồi hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:410:function getBedrockBearerToken(): string {
+SE/FE/server.ts:414:async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, timeoutMs = 3500, externalSignal?: AbortSignal): Promise<string> {
+SE/FE/server.ts:415:  const token = getBedrockBearerToken();
+SE/FE/server.ts:419:  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+SE/FE/server.ts:420:  const signal = externalSignal ? AbortSignal.any([timeoutSignal, externalSignal]) : timeoutSignal;
+SE/FE/server.ts:442:    throw new Error(`Bedrock ${response.status}: ${message}`);
+SE/FE/server.ts:478:const finiteNumber = (value: unknown, fallback = 0) =>
+SE/FE/server.ts:479:  typeof value === "number" && Number.isFinite(value) ? value : fallback;
+SE/FE/server.ts:645:  const filePath = path.join(SAVED_TRIPS_DIR, `${safeId}.json`);
+SE/FE/server.ts:662:    const files = fs.readdirSync(SAVED_TRIPS_DIR).filter((f) => f.endsWith(".json"));
+SE/FE/server.ts:676:  const filePath = path.join(SAVED_TRIPS_DIR, `${safeId}.json`);
+SE/FE/server.ts:711:  const filePath = path.join(SAVED_TRIPS_DIR, `${safeId}.json`);
+SE/FE/server.ts:801:      // Report cards must open immediately from JSON/local AI. Bedrock is only
+SE/FE/server.ts:837:      console.error("Bedrock report card error:", err);
+SE/FE/server.ts:848:            ? "Đang chờ AI Copilot/Bedrock diễn giải. Card chỉ dùng safety telemetry JSON/local AI; không hiển thị DTC, chi phí hoặc chẩn đoán giả."
+SE/FE/server.ts:850:              ? "Đang chờ AI Copilot/Bedrock diễn giải. Tất cả trip trong JSON/local AI đang ở nhóm rủi ro cao; list vẫn xếp theo điểm an toàn Ranking Score."
+SE/FE/server.ts:851:              : "Đang chờ AI Copilot/Bedrock diễn giải. Card chỉ dùng telemetry JSON/local AI; không hiển thị dữ liệu giả."),
+SE/FE/server.ts:872:  if (getBedrockBearerToken()) {
+SE/FE/server.ts:878:      const reply = await callBedrockConverse(`
+SE/FE/server.ts:894:      console.error("Bedrock API Error:", err);
+SE/FE/server.ts:923:    "AI Copilot chưa có phản hồi hợp lệ từ Bedrock/Gemini.",
+SE/FE/server.ts:953:      ai_status: "unavailable",
+SE/FE/server.ts:1000:  if (!getBedrockBearerToken()) {
+SE/FE/server.ts:1025:        trips: trips.map((trip) => compactTripForBedrock(trip, reportMode)),
+SE/FE/server.ts:1036:    console.info("Bedrock report insight request:", {
+SE/FE/server.ts:1045:      const rawAiOutput = await callBedrockConverse(promptText, BEDROCK_MODEL_ID, 45000, clientAbortController.signal);
+SE/FE/server.ts:1048:      validateBedrockInsight(parsed, trips, reportMode);
+SE/FE/server.ts:1050:      if (!fleetInsight.trim()) throw new Error("Bedrock returned no fleet_insight");
+SE/FE/server.ts:1051:      console.info("Bedrock report insight validated:", {
+SE/FE/server.ts:1074:      const reason = err instanceof Error ? err.name === "TimeoutError" ? "timeout" : err.message : "unknown-error";
+SE/FE/server.ts:1075:      console.error("Bedrock report insight error:", {
+SE/FE/server.ts:1093:    if (payload.ai_status === "validated" || payload.ai_status === "unavailable") {
+SE/FE/server.ts:1141:      signal: AbortSignal.timeout(3000),
+SE/BE/app/modules/ai_alerts/router.py:368:        raise HTTPException(status_code=404, detail="No live snapshot for this trip")
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:55:    private static final long OFFLINE_AFTER_MS = 4000;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:111:        aiPill = pill("AI OFFLINE", 0xff64748b);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:316:                    Log.w(TAG, "VHAL property unavailable 0x" + Integer.toHexString(propId), propError);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:321:            Log.w(TAG, "VHAL polling fallback could not read DMS properties", error);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:375:                // Keep speed-mux fallback for older AAOS APIs.
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:514:            if (age > OFFLINE_AFTER_MS) {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:556:        aiPill.setText("●  AI OFFLINE");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:591:        return v == 0 ? "ONLINE" : v == 1 ? "DEGRADED" : "OFFLINE";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:680:        String aiStatus = "OFFLINE";
+SE/BE/app/core/errors.py:89:            code="VALIDATION_ERROR",
+SE/BE/app/core/errors.py:90:            message="Request validation failed",
+SE/BE/app/core/errors.py:114:            message="Dataset file is unavailable",

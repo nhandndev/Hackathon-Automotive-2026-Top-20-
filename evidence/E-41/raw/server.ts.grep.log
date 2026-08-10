@@ -1,0 +1,9 @@
+SE/FE/server.ts:170: const reportInsightCache = new Map<string, { expiresAt: number; payload: CopilotInsightPayload }>();
+SE/FE/server.ts:171: const reportInsightInflight = new Map<string, Promise<CopilotInsightPayload>>();
+SE/FE/server.ts:971:   const cached = reportInsightCache.get(cacheKey);
+SE/FE/server.ts:984:   const inflight = reportInsightInflight.get(cacheKey);
+SE/FE/server.ts:1090:   reportInsightInflight.set(cacheKey, requestPromise);
+SE/FE/server.ts:1094:       reportInsightCache.set(cacheKey, {
+SE/FE/server.ts:1100:     reportInsightInflight.delete(cacheKey);
+SE/FE/server.ts:1106:     reportInsightCache.set(cacheKey, {
+SE/FE/server.ts:1110:     reportInsightInflight.delete(cacheKey);

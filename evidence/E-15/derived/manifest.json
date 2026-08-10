@@ -1,0 +1,64 @@
+{
+  "evidence_id": "E-15",
+  "title": "Automated test claim traceability",
+  "generated_at_utc": "2026-08-10T03:58:39+00:00",
+  "repo_commit": "44e6cb32",
+  "status": "DONE / BE TESTS, FE LINT-BUILD, HMI ARTIFACT VERIFIED",
+  "files": [
+    {
+      "path": "E-15/commands/commands.log",
+      "sha256": "1ad445ce8c5053bcebab73717d9dbb89a20c986030faf3eb96967ef07c5d61fb",
+      "bytes": 636
+    },
+    {
+      "path": "E-15/derived/hmi_apk_artifact.json",
+      "sha256": "87e299ef8af9aa5fd2cf065af71af6552189f6cf1c95499e7c3eb15a8948ab55",
+      "bytes": 173
+    },
+    {
+      "path": "E-15/derived/test_summary.json",
+      "sha256": "eeec23afc7955b554f82163fb77a7675267876b04d8ba5578e6387d19c502253",
+      "bytes": 495
+    },
+    {
+      "path": "E-15/junit/be_pytest.xml",
+      "sha256": "62e5cd84d158de7d02416bee676ba024980a3829cde0076535d6d80cbe905006",
+      "bytes": 3450
+    },
+    {
+      "path": "E-15/raw/be_pytest_all.log",
+      "sha256": "56a4cfcdf8965b18252b2d65e77a7d5e34010c2d0f72d5da1264c4da0db9ad7e",
+      "bytes": 1528
+    },
+    {
+      "path": "E-15/raw/be_pytest_junit_command.log",
+      "sha256": "7d921adbe5ab2efdd3c7b2b328d986b487c379fe106b34b8213d24b1b62dc47f",
+      "bytes": 1747
+    },
+    {
+      "path": "E-15/raw/fe_build.log",
+      "sha256": "0227faae7bc2b11526e62b7cc498ee5114b93e2b0048160775ccbe6a830a3590",
+      "bytes": 920
+    },
+    {
+      "path": "E-15/raw/fe_lint.log",
+      "sha256": "0600f24bd3937ebcfe0a58403a4811e114accc3529b4af3851464c0a4b551c78",
+      "bytes": 60
+    },
+    {
+      "path": "E-15/raw/hmi_apk_static_scan.log",
+      "sha256": "4f2e3ea276be493d7847fcfc22f6626b9653905bcb92397e68f8d59273507b8c",
+      "bytes": 427
+    },
+    {
+      "path": "E-15/raw/source_snippets/automated_test_traceability.log",
+      "sha256": "ce45fd0c6f5d70a03462b98462ebd9589e2cc482a2472bfb064681a153a2e162",
+      "bytes": 4984
+    },
+    {
+      "path": "E-15/reports/source_report.md",
+      "sha256": "9fcadccacf1972de9de971db298a0b1578786313f932abfc97f714db242acf0c",
+      "bytes": 1053
+    }
+  ]
+}

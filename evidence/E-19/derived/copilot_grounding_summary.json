@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-08-10T04:18:19.948323+00:00",
+  "commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "golden_questions": 30,
+  "source_checks_total": 21,
+  "source_checks_found": 9,
+  "bedrock_raw_outputs_collected": 0,
+  "reviewer_labels_collected": 0,
+  "status": "PARTIAL_SOURCE_CONTRACT_AND_GOLDEN_SET_READY_BEDROCK_REVIEW_PENDING",
+  "honest_limitation": "No raw Bedrock outputs or human reviewer labels were generated in this run; do not claim formal factual accuracy yet."
+}

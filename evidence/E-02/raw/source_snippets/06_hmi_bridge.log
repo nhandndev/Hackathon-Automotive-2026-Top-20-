@@ -1,0 +1,23 @@
+$ nl -ba SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua | sed -n '1,80p'
+
+     1	-- DMS HMI Bridge - BTC default VSS passthrough.
+     2	--
+     3	-- Use this when the KUKSA broker does not include custom DMS VSS paths.
+     4	-- Backend sends DMS multiplex values directly to Vehicle.Speed:
+     5	--   41.088 = risk 88
+     6	--   42.002 = CRITICAL
+     7	--   43.004 = microsleep
+     8	-- APK V2.2 decodes those decimal speed-mux values.
+     9	
+    10	local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED
+    11	local PATH_SPEED = "Vehicle.Speed"
+    12	
+    13	pins.kuksa:on_change(function(ev)
+    14	    if ev.path ~= PATH_SPEED or ev.value == nil then return end
+    15	    local value = tonumber(ev.value) or 0
+    16	    pins.vhal:push(PROP_SPEED, 0, value)
+    17	    log(string.format("DMS_HMI_SPEED_MUX %s=%s -> 0x%08X=%s", ev.path, tostring(ev.value), PROP_SPEED, tostring(value)))
+    18	end)
+    19	
+    20	pins.kuksa:subscribe({ PATH_SPEED })
+    21	log("DMS HMI speed-mux bridge subscribed to Vehicle.Speed")

@@ -1,0 +1,23 @@
+# E-03 commands - Canonical DecisionEvent contract
+
+Generated at UTC: 2026-08-10T03:50:33+00:00
+Commit: 44e6cb32
+
+Run from `HACKATHON/`.
+
+```bash
+SE/BE/.venv/bin/python <evidence-generation-script>
+```
+
+Verify manually:
+
+```bash
+cd SE/BE
+.venv/bin/python -m pytest tests/test_contract.py tests/test_ai_alerts.py
+```
+
+Source snippet command:
+
+```bash
+rg -n "DecisionEvent|DecisionEventPayload|LiveSnapshotPayload|Idempotency-Key|/alerts|snapshot" AI/core/decision_engine/schemas.py SE/BE/app/modules/ai_alerts/router.py SE/BE/tests/test_ai_alerts.py SE/BE/tests/test_contract.py
+```

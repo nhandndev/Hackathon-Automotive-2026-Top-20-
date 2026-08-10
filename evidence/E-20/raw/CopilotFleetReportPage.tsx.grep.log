@@ -1,0 +1,2 @@
+SE/FE/src/components/CopilotFleetReportPage.tsx:613:         if (payload.ai_status === 'validated' && !payload.vehicle_diagnostics && !payload.action_orders && isValidBedrockPayloadForRows(payload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:618:         if (!cancelled && payload.ai_status !== 'validated') {

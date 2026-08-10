@@ -1,0 +1,49 @@
+$ grep -RInE 'api/v1/alerts|saved_trips|runtime_status|completed|DecisionEvent' SE/FE/src SE/FE/server.ts | head -120
+
+SE/FE/src/App.tsx:55:  // detect the running→completed transition and trigger an auto-save.
+SE/FE/src/App.tsx:57:  // Ref: historical trips loaded from server disk (data/saved_trips/).
+SE/FE/src/App.tsx:62:    const alertsHttp = import.meta.env.VITE_ALERTS_HTTP_URL || 'http://127.0.0.1:8000/api/v1/alerts';
+SE/FE/src/App.tsx:63:    const endpoint = import.meta.env.VITE_ALERTS_WS_URL || 'ws://127.0.0.1:8000/api/v1/alerts/live';
+SE/FE/src/App.tsx:89:    /** Persist a completed TripData to disk via the Express server. */
+SE/FE/src/App.tsx:152:        // ── Detect running → completed transition and auto-save ─────────────
+SE/FE/src/App.tsx:156:            session.status === 'completed'
+SE/FE/src/App.tsx:160:            const completedTrip = dynamicTrips.find(t => t.trip_id === session.trip_id);
+SE/FE/src/App.tsx:161:            if (completedTrip) void saveTripToServer(completedTrip);
+SE/FE/src/App.tsx:176:            ? mergedTrips.find((trip) => trip.runtime_status === 'running')
+SE/FE/src/App.tsx:236:      const liveOnly = vehicles.filter((trip) => trip.runtime_status !== 'completed');
+SE/FE/src/types.ts:133:  runtime_status?: 'pending' | 'running' | 'completed';
+SE/FE/src/types.ts:220:  status: 'pending' | 'running' | 'completed';
+SE/FE/src/components/CopilotFleetReportPage.tsx:386:        : vehicles.filter((vehicle) => vehicle.runtime_status === 'completed')
+SE/FE/src/components/InterventionModal.tsx:19:  const isRunning = vehicle.runtime_status === 'running';
+SE/FE/src/components/FleetMapView.tsx:51:  if (trip.runtime_status === 'running') return 'LIVE';
+SE/FE/src/components/FleetMapView.tsx:52:  if (trip.runtime_status === 'pending') return 'PENDING';
+SE/FE/src/components/VehicleLiveView.tsx:55:    || 'http://127.0.0.1:8000/api/v1/alerts/snapshot';
+SE/FE/src/components/VehicleLiveView.tsx:202:              <div className="flex h-full items-center justify-center p-5 text-center text-xs text-slate-500">No DecisionEvent received for this trip.</div>
+SE/FE/src/components/TripDetailView.tsx:86:    || 'http://127.0.0.1:8000/api/v1/alerts/snapshot';
+SE/FE/src/components/TripDetailView.tsx:206:          <div className="shrink-0 rounded-xl border border-[#1E293B] bg-[#0B0F19] p-4"><span className="mb-2 block text-[10px] font-bold uppercase text-slate-300">Decision events · current session</span>{eventCounts.length === 0 ? <p className="text-[10px] text-slate-500">No DecisionEvent received.</p> : <div className="flex max-h-24 flex-col gap-1.5 overflow-y-auto text-[10px]">{eventCounts.map(([type, count]) => <div key={type} className="flex justify-between rounded border border-slate-700 bg-slate-900 p-1.5"><span>{type.replaceAll('_', ' ')}</span><b className="font-mono">×{count}</b></div>)}</div>}</div>
+SE/FE/src/components/AICopilotDrawer.tsx:53:    .filter((vehicle) => vehicle.runtime_status === 'completed')
+SE/FE/src/components/AICopilotDrawer.tsx:56:      runtime_status: vehicle.runtime_status,
+SE/FE/src/components/LiveCameraFrame.tsx:14:    ? (import.meta.env.VITE_ROAD_FRAME_URL || 'http://127.0.0.1:8000/api/v1/alerts/road-frame')
+SE/FE/src/components/LiveCameraFrame.tsx:15:    : (import.meta.env.VITE_CABIN_FRAME_URL || 'http://127.0.0.1:8000/api/v1/alerts/cabin-frame');
+SE/FE/src/data/saved_trips/README.md:1:# src/data/saved_trips/
+SE/FE/src/data/saved_trips/README.md:3:Completed trip JSON files (`{trip_id}.json`) are persisted directly under `src/data/saved_trips/`.
+SE/FE/src/data/saved_trips/README.md:7:1. **Auto-save on Completion**: When a live trip status changes to `completed`, `App.tsx` calls `POST /api/trips/save` to save the full `TripData` JSON object into `src/data/saved_trips/{trip_id}.json`.
+SE/FE/src/data/saved_trips/README.md:8:2. **AI Copilot Tracing**: The Express server (`server.ts`) reads all completed trip JSON files in `src/data/saved_trips/` so AI Copilot can trace and analyze historical completed trips.
+SE/FE/src/data/liveTripData.ts:136:    runtime_status: session.status,
+SE/FE/src/data/btcTripData.ts:4: * btcTripData holds completed trip records saved in `src/data/saved_trips/`.
+SE/FE/src/data/btcTripData.ts:5: * When an AI pipeline trip session status transitions to 'completed',
+SE/FE/src/data/btcTripData.ts:6: * the frontend auto-persists the full TripData to `src/data/saved_trips/{trip_id}.json`.
+SE/FE/src/data/btcTripData.ts:7: * Both the Dashboard and AI Copilot read from `src/data/saved_trips/` to trace completed trips.
+SE/FE/server.ts:28:// Saved completed trips live in <project>/src/data/saved_trips/{trip_id}.json
+SE/FE/server.ts:29:const SAVED_TRIPS_DIR = path.join(process.cwd(), "src", "data", "saved_trips");
+SE/FE/server.ts:45:  runtime_status?: "pending" | "running" | "completed";
+SE/FE/server.ts:95:      mergedMap.set(v.trip_id, { ...v, runtime_status: "completed" });
+SE/FE/server.ts:99:  // Only include incoming vehicles if their runtime_status is explicitly 'completed'
+SE/FE/server.ts:101:    if (v && v.trip_id && v.runtime_status === "completed") {
+SE/FE/server.ts:634: * Saves to data/saved_trips/{trip_id}.json so future Copilot sessions
+SE/FE/server.ts:658: * Returns list of all persisted trip IDs (files in data/saved_trips/).
+SE/FE/server.ts:693: * Clears ALL saved completed trip JSON files in data/saved_trips/.
+SE/FE/server.ts:740:      reply: "Chưa có chuyến đi nào hoàn thành (status = completed). AI Copilot chỉ phân tích dữ liệu các chuyến đi đã kết thúc."
+SE/FE/server.ts:925:    `Dashboard hiện có ${vehicles.length} trip completed từ JSON/local AI: ${availableTripIds(vehicles).join(", ") || "chưa có"}.`,
+SE/FE/server.ts:1118:const PYTHON_BE = process.env.VITE_ALERTS_HTTP_URL?.replace("/api/v1/alerts", "") || "http://127.0.0.1:8000";
+SE/FE/server.ts:1132:    const response = await fetch(`${PYTHON_BE}/api/v1/alerts/interventions`, {

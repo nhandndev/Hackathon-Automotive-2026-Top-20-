@@ -1,0 +1,188 @@
+{
+  "evidence_id": "E-02",
+  "title": "AS-IS architecture matches code",
+  "generated_at": "2026-08-10T03:43:31Z",
+  "commit": "44e6cb32",
+  "scope": "Map every claimed AS-IS architecture arrow to repository source, tests, runtime evidence expectation, and caveat.",
+  "primary_owner": "Nhan",
+  "supporting": [
+    "Hung"
+  ],
+  "outputs": {
+    "as_is_architecture_pdf": "derived/as_is_architecture.pdf",
+    "as_is_architecture_svg": "derived/as_is_architecture.svg",
+    "source_map_csv": "derived/source_map.csv",
+    "source_report": "reports/source_report.md",
+    "commands_log": "commands/commands.log",
+    "signoff": "reports/owner_signoff.md"
+  },
+  "architecture_arrows": [
+    {
+      "arrow": "AI/local Decision Engine -> canonical DecisionEvent",
+      "owner": "AI / Hùng support, Nhân review",
+      "source": "HACKATHON/AI/core/decision_engine/schemas.py:104",
+      "function_or_symbol": "DecisionEvent",
+      "proof_command": "nl -ba AI/core/decision_engine/schemas.py | sed -n '104,137p'",
+      "evidence_output": "raw/source_snippets/01_decision_event_schema.log",
+      "status": "SOURCE_VERIFIED",
+      "caveat": "Schema evidence only; not model factuality evidence."
+    },
+    {
+      "arrow": "DecisionEvent -> Backend REST ingestion boundary",
+      "owner": "SE Backend / Nhân",
+      "source": "HACKATHON/SE/BE/app/modules/ai_alerts/router.py:25,154",
+      "function_or_symbol": "DecisionEventPayload, receive_alert()",
+      "proof_command": "nl -ba SE/BE/app/modules/ai_alerts/router.py | sed -n '25,45p;154,181p'",
+      "evidence_output": "raw/source_snippets/02_backend_alert_boundary.log",
+      "status": "SOURCE_AND_TEST_VERIFIED",
+      "caveat": "Runtime request trace should be attached in E-04/E-14."
+    },
+    {
+      "arrow": "Backend alert boundary -> Fleet Dashboard live/saved context",
+      "owner": "Fleet Dashboard / Nhân",
+      "source": "HACKATHON/SE/FE/src/App.tsx, HACKATHON/SE/FE/server.ts",
+      "function_or_symbol": "Dashboard live/saved trip flow",
+      "proof_command": "grep -RInE 'api/v1/alerts|saved_trips|runtime_status|completed|DecisionEvent' SE/FE/src SE/FE/server.ts | head -120",
+      "evidence_output": "raw/source_snippets/03_fleet_dashboard_flow.log",
+      "status": "SOURCE_VERIFIED",
+      "caveat": "Use dashboard runtime video for user-facing proof."
+    },
+    {
+      "arrow": "Backend alert/live snapshot -> CarSky mapper",
+      "owner": "Backend / Nhân",
+      "source": "HACKATHON/SE/BE/app/integrations/carsky/mapper.py:87,158",
+      "function_or_symbol": "map_decision_event(), map_live_snapshot()",
+      "proof_command": "nl -ba SE/BE/app/integrations/carsky/mapper.py | sed -n '87,214p'",
+      "evidence_output": "raw/source_snippets/04_carsky_mapper.log",
+      "status": "SOURCE_AND_TEST_VERIFIED",
+      "caveat": "Custom VSS paths are not final claim; Vehicle.Speed speed-mux is final demo path."
+    },
+    {
+      "arrow": "CarSky mapper -> CarSky REST Signal API",
+      "owner": "Backend / Nhân",
+      "source": "HACKATHON/SE/BE/app/integrations/carsky/client.py, service.py",
+      "function_or_symbol": "CarSkyClient.actuate(), CarSkyPublisher",
+      "proof_command": "grep -RInE 'actuate|/api/v1/signals|vehicle-speed-mux|Authorization|Bearer|enqueue' SE/BE/app/integrations/carsky SE/BE/tests/test_carsky.py",
+      "evidence_output": "raw/source_snippets/05_carsky_rest_api.log",
+      "status": "SOURCE_AND_TEST_VERIFIED",
+      "caveat": "Runtime CarSky token/deployment proof belongs in E-04/E-24."
+    },
+    {
+      "arrow": "CarSky Signal Broker/KUKSA Vehicle.Speed -> HMI Bridge Script Node",
+      "owner": "CarSky/HMI / Nhân + Dân support",
+      "source": "HACKATHON/SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:10",
+      "function_or_symbol": "pins.kuksa:on_change, pins.vhal:push",
+      "proof_command": "nl -ba SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua | sed -n '1,80p'",
+      "evidence_output": "raw/source_snippets/06_hmi_bridge.log",
+      "status": "SOURCE_VERIFIED_RUNTIME_SCREENSHOT_PENDING",
+      "caveat": "Runtime screenshot should show DMS_HMI_SPEED_MUX and Vehicle.Speed in same view. Runtime screenshot not stored in E-02 evidence folder."
+    },
+    {
+      "arrow": "HMI Bridge -> Android VHAL PERF_VEHICLE_SPEED",
+      "owner": "CarSky/HMI / Nhân + Dân support",
+      "source": "HACKATHON/SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:10,16",
+      "function_or_symbol": "PROP_SPEED = 291504647 / 0x11600207",
+      "proof_command": "grep -RInE '291504647|0x11600207|PERF_VEHICLE_SPEED|DMS_HMI_SPEED_MUX' SE/BE/carsky SE/HMI/app/src/main/java SE/HMI/README.md",
+      "evidence_output": "raw/source_snippets/07_vhal_perf_vehicle_speed.log",
+      "status": "SOURCE_VERIFIED_RUNTIME_SCREENSHOT_PENDING",
+      "caveat": "This is verified demo speed-mux path, not custom DMS CarProperty production claim. Runtime screenshot not stored in E-02 evidence folder."
+    },
+    {
+      "arrow": "Android VHAL -> Android HMI APK UI",
+      "owner": "Android HMI / Nhân + Dân support",
+      "source": "HACKATHON/SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:39",
+      "function_or_symbol": "PERF_VEHICLE_SPEED, CarPropertyManager callback/polling",
+      "proof_command": "nl -ba SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java | sed -n '27,55p;320,405p;660,690p'",
+      "evidence_output": "raw/source_snippets/08_android_hmi_carproperty.log",
+      "status": "SOURCE_AND_APK_ARTIFACT_VERIFIED",
+      "caveat": "Use CarSky Android screen screenshot for final runtime UI proof."
+    },
+    {
+      "arrow": "Backend/FE -> AI Copilot Report -> Word/DOC artifact",
+      "owner": "Fleet Dashboard / Nhân",
+      "source": "HACKATHON/SE/FE/server.ts:932, HACKATHON/SE/FE/src/components/CopilotFleetReportPage.tsx:1115",
+      "function_or_symbol": "/api/copilot/report, handleExportWord()",
+      "proof_command": "nl -ba SE/FE/server.ts | sed -n '925,990p'; nl -ba SE/FE/src/components/CopilotFleetReportPage.tsx | sed -n '1115,1235p'",
+      "evidence_output": "raw/source_snippets/09_copilot_report_export.log",
+      "status": "SOURCE_VERIFIED",
+      "caveat": "Bedrock is explanation layer, not canonical metric source."
+    }
+  ],
+  "not_claimed": [
+    "Custom DMS CarProperty IDs are not claimed production-ready.",
+    "Automatic actuator control is not part of AS-IS architecture.",
+    "Multi-instance durable runtime is not claimed in E-02.",
+    "Business ROI/pilot validation is not part of E-02.",
+    "Bedrock/Copilot is explanation layer, not canonical safety metric source."
+  ],
+  "files": [
+    {
+      "path": ".gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/commands.log",
+      "sha256": "cdfc839816326951f9518976a5dba629ae4fb56483da3f7aac44920a042af00a"
+    },
+    {
+      "path": "derived/as_is_architecture.pdf",
+      "sha256": "a3a74aa1774e86192e95d0cd91c322539ef449fcb127190febd31b652b540ac1"
+    },
+    {
+      "path": "derived/as_is_architecture.svg",
+      "sha256": "994f2ac99cae2946c33c143d72da0a329ea56d2d0349428fd2bf00d4db36cbd6"
+    },
+    {
+      "path": "derived/manifest.json",
+      "sha256": "8fcb465a3a0baec2df47f23c62d4efb185a3077bcfdca66b7f979cc213d839ec"
+    },
+    {
+      "path": "derived/source_map.csv",
+      "sha256": "0e1c3d7aa465cfc7974b6f9143e851e054369faad42811c1d1656d6386265a47"
+    },
+    {
+      "path": "raw/source_snippets/01_decision_event_schema.log",
+      "sha256": "c8975f44f2769240ec4b67b94a5730eea7db37fac303b6668a9a5ec58dc63019"
+    },
+    {
+      "path": "raw/source_snippets/02_backend_alert_boundary.log",
+      "sha256": "dafaa12b34788b596ed1e40faccf6384ce03297bf7416cee795f7c4154abee1d"
+    },
+    {
+      "path": "raw/source_snippets/03_fleet_dashboard_flow.log",
+      "sha256": "ea5e37205edff21acaa27b3ef5260c2cc345c79493d67a091c50b9a890ac5edc"
+    },
+    {
+      "path": "raw/source_snippets/04_carsky_mapper.log",
+      "sha256": "b9b91808c76220aa5bc82b1bf113a39e5d2f66ac76b037b7495ac8530109bea7"
+    },
+    {
+      "path": "raw/source_snippets/05_carsky_rest_api.log",
+      "sha256": "01075d88f4b1abd67cf403352477387fb4540410787cf70ccf8265a9ea22b5be"
+    },
+    {
+      "path": "raw/source_snippets/06_hmi_bridge.log",
+      "sha256": "25e94f5d9734322951b6f0e6a5c828c77b8aa22d202b6957fda2697f80f8910f"
+    },
+    {
+      "path": "raw/source_snippets/07_vhal_perf_vehicle_speed.log",
+      "sha256": "3e7fd4ef25b9d3b1e35ba4efc978bc1296ae6ed6cf2db2dd5434780f017660dc"
+    },
+    {
+      "path": "raw/source_snippets/08_android_hmi_carproperty.log",
+      "sha256": "fa19d0a0b40b87dcf153181abb455e54200e403b745ecc541a294125d42f5a19"
+    },
+    {
+      "path": "raw/source_snippets/09_copilot_report_export.log",
+      "sha256": "4c94f895723ea0bf111cf35badc515550ff63bc426c0a21a4ce3dddfa8716753"
+    },
+    {
+      "path": "reports/owner_signoff.md",
+      "sha256": "ec5c51a5484a74f84ce2d6ebaa2967771f9824cb3154147ad6ad895f3136b24c"
+    },
+    {
+      "path": "reports/source_report.md",
+      "sha256": "06d59bf126f030d774a8e6f87b2245426f3caf967d1cb0a8aad864e78c8138dc"
+    }
+  ]
+}

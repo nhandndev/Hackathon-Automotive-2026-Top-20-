@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "event_id": "evt-e03-critical-0001",
+  "idempotency_key": "evt-e03-critical-0001-open-16600",
+  "trip_id": "T02-Sample",
+  "driver_id": "driver_001",
+  "frame_id": 166,
+  "trip_timestamp_ms": 16600,
+  "timestamp_utc": "2026-08-10T00:00:00Z",
+  "status": "open",
+  "alert_type": "collision_risk",
+  "severity": "critical",
+  "confidence": 0.92,
+  "audiences": [
+    "driver_display",
+    "fleet_dashboard"
+  ],
+  "driver_message": "Critical TTC risk. Brake safely.",
+  "evidence": {
+    "driver_state": "microsleep",
+    "speed_kmh": 29,
+    "predicted_ttc_sec": 1.2,
+    "risk_score": 88.0,
+    "safe_driving_score": 12.0,
+    "source": "golden E-03 payload"
+  },
+  "recommended_action": "BRAKE_SAFE",
+  "model_versions": {
+    "risk": "test-contract",
+    "driver_state": "test-contract"
+  }
+}

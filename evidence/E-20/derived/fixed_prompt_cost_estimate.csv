@@ -1,0 +1,4 @@
+label,prompt,input_chars,input_tokens_est,assumed_output_tokens_for_budget,estimated_cost_usd_for_budget
+quick_chat,Xe nào trong fleet đang có rủi ro cao nhất? Trả lời ngắn gọn 2 câu.,67,17,180,0.0003016
+safety_detail,"Bạn là Fleet AI Copilot. Input canonical: trip_id=T02-Sample, report_mode=safety_detail, ranking_score=83.6/100, risk=SAFE, high_risk_frames=4, near_miss=4, harsh_events=8. Trả JSON ngắn với fleet_insight và trip_insights; không bịa số liệu.",241,60,420,0.00072
+maintenance_overview,"Bạn là Fleet Maintenance Validator. Input canonical: 6 trips, report_mode=maintenance_overview, DTC=N/A, estimated_cost=0, work_order=Recommended - not created. Trả JSON ngắn, không invent DTC/cost/downtime.",207,52,420,0.0007136

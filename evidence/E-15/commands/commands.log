@@ -1,0 +1,22 @@
+# E-15 commands - Automated test claim traceability
+
+Generated at UTC: 2026-08-10T03:58:39+00:00
+Commit: 44e6cb32
+
+```bash
+cd SE/BE
+.venv/bin/python -m pytest tests
+.venv/bin/python -m pytest tests --junitxml ../../evidence/E-15/junit/be_pytest.xml
+```
+
+```bash
+cd SE/FE
+npm run lint
+npm run build
+```
+
+```bash
+unzip -p SE/HMI/release/dms-hmi-realtime-vhal.apk classes.dex | strings | rg "DMS_HMI|PERF_VEHICLE_SPEED|CarPropertyManager|SAFE|CRITICAL|TTC|km/h|SAFE SCORE"
+```
+
+Note: `SE/HMI` currently has no Gradle wrapper (`./gradlew` missing in this checkout), so HMI evidence is APK artifact/static scan, not a fresh Gradle test run.

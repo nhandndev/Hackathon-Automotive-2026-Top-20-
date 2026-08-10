@@ -1,0 +1,64 @@
+[
+  {
+    "step": "post_intervention",
+    "status_code": 202,
+    "body": {
+      "accepted": true,
+      "type": "stop",
+      "trip_id": "T02-Sample"
+    }
+  },
+  {
+    "step": "poll_pending_first",
+    "status_code": 200,
+    "body": {
+      "count": 1,
+      "items": [
+        {
+          "type": "stop",
+          "trip_id": "T02-Sample",
+          "message": "Operator requests safety stop review at next safe location",
+          "timestamp_ms": 123456
+        }
+      ]
+    }
+  },
+  {
+    "step": "poll_pending_second_consumed",
+    "status_code": 200,
+    "body": {
+      "count": 0,
+      "items": []
+    }
+  },
+  {
+    "step": "probe_no_vehicle_actuator_endpoint",
+    "path": "/api/v1/vehicle/brake",
+    "status_code": 404,
+    "body": {
+      "code": "HTTP_404",
+      "message": "Not Found",
+      "request_id": "f21bb902-91fb-49c5-ab94-89d029fdb405"
+    }
+  },
+  {
+    "step": "probe_no_vehicle_actuator_endpoint",
+    "path": "/api/v1/vehicle/actuate",
+    "status_code": 404,
+    "body": {
+      "code": "HTTP_404",
+      "message": "Not Found",
+      "request_id": "08b91b35-51a4-4b56-99ef-ea4822aabeb1"
+    }
+  },
+  {
+    "step": "probe_no_vehicle_actuator_endpoint",
+    "path": "/api/v1/alerts/actuate",
+    "status_code": 404,
+    "body": {
+      "code": "HTTP_404",
+      "message": "Not Found",
+      "request_id": "e503ad7e-991b-4318-bc19-4a1a6589bddc"
+    }
+  }
+]

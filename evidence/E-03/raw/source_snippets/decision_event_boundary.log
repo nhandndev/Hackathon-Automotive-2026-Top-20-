@@ -1,0 +1,45 @@
+$ rg -n DecisionEvent|DecisionEventPayload|LiveSnapshotPayload|Idempotency-Key|/alerts|snapshot AI/core/decision_engine/schemas.py SE/BE/app/modules/ai_alerts/router.py SE/BE/tests/test_ai_alerts.py SE/BE/tests/test_contract.py
+
+SE/BE/app/modules/ai_alerts/router.py:25:class DecisionEventPayload(BaseModel):
+SE/BE/app/modules/ai_alerts/router.py:45:class LiveSnapshotPayload(BaseModel):
+SE/BE/app/modules/ai_alerts/router.py:95:router = APIRouter(prefix="/alerts", tags=["AI Decision Alerts"])
+SE/BE/app/modules/ai_alerts/router.py:138:            "latest_snapshot": None,
+SE/BE/app/modules/ai_alerts/router.py:139:            "snapshot_history": deque(maxlen=2400),
+SE/BE/app/modules/ai_alerts/router.py:150:        "snapshot_history": list(session["snapshot_history"]),
+SE/BE/app/modules/ai_alerts/router.py:156:    payload: DecisionEventPayload,
+SE/BE/app/modules/ai_alerts/router.py:158:    idempotency_key: str = Header(alias="Idempotency-Key"),
+SE/BE/app/modules/ai_alerts/router.py:161:        raise HTTPException(status_code=400, detail="Idempotency-Key mismatch")
+SE/BE/app/modules/ai_alerts/router.py:336:@router.post("/snapshot", status_code=status.HTTP_202_ACCEPTED)
+SE/BE/app/modules/ai_alerts/router.py:337:async def receive_live_snapshot(
+SE/BE/app/modules/ai_alerts/router.py:338:    payload: LiveSnapshotPayload,
+SE/BE/app/modules/ai_alerts/router.py:344:    session["latest_snapshot"] = document
+SE/BE/app/modules/ai_alerts/router.py:345:    session["snapshot_history"].append(document)
+SE/BE/app/modules/ai_alerts/router.py:348:    last_carsky_at = float(session.get("last_carsky_snapshot_at") or 0.0)
+SE/BE/app/modules/ai_alerts/router.py:350:        session["last_carsky_snapshot_at"] = now
+SE/BE/app/modules/ai_alerts/router.py:352:            carsky_mapper.map_live_snapshot(document),
+SE/BE/app/modules/ai_alerts/router.py:353:            dedup_key=f"snapshot:{payload.trip_id}:{payload.frame_id}",
+SE/BE/app/modules/ai_alerts/router.py:359:@router.get("/snapshot")
+SE/BE/app/modules/ai_alerts/router.py:360:async def latest_live_snapshot(request: Request, trip_id: str | None = None) -> dict[str, Any]:
+SE/BE/app/modules/ai_alerts/router.py:366:    snapshot = session.get("latest_snapshot") if session is not None else None
+SE/BE/app/modules/ai_alerts/router.py:367:    if snapshot is None:
+SE/BE/app/modules/ai_alerts/router.py:368:        raise HTTPException(status_code=404, detail="No live snapshot for this trip")
+SE/BE/app/modules/ai_alerts/router.py:369:    return snapshot
+SE/BE/tests/test_ai_alerts.py:34:    headers = {"Idempotency-Key": payload["idempotency_key"]}
+SE/BE/tests/test_ai_alerts.py:35:    first = client.post("/api/v1/alerts", json=payload, headers=headers)
+SE/BE/tests/test_ai_alerts.py:36:    second = client.post("/api/v1/alerts", json=payload, headers=headers)
+SE/BE/tests/test_ai_alerts.py:41:    recent = client.get("/api/v1/alerts/recent")
+SE/BE/tests/test_ai_alerts.py:70:    headers = {"Idempotency-Key": payload["idempotency_key"]}
+SE/BE/tests/test_ai_alerts.py:71:    assert client.post("/api/v1/alerts", json=payload, headers=headers).status_code == 202
+SE/BE/tests/test_ai_alerts.py:72:    assert client.post("/api/v1/alerts", json=payload, headers=headers).json()["duplicate"] is True
+SE/BE/tests/test_ai_alerts.py:93:        "/api/v1/alerts/trips/register", json=registration
+SE/BE/tests/test_ai_alerts.py:96:    def snapshot(trip_id: str, frame_id: int) -> dict:
+SE/BE/tests/test_ai_alerts.py:111:        "/api/v1/alerts/snapshot", json=snapshot("T01-Sample", 1)
+SE/BE/tests/test_ai_alerts.py:114:        "/api/v1/alerts/trips/T01-Sample/complete"
+SE/BE/tests/test_ai_alerts.py:117:        "/api/v1/alerts/snapshot", json=snapshot("T02-Sample", 2)
+SE/BE/tests/test_ai_alerts.py:120:    sessions = client.get("/api/v1/alerts/trips").json()["items"]
+SE/BE/tests/test_ai_alerts.py:123:    assert by_id["T01-Sample"]["latest_snapshot"]["frame_id"] == 1
+SE/BE/tests/test_ai_alerts.py:124:    assert len(by_id["T01-Sample"]["snapshot_history"]) == 1
+SE/BE/tests/test_ai_alerts.py:127:        "/api/v1/alerts/snapshot?trip_id=T01-Sample"
+SE/BE/tests/test_ai_alerts.py:131:def test_live_snapshot_is_forwarded_to_carsky(client: TestClient):
+SE/BE/tests/test_ai_alerts.py:147:    response = client.post("/api/v1/alerts/snapshot", json=payload)
+AI/core/decision_engine/schemas.py:104:class DecisionEvent(StrictModel):

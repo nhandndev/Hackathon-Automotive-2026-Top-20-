@@ -1,0 +1,13 @@
+# E-17 commands - Human intervention is not actuation
+
+Generated at UTC: 2026-08-10T04:08:30+00:00
+Commit: 44e6cb3224a58fc0a5d804fc8fab5e233f89e477
+
+```bash
+cd SE/BE
+.venv/bin/python ../../evidence/E-17/raw/e17_intervention_trace_script.py
+```
+
+```bash
+rg -n "interventions|intervention|api/intervention|actuate|RecommendedActionCode|BRAKE ASSIST|ECU|operator presses|stored in memory|pending" SE/BE/app/modules/ai_alerts/router.py SE/BE/app/integrations/carsky/client.py SE/BE/app/integrations/carsky/mapper.py SE/BE/tests/test_carsky.py SE/FE/server.ts SE/FE/src/components/InterventionModal.tsx SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java
+```

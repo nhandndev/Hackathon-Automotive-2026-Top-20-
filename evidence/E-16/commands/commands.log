@@ -1,0 +1,11 @@
+# E-16 commands - Failure handling
+
+Generated at UTC: 2026-08-10T03:58:39+00:00
+Commit: 44e6cb32
+
+```bash
+cd SE/BE
+.venv/bin/python ../../evidence/E-16/raw/e16_fault_trace_script.py
+.venv/bin/python -m pytest tests/test_carsky.py::test_client_does_not_retry_auth_failure tests/test_carsky.py::test_mapper_omits_infinite_ttc_and_preserves_ai_risk
+.venv/bin/python scripts/carsky_phase05.py scenario critical
+```

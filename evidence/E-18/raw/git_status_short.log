@@ -1,0 +1,74 @@
+$ git status --short
+
+ M ../.DS_Store
+ D evidence/Nhan/02_as_is_architecture/source_map.csv
+ D evidence/Nhan/04_event_trace/trace_index.md
+ D evidence/Nhan/12_business_and_market/business_market_plan.md
+ D evidence/Nhan/15_automated_tests/test_commands.md
+ D evidence/Nhan/16_failure_handling/fault_matrix.csv
+ D evidence/Nhan/17_intervention_scope/intervention_scope_statement.md
+ D evidence/Nhan/18_release_packet/release_manifest.json
+ D evidence/Nhan/18_release_packet/release_manifest.sha256
+ D evidence/Nhan/19_copilot_grounding/factuality_label_template.csv
+ D evidence/Nhan/34_safety_privacy/safety_privacy_checklist.md
+ D evidence/Nhan/35_evidence_index/README.md
+ D evidence/Nhan/35_evidence_index/evidence_files.txt
+ D evidence/Nhan/README_NHAN_SELECTED_EVIDENCE_DETAILED.md
+ D evidence/Nhan/README_NHAN_TECH_LEAD_EVIDENCE_PLAN.md
+ D evidence/fleetdashboard_android_hmi/EVIDENCE_SUMMARY.md
+ D evidence/fleetdashboard_android_hmi/FE_CHECKS.md
+ D evidence/fleetdashboard_android_hmi/HMI_APK_ARTIFACTS.md
+ D evidence/fleetdashboard_android_hmi/MANUAL_CAPTURE_TODO.md
+ D evidence/fleetdashboard_android_hmi/SOURCE_MANIFEST.md
+ D evidence/fleetdashboard_android_hmi/SOURCE_SNIPPETS.md
+ D evidence/platform_ai_engineering/README_PLATFORM_AI_ENGINEERING_EVIDENCE.md
+ D evidence/platform_ai_engineering/platform_ai_engineering_evidence.html
+ D evidence/platform_ai_engineering/raw/01_decision_event_schema.txt
+ D evidence/platform_ai_engineering/raw/02_ai_backend_boundary_router.txt
+ D evidence/platform_ai_engineering/raw/03_backend_to_carsky_mapper.txt
+ D evidence/platform_ai_engineering/raw/04_carsky_phase05_script.txt
+ D evidence/platform_ai_engineering/raw/05_copilot_report_api.txt
+ D evidence/platform_ai_engineering/raw/06_copilot_doc_export.txt
+ D evidence/platform_ai_engineering/raw/07_fleet_dashboard_consumers.txt
+ D evidence/platform_ai_engineering/raw/08_contract_docs.txt
+ D evidence/platform_ai_engineering/raw/09_test_source_proves_consumers.txt
+ D evidence/platform_ai_engineering/raw/10_pytest_contract_carsky_alerts.txt
+ D evidence/platform_ai_engineering/raw/11_apk_hmi_artifact.txt
+ D evidence/platform_ai_engineering/screenshots/01_backend_consumer_api_evidence.png
+ D evidence/platform_ai_engineering/screenshots/02_carsky_consumer_mapper_evidence.png
+ D evidence/platform_ai_engineering/screenshots/03_copilot_report_export_evidence.png
+ D evidence/platform_ai_engineering/screenshots/04_tests_apk_artifact_evidence.png
+ D evidence/platform_ai_engineering/screenshots/platform_ai_engineering_evidence_full.png
+ M ../evidence/tasks/TASK_STATUS_INDEX.md
+ M ../evidence/tasks/Task_Nhan.md
+?? ../evidence/E-02/commands/
+?? ../evidence/E-02/derived/
+?? ../evidence/E-02/raw/
+?? ../evidence/E-02/reports/
+?? ../evidence/E-03/commands/
+?? ../evidence/E-03/derived/
+?? ../evidence/E-03/golden_payloads/
+?? ../evidence/E-03/raw/
+?? ../evidence/E-03/reports/
+?? ../evidence/E-04/commands/
+?? ../evidence/E-04/derived/
+?? ../evidence/E-04/raw/
+?? ../evidence/E-04/reports/
+?? ../evidence/E-14/commands/
+?? ../evidence/E-14/derived/
+?? ../evidence/E-14/raw/
+?? ../evidence/E-14/reports/
+?? ../evidence/E-15/commands/
+?? ../evidence/E-15/derived/
+?? ../evidence/E-15/junit/
+?? ../evidence/E-15/raw/
+?? ../evidence/E-15/reports/
+?? ../evidence/E-16/commands/
+?? ../evidence/E-16/derived/
+?? ../evidence/E-16/raw/
+?? ../evidence/E-16/reports/
+?? ../evidence/E-16/screenshots/
+?? ../evidence/E-17/commands/
+?? ../evidence/E-17/derived/
+?? ../evidence/E-17/raw/
+?? ../evidence/E-17/reports/

@@ -1,0 +1,79 @@
+{
+  "evidence_id": "E-16",
+  "title": "Failure handling demonstrated",
+  "generated_at_utc": "2026-08-10T04:03:15+00:00",
+  "repo_commit": "44e6cb32",
+  "status": "PARTIAL / API, CARSKY, FALLBACK SOURCES VERIFIED; UI SCREENSHOT CAPTURED",
+  "files": [
+    {
+      "path": "E-16/commands/commands.log",
+      "sha256": "b1ba9cac67888ed97ba0cda0bdb267f89254c952328ebebd701db485a9749046",
+      "bytes": 411
+    },
+    {
+      "path": "E-16/derived/fault_matrix.csv",
+      "sha256": "fa4c67e729c1ee841f0e8ef183666c6b9415af3bd5e676784ce9fb42485d082c",
+      "bytes": 1238
+    },
+    {
+      "path": "E-16/derived/fault_matrix.json",
+      "sha256": "44692eec112d9cd3aed9a26d5e49cd0f4122e9a42b4f8a16a7effdb55e8c4f17",
+      "bytes": 2031
+    },
+    {
+      "path": "E-16/derived/manifest.json",
+      "sha256": "2c5be445b921db057ca1c652414cef0fd94255f3bcd4775597468fce8ae0baeb",
+      "bytes": 2638
+    },
+    {
+      "path": "E-16/raw/carsky_failure_tests.log",
+      "sha256": "a520266ba492ed822e43b8eb04d5ac63b5a59c9effe3a05ad7802f2d1fa6c472",
+      "bytes": 1338
+    },
+    {
+      "path": "E-16/raw/carsky_runtime_fallback_command.json",
+      "sha256": "4489a5bcb5fe111559fa0004f8bd27a12521cd892ad6955632557a2cf88211bd",
+      "bytes": 877
+    },
+    {
+      "path": "E-16/raw/e16_fault_trace_script.py",
+      "sha256": "c09e58d825cb286a1f18e38ae1117b7082fce2668a4b5e9a18108e0ff1e2d4af",
+      "bytes": 2187
+    },
+    {
+      "path": "E-16/raw/failure_trace.jsonl",
+      "sha256": "4e434de15ede300800c749e69269924caba42df7267d66e9804085cfda09474a",
+      "bytes": 2303
+    },
+    {
+      "path": "E-16/raw/fe_screenshot_server.log",
+      "sha256": "514d83f52e7f7753be69937ca8214ef789236f5699166e793793826871c82d3e",
+      "bytes": 231
+    },
+    {
+      "path": "E-16/raw/source_snippets/failure_handling_sources.log",
+      "sha256": "5a15fed7f664187cf779b2f59306f112260aa69e1b17fef7ed789c43a2208a51",
+      "bytes": 16957
+    },
+    {
+      "path": "E-16/raw/ui_screenshot_attempt.json",
+      "sha256": "ed6286677755afc976da89cc55aa705dfb2c642df12f3899d4af0df57ecdae8b",
+      "bytes": 893
+    },
+    {
+      "path": "E-16/reports/source_report.md",
+      "sha256": "dee19349ecd121c42c3630b925b9fc7679450007e34b190f9584f83f8dd87654",
+      "bytes": 1302
+    },
+    {
+      "path": "E-16/screenshots/copilot_report_fallback.png",
+      "sha256": "11a008ddb4a5546bb17a22a7f0e79be9ff2b9bcee761452aaf1496453a7a7163",
+      "bytes": 153380
+    },
+    {
+      "path": "E-16/screenshots/trip_detail_saved_offline.png",
+      "sha256": "b941a1d6be0a69ba864abca53da56d2a5ddd95085df64fe97240da674c73b9b9",
+      "bytes": 46226
+    }
+  ]
+}

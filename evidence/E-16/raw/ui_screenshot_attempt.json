@@ -1,0 +1,21 @@
+[
+  {
+    "server_started": true
+  },
+  {
+    "name": "trip_detail_saved_offline",
+    "url": "http://127.0.0.1:3016/?view=TRIP_DETAIL&trip_id=T02-Sample",
+    "returncode": 0,
+    "exists": true,
+    "bytes": 46226,
+    "stderr_tail": "Trying to load the allocator multiple times. This is *not* supported.\n46226 bytes written to file /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/evidence/E-16/screenshots/trip_detail_saved_offline.png\n"
+  },
+  {
+    "name": "copilot_report_fallback",
+    "url": "http://127.0.0.1:3016/?view=copilot-report&type=safety&trip_ids=T02-Sample",
+    "returncode": 0,
+    "exists": true,
+    "bytes": 153380,
+    "stderr_tail": "Trying to load the allocator multiple times. This is *not* supported.\n153380 bytes written to file /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/evidence/E-16/screenshots/copilot_report_fallback.png\n"
+  }
+]

@@ -1,0 +1,11 @@
+# E-18 commands - Release packet immutable
+
+Generated at UTC: 2026-08-10T04:08:30+00:00
+Commit: 44e6cb3224a58fc0a5d804fc8fab5e233f89e477
+
+```bash
+git rev-parse HEAD
+git status --short
+git log -1 --pretty=fuller
+python <generate release manifest and sha256>
+```

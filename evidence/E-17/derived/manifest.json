@@ -1,0 +1,44 @@
+{
+  "evidence_id": "E-17",
+  "title": "Human intervention is not actuation",
+  "generated_at_utc": "2026-08-10T04:08:30+00:00",
+  "repo_commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "status": "DONE / HUMAN INTERVENTION WORKFLOW VERIFIED; NO BACKEND VEHICLE ACTUATOR API FOUND",
+  "files": [
+    {
+      "path": "E-17/commands/commands.log",
+      "sha256": "d079cf260d3a18f401c8286b88f5a229bbf466ecb69f568c80c235a985071ddd",
+      "bytes": 660
+    },
+    {
+      "path": "E-17/derived/intervention_trace_summary.json",
+      "sha256": "6811671290cc2d1a5653dd94ab11895636b2e4116cae2898a81f13214188d949",
+      "bytes": 1393
+    },
+    {
+      "path": "E-17/raw/e17_intervention_trace_script.py",
+      "sha256": "c4660909823be652992e375c9cdf0e1d1f3b5813df3f9ce4845a394c28956b09",
+      "bytes": 1601
+    },
+    {
+      "path": "E-17/raw/intervention_trace.jsonl",
+      "sha256": "ca015f1f955dc0ce801c458b23d8f9693671904ff17efbd12ccc1b2a7c04bae0",
+      "bytes": 1922
+    },
+    {
+      "path": "E-17/raw/source_snippets/intervention_scope_sources.log",
+      "sha256": "8dcab4e79ab0e32aae52f1ceeb69cc4b56e0dce395b451032a5739a25247dfa2",
+      "bytes": 4466
+    },
+    {
+      "path": "E-17/reports/intervention_scope_statement.md",
+      "sha256": "ba027483782bd6e8d04630c44321c502566513fec92267a9d0fdf39e2111fe8d",
+      "bytes": 868
+    },
+    {
+      "path": "E-17/reports/source_report.md",
+      "sha256": "579fba3b6f1bca076b60e6be7b8550612ad809b4c349d32543ef758316589082",
+      "bytes": 1018
+    }
+  ]
+}

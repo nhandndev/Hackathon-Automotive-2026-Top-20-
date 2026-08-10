@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-08-10T04:23:54Z",
+  "commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "status": "PARTIAL_OFFLINE_FAILURE_AND_COST_BUDGET_EVIDENCE_NO_EXTERNAL_BEDROCK_CALL",
+  "external_bedrock_calls": 0,
+  "reason_no_external_call": "External Bedrock probe was not executed to avoid unapproved egress of project prompts/data and credentials.",
+  "fixed_prompt_count": 3,
+  "provider_down_simulation_runs": 3,
+  "provider_down_failures_captured": 3,
+  "source_checks_found": 6,
+  "source_checks_total": 15
+}

@@ -1,0 +1,3 @@
+$ test -f SE/FE/package-lock.json
+
+returncode=0

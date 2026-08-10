@@ -1,3 +1,0 @@
-case_id,prompt,report_type,trip_ids,raw_output_file,numeric_consistency,unsupported_claim,wrong_trip_context,fallback_correct,reviewer_note,status
-example_001,TBD,safety_detail,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD
-

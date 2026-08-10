@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-08-10T04:23:54Z",
+  "commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "status": "NOT_EXECUTED_NO_REVIEW_TIME_IMPROVEMENT_CLAIM",
+  "claim_policy": "Do not claim Copilot review-time improvement without measured baseline task time, assisted task time, participants/repetitions, and statistical summary.",
+  "observed_evidence": [],
+  "required_before_claim": [
+    "manual baseline timing protocol",
+    "Copilot-assisted timing protocol",
+    "same task set",
+    "operator/reviewer labels",
+    "raw timing logs",
+    "summary statistics"
+  ]
+}

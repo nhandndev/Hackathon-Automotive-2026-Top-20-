@@ -1,0 +1,9 @@
+fault,observed_status,safe_state,evidence,status
+malformed_decision_event_missing_event_id,422,rejected; no accepted alert fabricated,raw/failure_trace.jsonl,VERIFIED
+idempotency_key_mismatch,400,rejected before store/broadcast,raw/failure_trace.jsonl,VERIFIED
+missing_live_snapshot,404,404; frontend can fall back to saved frame/offline state,raw/failure_trace.jsonl,VERIFIED
+recovery_valid_event_after_errors,202,accepted after rejected errors,raw/failure_trace.jsonl,VERIFIED
+CarSky auth failure,pytest selected tests pass=True,client does not retry auth failure; mapper preserves finite AI values,raw/carsky_failure_tests.log,VERIFIED
+CarSky custom paths unavailable,runtime ok=True mode=vehicle-speed-mux,falls back to Vehicle.Speed speed-mux instead of blocking Backend,raw/carsky_runtime_fallback_command.json,VERIFIED
+Bedrock unavailable/invalid,source-level fallback contract,UI/server returns JSON/local baseline and does not display fake insight,raw/source_snippets/failure_handling_sources.log,SOURCE VERIFIED
+Camera/live snapshot offline,source-level offline/saved state; screenshots attempted,Trip UI falls back to saved frame/offline camera labels,screenshots/ + raw/ui_screenshot_attempt.json,SCREENSHOT VERIFIED

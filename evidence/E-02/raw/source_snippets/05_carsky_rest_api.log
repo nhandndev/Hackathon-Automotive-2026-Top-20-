@@ -1,0 +1,21 @@
+$ grep -RInE 'actuate|/api/v1/signals|vehicle-speed-mux|Authorization|Bearer|enqueue' SE/BE/app/integrations/carsky SE/BE/tests/test_carsky.py
+
+SE/BE/app/integrations/carsky/service.py:48:    async def enqueue(
+SE/BE/app/integrations/carsky/service.py:102:                await self.client.actuate(delivery.payload)
+SE/BE/app/integrations/carsky/mapper.py:209:            "transport": "vehicle-speed-mux",
+SE/BE/app/integrations/carsky/client.py:32:        header = "Authorization" if auth_mode == "bearer" else "X-API-Key"
+SE/BE/app/integrations/carsky/client.py:33:        value = f"Bearer {api_key}" if auth_mode == "bearer" else api_key
+SE/BE/app/integrations/carsky/client.py:42:        return f"{self.base_url}/api/v1/signals/{self.room_id}/{self.node_key}"
+SE/BE/app/integrations/carsky/client.py:52:    async def actuate(self, payload: dict[str, Any]) -> Any:
+SE/BE/app/integrations/carsky/client.py:56:            and payload.get("transport") == "vehicle-speed-mux"
+SE/BE/app/integrations/carsky/client.py:61:                responses.append(await self._post_actuate({"signals": [signal]}))
+SE/BE/app/integrations/carsky/client.py:67:                responses.append(await self._post_actuate({"signals": [signal]}))
+SE/BE/app/integrations/carsky/client.py:70:                responses.append(await self._post_actuate({"signals": [signal]}))
+SE/BE/app/integrations/carsky/client.py:73:        return await self._post_actuate(payload)
+SE/BE/app/integrations/carsky/client.py:75:    async def _post_actuate(self, payload: dict[str, Any]) -> Any:
+SE/BE/app/integrations/carsky/client.py:79:                response = await self._client.post(f"{self.signal_url}/actuate", json=payload)
+SE/BE/tests/test_carsky.py:110:        assert request.url.path == "/api/v1/signals/room-1/node-1/actuate"
+SE/BE/tests/test_carsky.py:111:        assert request.headers["Authorization"] == "Bearer secret"
+SE/BE/tests/test_carsky.py:123:        assert await client.actuate({"signals": [{"path": "x", "value": 1}]}) == {"ok": True}
+SE/BE/tests/test_carsky.py:147:            await client.actuate({"signals": []})
+SE/BE/tests/test_carsky.py:171:        accepted = await publisher.enqueue(

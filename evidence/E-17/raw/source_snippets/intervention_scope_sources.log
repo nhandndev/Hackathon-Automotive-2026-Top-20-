@@ -1,0 +1,42 @@
+$ rg -n interventions|intervention|api/intervention|actuate|RecommendedActionCode|BRAKE ASSIST|ECU|operator presses|stored in memory|pending SE/BE/app/modules/ai_alerts/router.py SE/BE/app/integrations/carsky/client.py SE/BE/app/integrations/carsky/mapper.py SE/BE/tests/test_carsky.py SE/FE/server.ts SE/FE/src/components/InterventionModal.tsx SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java
+
+SE/BE/tests/test_carsky.py:110:        assert request.url.path == "/api/v1/signals/room-1/node-1/actuate"
+SE/BE/tests/test_carsky.py:123:        assert await client.actuate({"signals": [{"path": "x", "value": 1}]}) == {"ok": True}
+SE/BE/tests/test_carsky.py:147:            await client.actuate({"signals": []})
+SE/FE/src/components/InterventionModal.tsx:35:      const response = await fetch('/api/intervention', {
+SE/FE/src/components/InterventionModal.tsx:51:      console.warn('[intervention] POST failed:', err);
+SE/BE/app/modules/ai_alerts/router.py:136:            "status": "pending",
+SE/BE/app/modules/ai_alerts/router.py:397:def _intervention_store(request: Request) -> deque:
+SE/BE/app/modules/ai_alerts/router.py:398:    if not hasattr(request.app.state, "intervention_commands"):
+SE/BE/app/modules/ai_alerts/router.py:399:        request.app.state.intervention_commands = deque(maxlen=50)
+SE/BE/app/modules/ai_alerts/router.py:400:    return request.app.state.intervention_commands
+SE/BE/app/modules/ai_alerts/router.py:403:@router.post("/interventions", status_code=status.HTTP_202_ACCEPTED)
+SE/BE/app/modules/ai_alerts/router.py:404:async def receive_intervention(
+SE/BE/app/modules/ai_alerts/router.py:409:    Called by the React Fleet Dashboard when an operator presses one of the
+SE/BE/app/modules/ai_alerts/router.py:410:    three intervention buttons (alarm / stop / call).  The command is stored
+SE/BE/app/modules/ai_alerts/router.py:411:    in memory; the Python AI desktop script polls GET /interventions/pending
+SE/BE/app/modules/ai_alerts/router.py:414:    store = _intervention_store(request)
+SE/BE/app/modules/ai_alerts/router.py:426:@router.get("/interventions/pending")
+SE/BE/app/modules/ai_alerts/router.py:427:async def pending_interventions(
+SE/BE/app/modules/ai_alerts/router.py:433:    to discover unconsumed intervention commands. Marks them consumed on read.
+SE/BE/app/modules/ai_alerts/router.py:435:    store = _intervention_store(request)
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:171:        ecuValue = addMetric(rightCard, "ECU REACTION", "STANDBY", 20);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:614:        if ("CRITICAL".equals(severity)) return "BRAKE ASSIST REQUESTED";
+SE/BE/app/integrations/carsky/client.py:52:    async def actuate(self, payload: dict[str, Any]) -> Any:
+SE/BE/app/integrations/carsky/client.py:61:                responses.append(await self._post_actuate({"signals": [signal]}))
+SE/BE/app/integrations/carsky/client.py:67:                responses.append(await self._post_actuate({"signals": [signal]}))
+SE/BE/app/integrations/carsky/client.py:70:                responses.append(await self._post_actuate({"signals": [signal]}))
+SE/BE/app/integrations/carsky/client.py:73:        return await self._post_actuate(payload)
+SE/BE/app/integrations/carsky/client.py:75:    async def _post_actuate(self, payload: dict[str, Any]) -> Any:
+SE/BE/app/integrations/carsky/client.py:79:                response = await self._client.post(f"{self.signal_url}/actuate", json=payload)
+SE/BE/app/integrations/carsky/client.py:100:            or "Vehicle.ADAS.RecommendedActionCode" in paths
+SE/BE/app/integrations/carsky/client.py:109:            "Vehicle.ADAS.RecommendedActionCode",
+SE/BE/app/integrations/carsky/mapper.py:43:    recommended_action: str = "Vehicle.ADAS.RecommendedActionCode"
+SE/FE/server.ts:45:  runtime_status?: "pending" | "running" | "completed";
+SE/FE/server.ts:158:  ai_status: "validated" | "unavailable" | "pending";
+SE/FE/server.ts:392:    ai_status: "pending",
+SE/FE/server.ts:1120:app.post("/api/intervention", async (req, res) => {
+SE/FE/server.ts:1132:    const response = await fetch(`${PYTHON_BE}/api/v1/alerts/interventions`, {
+SE/FE/server.ts:1145:      console.warn(`[intervention] Python BE returned ${response.status}:`, data);
+SE/FE/server.ts:1149:    console.warn("[intervention] Python BE offline; command was not delivered:", err);
+SE/FE/server.ts:1152:      error: "Python AI backend is offline; intervention command was not delivered",

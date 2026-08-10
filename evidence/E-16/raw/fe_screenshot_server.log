@@ -1,0 +1,6 @@
+STDOUT:
+◇ injected env (12) from ../BE/.env // tip: ◈ secrets for agents [www.dotenvx.com]
+10:58:54 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
+Server is running on http://127.0.0.1:3016
+
+STDERR:

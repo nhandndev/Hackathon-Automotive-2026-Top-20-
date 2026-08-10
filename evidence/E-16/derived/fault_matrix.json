@@ -1,0 +1,58 @@
+[
+  {
+    "fault": "malformed_decision_event_missing_event_id",
+    "observed_status": 422,
+    "safe_state": "rejected; no accepted alert fabricated",
+    "evidence": "raw/failure_trace.jsonl",
+    "status": "VERIFIED"
+  },
+  {
+    "fault": "idempotency_key_mismatch",
+    "observed_status": 400,
+    "safe_state": "rejected before store/broadcast",
+    "evidence": "raw/failure_trace.jsonl",
+    "status": "VERIFIED"
+  },
+  {
+    "fault": "missing_live_snapshot",
+    "observed_status": 404,
+    "safe_state": "404; frontend can fall back to saved frame/offline state",
+    "evidence": "raw/failure_trace.jsonl",
+    "status": "VERIFIED"
+  },
+  {
+    "fault": "recovery_valid_event_after_errors",
+    "observed_status": 202,
+    "safe_state": "accepted after rejected errors",
+    "evidence": "raw/failure_trace.jsonl",
+    "status": "VERIFIED"
+  },
+  {
+    "fault": "CarSky auth failure",
+    "observed_status": "pytest selected tests pass=True",
+    "safe_state": "client does not retry auth failure; mapper preserves finite AI values",
+    "evidence": "raw/carsky_failure_tests.log",
+    "status": "VERIFIED"
+  },
+  {
+    "fault": "CarSky custom paths unavailable",
+    "observed_status": "runtime ok=True mode=vehicle-speed-mux",
+    "safe_state": "falls back to Vehicle.Speed speed-mux instead of blocking Backend",
+    "evidence": "raw/carsky_runtime_fallback_command.json",
+    "status": "VERIFIED"
+  },
+  {
+    "fault": "Bedrock unavailable/invalid",
+    "observed_status": "source-level fallback contract",
+    "safe_state": "UI/server returns JSON/local baseline and does not display fake insight",
+    "evidence": "raw/source_snippets/failure_handling_sources.log",
+    "status": "SOURCE VERIFIED"
+  },
+  {
+    "fault": "Camera/live snapshot offline",
+    "observed_status": "source-level offline/saved state; screenshots attempted",
+    "safe_state": "Trip UI falls back to saved frame/offline camera labels",
+    "evidence": "screenshots/ + raw/ui_screenshot_attempt.json",
+    "status": "SCREENSHOT VERIFIED"
+  }
+]

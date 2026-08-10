@@ -1,0 +1,13 @@
+$ sh -c unzip -p SE/HMI/release/dms-hmi-realtime-vhal.apk classes.dex | strings | rg 'DMS_HMI|PERF_VEHICLE_SPEED|CarPropertyManager|SAFE|CRITICAL|TTC|km/h|SAFE SCORE'
+
+�  TTC %.1fs
+,%.0f km/h     Risk %.0f     Alertness %.0f%%
+$-- km/h     Risk --     Alertness --
+BRAKE_SAFE
+CRITICAL
+DMS_HMI
+PERF_VEHICLE_SPEED
+PROP_CRITICAL_ALERT
+PROP_MIN_TTC
+SAFE
+Iandroid.car.hardware.property.CarPropertyManager$CarPropertyEventCallback

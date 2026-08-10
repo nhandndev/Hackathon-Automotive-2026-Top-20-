@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "trip_id": "T02-Sample",
+  "frame_id": 166,
+  "trip_timestamp_ms": 16600,
+  "speed_kmh": 29.0,
+  "predicted_ttc_sec": 1.2,
+  "risk_score": 88.0,
+  "safe_driving_score": 12.0,
+  "driver_state": "microsleep",
+  "driver_confidence": 0.9,
+  "alertness_score": 0.15
+}

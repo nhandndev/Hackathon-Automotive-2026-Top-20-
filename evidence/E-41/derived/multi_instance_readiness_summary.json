@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-08-10T04:18:19.948323+00:00",
+  "commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "status": "ASSESSED_NOT_READY_FOR_MULTI_INSTANCE",
+  "reason": "Backend live alert/trip/intervention stores and FE Copilot cache/inflight are process-local. No durable outbox/external shared store is implemented in the verified path.",
+  "required_before_done": [
+    "durable external store for alerts/trips/snapshots/interventions",
+    "shared queue/outbox for CarSky delivery",
+    "cross-instance idempotency store",
+    "load-balanced websocket/session strategy",
+    "multi-instance test"
+  ]
+}

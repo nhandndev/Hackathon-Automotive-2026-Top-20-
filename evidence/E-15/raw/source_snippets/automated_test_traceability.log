@@ -1,0 +1,50 @@
+$ rg -n test_|pytest|npm run lint|npm run build|DMS_HMI|PERF_VEHICLE_SPEED|CarPropertyManager|dms-hmi-realtime-vhal.apk SE/BE/tests/test_ai_alerts.py SE/BE/tests/test_carsky.py SE/BE/tests/test_contract.py SE/BE/tests/test_config.py SE/BE/tests/test_health.py SE/FE/package.json SE/HMI/README.md SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java
+
+SE/BE/tests/test_contract.py:4:import pytest
+SE/BE/tests/test_contract.py:10:def test_ai_payload_round_trip_preserves_source_fields(sample_ai_payload):
+SE/BE/tests/test_contract.py:24:def test_mismatched_trip_ids_are_rejected(sample_ai_payload):
+SE/BE/tests/test_contract.py:26:    with pytest.raises(ValidationError):
+SE/BE/tests/test_contract.py:30:@pytest.mark.parametrize(
+SE/BE/tests/test_contract.py:41:def test_invalid_ai_values_are_rejected(sample_ai_payload, field_path, invalid_value):
+SE/BE/tests/test_contract.py:47:    with pytest.raises(ValidationError):
+SE/BE/tests/test_config.py:1:import pytest
+SE/BE/tests/test_config.py:7:def test_environment_overrides_and_comma_separated_cors(monkeypatch, tmp_path):
+SE/BE/tests/test_config.py:20:def test_wildcard_cors_is_rejected():
+SE/BE/tests/test_config.py:21:    with pytest.raises(ValidationError):
+SE/BE/tests/test_health.py:7:def test_health_is_public_and_matches_contract(app_factory):
+SE/BE/tests/test_health.py:22:def test_ready_returns_503_for_empty_cache(app_factory):
+SE/BE/tests/test_health.py:33:def test_ready_returns_200_for_all_expected_trips(app_factory):
+SE/BE/tests/test_health.py:44:def test_external_api_mode_requires_outbound_credentials(app_factory):
+SE/BE/tests/test_health.py:54:def test_openapi_has_no_authentication_scheme(app_factory):
+SE/BE/tests/test_health.py:64:def test_request_id_is_preserved_on_errors(app_factory):
+SE/BE/tests/test_health.py:78:def test_invalid_query_uses_common_422_error_contract(app_factory):
+SE/BE/tests/test_health.py:88:def test_missing_trip_uses_common_404_error_contract(app_factory, monkeypatch, tmp_path):
+SE/BE/tests/test_health.py:100:def test_cors_preflight_allows_local_frontend(app_factory):
+SE/BE/tests/test_health.py:115:def test_cors_preflight_allows_product_dashboard(app_factory):
+SE/HMI/README.md:9:AI DecisionEvent → Backend → CarSky/KUKSA → Lua bridge → VHAL PERF_VEHICLE_SPEED multiplex → Android HMI
+SE/HMI/README.md:58:release/dms-hmi-realtime-vhal.apk
+SE/BE/tests/test_ai_alerts.py:16:def test_ai_alert_is_idempotent(client: TestClient):
+SE/BE/tests/test_ai_alerts.py:46:def test_driver_alert_is_forwarded_to_carsky_once(client: TestClient):
+SE/BE/tests/test_ai_alerts.py:85:def test_live_trip_registry_keeps_completed_trip_history(client: TestClient):
+SE/BE/tests/test_ai_alerts.py:123:    assert by_id["T01-Sample"]["latest_snapshot"]["frame_id"] == 1
+SE/BE/tests/test_ai_alerts.py:131:def test_live_snapshot_is_forwarded_to_carsky(client: TestClient):
+SE/BE/tests/test_carsky.py:6:import pytest
+SE/BE/tests/test_carsky.py:18:def test_decision_event_maps_without_recomputing_ai_severity():
+SE/BE/tests/test_carsky.py:88:def test_mapper_omits_infinite_ttc_and_preserves_ai_risk() -> None:
+SE/BE/tests/test_carsky.py:107:@pytest.mark.asyncio
+SE/BE/tests/test_carsky.py:108:async def test_client_uses_bearer_and_expected_path() -> None:
+SE/BE/tests/test_carsky.py:128:@pytest.mark.asyncio
+SE/BE/tests/test_carsky.py:129:async def test_client_does_not_retry_auth_failure() -> None:
+SE/BE/tests/test_carsky.py:146:        with pytest.raises(CarSkyDeliveryError):
+SE/BE/tests/test_carsky.py:153:@pytest.mark.asyncio
+SE/BE/tests/test_carsky.py:154:async def test_publisher_delivers_without_blocking_producer() -> None:
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:27: * Backend/AI -> CarSky KUKSA -> dms_hmi_bridge.lua -> VHAL PERF_VEHICLE_SPEED
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:31: * The CarSky AAOS image currently exposes PERF_VEHICLE_SPEED reliably, while
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:37:    private static final String TAG = "DMS_HMI";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:39:    private static final int PERF_VEHICLE_SPEED = 291504647; // 0x11600207
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:49:            PERF_VEHICLE_SPEED
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:326:        Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:367:                // Android AAOS CarPropertyManager callback already passes CarPropertyValue.
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:370:            int propId = PERF_VEHICLE_SPEED;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:395:            if (propId == PERF_VEHICLE_SPEED) {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:670:            Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");

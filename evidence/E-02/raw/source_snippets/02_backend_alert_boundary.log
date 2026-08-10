@@ -1,0 +1,51 @@
+$ nl -ba SE/BE/app/modules/ai_alerts/router.py | sed -n '25,45p;154,181p'
+
+    25	class DecisionEventPayload(BaseModel):
+    26	    model_config = ConfigDict(extra="allow")
+    27	
+    28	    schema_version: Literal["1.0"] = "1.0"
+    29	    event_id: str = Field(min_length=1)
+    30	    idempotency_key: str = Field(min_length=1)
+    31	    trip_id: str = Field(min_length=1)
+    32	    driver_id: str | None = None
+    33	    frame_id: int = Field(ge=0)
+    34	    trip_timestamp_ms: int = Field(ge=0)
+    35	    timestamp_utc: datetime
+    36	    status: Literal["open", "update", "resolved"]
+    37	    alert_type: str = Field(min_length=1)
+    38	    severity: Literal["info", "warning", "critical"]
+    39	    confidence: float = Field(ge=0, le=1)
+    40	    audiences: list[Literal["driver_display", "fleet_dashboard"]]
+    41	    evidence: dict[str, Any] = Field(default_factory=dict)
+    42	    recommended_action: str = Field(min_length=1)
+    43	
+    44	
+    45	class LiveSnapshotPayload(BaseModel):
+   154	@router.post("", status_code=status.HTTP_202_ACCEPTED)
+   155	async def receive_alert(
+   156	    payload: DecisionEventPayload,
+   157	    request: Request,
+   158	    idempotency_key: str = Header(alias="Idempotency-Key"),
+   159	) -> dict[str, Any]:
+   160	    if idempotency_key != payload.idempotency_key:
+   161	        raise HTTPException(status_code=400, detail="Idempotency-Key mismatch")
+   162	    alerts, keys = _store(request)
+   163	    duplicate = idempotency_key in keys
+   164	    if not duplicate:
+   165	        document = payload.model_dump(mode="json")
+   166	        _ensure_trip(request, payload.trip_id)
+   167	        alerts.append(document)
+   168	        keys.add(idempotency_key)
+   169	        await _broadcast(document)
+   170	        publisher = getattr(request.app.state, "carsky_publisher", None)
+   171	        if publisher is not None and "driver_display" in payload.audiences:
+   172	            await publisher.enqueue(
+   173	                carsky_mapper.map_decision_event(document),
+   174	                dedup_key=payload.idempotency_key,
+   175	                kind=DeliveryKind.TRANSITION,
+   176	            )
+   177	    return {
+   178	        "accepted": True,
+   179	        "duplicate": duplicate,
+   180	        "event_id": payload.event_id,
+   181	    }

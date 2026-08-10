@@ -1,0 +1,25 @@
+SE/FE/server.ts:22: const BE_ENV_PATH = path.resolve(process.cwd(), "../BE/.env");
+SE/FE/server.ts:23: dotenv.config({ path: BE_ENV_PATH, override: true });
+SE/FE/server.ts:158:   ai_status: "validated" | "unavailable" | "pending";
+SE/FE/server.ts:170: const reportInsightCache = new Map<string, { expiresAt: number; payload: CopilotInsightPayload }>();
+SE/FE/server.ts:171: const reportInsightInflight = new Map<string, Promise<CopilotInsightPayload>>();
+SE/FE/server.ts:251: function reportPromptContract(reportMode?: string) {
+SE/FE/server.ts:337: function validateBedrockInsight(parsed: any, trips: CopilotTripInput[], mode?: string) {
+SE/FE/server.ts:375:     ai_status: "unavailable",
+SE/FE/server.ts:392:     ai_status: "pending",
+SE/FE/server.ts:419:   const timeoutSignal = AbortSignal.timeout(timeoutMs);
+SE/FE/server.ts:953:       ai_status: "unavailable",
+SE/FE/server.ts:971:   const cached = reportInsightCache.get(cacheKey);
+SE/FE/server.ts:984:   const inflight = reportInsightInflight.get(cacheKey);
+SE/FE/server.ts:1028:       ...reportPromptContract(reportMode),
+SE/FE/server.ts:1048:       validateBedrockInsight(parsed, trips, reportMode);
+SE/FE/server.ts:1063:         ai_status: "validated",
+SE/FE/server.ts:1090:   reportInsightInflight.set(cacheKey, requestPromise);
+SE/FE/server.ts:1093:     if (payload.ai_status === "validated" || payload.ai_status === "unavailable") {
+SE/FE/server.ts:1094:       reportInsightCache.set(cacheKey, {
+SE/FE/server.ts:1095:         expiresAt: Date.now() + (payload.ai_status === "validated" ? REPORT_INSIGHT_CACHE_TTL_MS : REPORT_UNAVAILABLE_CACHE_TTL_MS),
+SE/FE/server.ts:1100:     reportInsightInflight.delete(cacheKey);
+SE/FE/server.ts:1105:   if (foregroundResult.ai_status === "validated") {
+SE/FE/server.ts:1106:     reportInsightCache.set(cacheKey, {
+SE/FE/server.ts:1110:     reportInsightInflight.delete(cacheKey);
+SE/FE/server.ts:1141:       signal: AbortSignal.timeout(3000),

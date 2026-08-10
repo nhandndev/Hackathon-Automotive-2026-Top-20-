@@ -1,0 +1,1 @@
+SE/BE/docs/README.md:70: database/outbox trước production nhưng phải giữ nguyên schema, event lifecycle

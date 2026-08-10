@@ -1,0 +1,12 @@
+{"ts": "2026-08-10T04:20:03.895270+00:00", "frame_id": 0, "status_code": 202, "latency_ms": 12.802, "rss_mb": 93.81}
+{"ts": "2026-08-10T04:20:03.996733+00:00", "frame_id": 100, "status_code": 202, "latency_ms": 0.881, "rss_mb": 94.28}
+{"ts": "2026-08-10T04:20:04.094823+00:00", "frame_id": 200, "status_code": 202, "latency_ms": 0.83, "rss_mb": 94.53}
+{"ts": "2026-08-10T04:20:04.189005+00:00", "frame_id": 300, "status_code": 202, "latency_ms": 0.949, "rss_mb": 94.72}
+{"ts": "2026-08-10T04:20:04.283339+00:00", "frame_id": 400, "status_code": 202, "latency_ms": 1.187, "rss_mb": 94.84}
+{"ts": "2026-08-10T04:20:04.383977+00:00", "frame_id": 500, "status_code": 202, "latency_ms": 1.316, "rss_mb": 95.06}
+{"ts": "2026-08-10T04:20:04.479221+00:00", "frame_id": 600, "status_code": 202, "latency_ms": 0.837, "rss_mb": 95.2}
+{"ts": "2026-08-10T04:20:04.572625+00:00", "frame_id": 700, "status_code": 202, "latency_ms": 0.95, "rss_mb": 95.34}
+{"ts": "2026-08-10T04:20:04.667054+00:00", "frame_id": 800, "status_code": 202, "latency_ms": 1.334, "rss_mb": 95.59}
+{"ts": "2026-08-10T04:20:04.761716+00:00", "frame_id": 900, "status_code": 202, "latency_ms": 0.908, "rss_mb": 95.77}
+{"ts": "2026-08-10T04:20:04.866399+00:00", "frame_id": 1000, "status_code": 202, "latency_ms": 1.156, "rss_mb": 95.92}
+{"ts": "2026-08-10T04:20:04.960721+00:00", "frame_id": 1100, "status_code": 202, "latency_ms": 0.899, "rss_mb": 96.09}

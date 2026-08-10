@@ -3,9 +3,9 @@
 | ID | Primary owner | Supporting | Status | Hành động còn lại |
 |---|---|---|---|---|
 | E-01 | Hùng | Tâm | PARTIAL | Đóng frozen `evaluation_bundle.zip`; bổ sung checksum và clean-run verification. |
-| E-02 | Nhân | Hùng | OPEN | Tạo AS-IS architecture và source map có sign-off. |
-| E-03 | Nhân | Hùng | OPEN | Export schema, golden payloads và API trace valid/invalid. |
-| E-04 | Nhân | Hùng, Thiện, Dân | OPEN | Capture cùng event ID xuyên AI/API/Dashboard/HMI. |
+| E-02 | Nhân | Hùng | PARTIAL | Architecture artifacts/source map đã có; còn owner sign-off. |
+| E-03 | Nhân | Hùng | DONE | Schema, golden payloads, API trace và tests đã có. |
+| E-04 | Nhân | Hùng, Thiện, Dân | PARTIAL | Golden trace + CarSky command ok; còn MP4/screenshots đồng bộ full chain. |
 | E-05 | Hùng | Tâm | PARTIAL | Chạy dynamic tests thật; thay static placeholder; owner sign-off policy. |
 | E-06 | Hùng | Nhân, Tâm | PARTIAL | Chốt episode protocol và tạo ablation CSV/notebook. |
 | E-07 | Hùng | - | PARTIAL | Owner sign-off và đối chiếu contract BTC chính thức nếu được yêu cầu. |
@@ -15,19 +15,19 @@
 | E-11 | Dân | Hùng | DONE | 50/50 trips valid; manifest/validation/summary/invalid report đã có. |
 | E-12 | Dân | - | OPEN | Ghi environment/command/seed và một reproducible trip. |
 | E-13 | Hùng | Tâm | PARTIAL | Tạo case PDF, prediction/GT CSV và chốt bin definition. |
-| E-14 | Nhân | - | OPEN | Capture backend contract, restart test và WebSocket trace. |
-| E-15 | Nhân | Hùng | OPEN | Chạy full suite đúng commit; lưu JUnit, coverage và command log. |
-| E-16 | Nhân | Tất cả technical owners | OPEN | Chạy fault matrix và capture recovery/safe state. |
-| E-17 | Nhân | Thiện | OPEN | Capture API/UI intervention workflow; xác nhận không có actuator path. |
-| E-18 | Nhân | - | OPEN | Tạo release manifest, hashes và reviewer access check. |
-| E-19 | Nhân | Thiện | OPEN | Chạy golden questions và reviewer factuality labels. |
-| E-20 | Nhân | - | OPEN | Đo Copilot latency/cost và provider failure. |
+| E-14 | Nhân | - | DONE | Backend contract, restart limitation và WebSocket trace verified. |
+| E-15 | Nhân | Hùng | DONE | BE pytest, FE lint/build, HMI artifact static scan verified; coverage/fresh HMI build không claim. |
+| E-16 | Nhân | Tất cả technical owners | PARTIAL | API/CarSky/Bedrock fallback + UI screenshots verified; full chaos matrix còn thiếu. |
+| E-17 | Nhân | Thiện | DONE | Human intervention workflow verified; no backend physical actuator API found. |
+| E-18 | Nhân | - | PARTIAL | Release manifest/hash/access CSV đã có; worktree dirty nên chưa immutable. |
+| E-19 | Nhân | Thiện | PARTIAL | Golden set + source validator đã có; còn raw Bedrock outputs và reviewer labels. |
+| E-20 | Nhân | - | PARTIAL | Offline provider-down/cost-budget evidence đã có; real Bedrock p50/p95 pending approval. |
 | E-21 | Thiện | Nhân | OPEN | Tạo sample reports và visual/data QA. |
 | E-22 | Thiện | Nhân | OPEN | Quay canonical Dashboard workflow không dùng hidden mock. |
 | E-23 | Thiện | Nhân | OPEN | Capture UI failure states và recovery. |
 | E-24 | Dân | Nhân | OPEN | Capture same-event CarSky/KUKSA/Bridge/VHAL/APK trace bundle. |
 | E-25 | Dân | - | NOT EXECUTED | Audio/TTS không nằm trong verified scope; không claim audio. |
-| E-26 | Nhân | Tất cả technical owners | OPEN | Clean-room build/run từ packet final. |
+| E-26 | Nhân | Tất cả technical owners | PARTIAL | Clean source archive/static compile checks đã có; full clean-room build chưa chạy. |
 | E-27 | Tâm | Hùng | PARTIAL | Đưa actual metrics/confusion matrix vào evidence; khóa model hash/split; audit subject/trip disjoint. |
 | E-28 | Nhân | - | OPEN | Lưu nguồn thị trường authoritative và calculation sheet. |
 | E-29 | Nhân | - | OPEN | Hoàn thiện competitor matrix với nguồn/ngày truy cập. |
@@ -37,10 +37,33 @@
 | E-33 | Nhân | - | OPEN | Tạo ROI calculator và baseline log, tách observed/assumed. |
 | E-34 | Nhân | Dân | OPEN | Tabletop review và safety/privacy checklist có unresolved items. |
 | E-35 | Nhân | Thiện | PARTIAL | Bổ sung claim-file-hash-time-owner mapping và reviewer access test. |
-| E-36 | Nhân | - | OPEN | Chạy replay/load 4-8 giờ và log queue/memory/drop/reconnect. |
+| E-36 | Nhân | - | PARTIAL | Short load smoke đã chạy; còn 4-8h long-run queue/memory/drop/reconnect. |
 | E-37 | Hùng | Dân | DONE | Baseline distribution và epipolar montage đã có. |
 | E-38 | Dân | Hùng | PARTIAL | Matrix đã có nhưng cần fresh-run logs/coverage; không claim 22 scenarios đã observed. |
 | E-39 | Thiện | Dân | NOT EXECUTED | Không claim alert-fatigue reduction, usability hoặc driver acceptance. |
-| E-40 | Nhân | Thiện | NOT EXECUTED | Không claim Copilot giúp giảm review time. |
-| E-41 | Nhân | - | DEFERRED | Chỉ chạy sau khi có durable external store/outbox và multi-instance design. |
+| E-40 | Nhân | Thiện | NOT EXECUTED / CLAIM CONTROL | Claim register đã có; không claim review-time improvement khi chưa đo before/after. |
+| E-41 | Nhân | - | DONE / NOT READY | Assessment đã xong: single-instance OK, multi-instance chưa sẵn sàng do process-local state/cache. |
 | E-42 | Tâm | Hùng | OPEN | Xác nhận real-data consent/provenance rồi chạy PSI/KS/domain-gap audit. |
+
+<!-- E-03/E-04 update generated by Codex -->
+- E-03: DONE / source, schema, API trace, test verified (`E-03/reports/source_report.md`).
+- E-04: PARTIAL / golden trace + runtime command log created; MP4/screenshots still required (`E-04/reports/trace_index.md`).
+
+<!-- E-14/E-15/E-16 update generated by Codex -->
+- E-14: DONE / CONTRACT, DEDUP, WEBSOCKET, RESTART LIMIT VERIFIED (`E-14/reports/source_report.md`).
+- E-15: DONE / BE TESTS, FE LINT-BUILD, HMI ARTIFACT VERIFIED (`E-15/reports/source_report.md`).
+- E-16: PARTIAL / API, CARSKY, FALLBACK SOURCES VERIFIED; UI SCREENSHOT CAPTURED (`E-16/reports/source_report.md`).
+
+<!-- E-17/E-18/E-26 update generated by Codex -->
+- E-17: DONE / HUMAN INTERVENTION WORKFLOW VERIFIED; NO BACKEND VEHICLE ACTUATOR API FOUND (`E-17/reports/source_report.md`).
+- E-18: PARTIAL / RELEASE MANIFEST CREATED; WORKTREE NOT CLEAN SO PACKET NOT IMMUTABLE (`E-18/reports/source_report.md`).
+- E-26: PARTIAL / CLEAN SOURCE ARCHIVE AND STATIC COMPILE CHECK CREATED; FULL CLEAN-ROOM BUILD NOT EXECUTED (`E-26/reports/source_report.md`).
+
+<!-- E-19/E-36/E-41 update generated by Codex -->
+- E-19: PARTIAL / GOLDEN SET AND SOURCE VALIDATOR VERIFIED; RAW BEDROCK REVIEW PENDING (`E-19/reports/source_report.md`).
+- E-36: PARTIAL / SHORT LOAD SMOKE EXECUTED; 4-8H LONG-RUN NOT EXECUTED (`E-36/reports/source_report.md`).
+- E-41: DONE / READINESS ASSESSMENT COMPLETED - NOT READY FOR MULTI-INSTANCE (`E-41/reports/source_report.md`).
+
+<!-- E-20/E-40 update generated by Codex -->
+- E-20: PARTIAL / OFFLINE FAILURE AND COST-BUDGET EVIDENCE CREATED; REAL BEDROCK LATENCY PENDING (`E-20/reports/source_report.md`).
+- E-40: NOT EXECUTED / NO REVIEW-TIME IMPROVEMENT CLAIM (`E-40/reports/source_report.md`).

@@ -1,0 +1,22 @@
+# E-26 commands - Clean-room build/run
+
+Generated at UTC: 2026-08-10T04:08:30+00:00
+Commit: 44e6cb3224a58fc0a5d804fc8fab5e233f89e477
+
+Attempted clean-room path:
+
+```bash
+docker info --format '{{json .ServerVersion}}'
+git archive 44e6cb3224a58fc0a5d804fc8fab5e233f89e477 | tar -x -C <temp-clean-room>
+cd <temp-clean-room>/HACKATHON
+python3 -m compileall SE/BE/app AI/core
+```
+
+Not executed as DONE-level clean-room:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r SE/BE/requirements.txt
+cd SE/FE && npm ci && npm run build
+```
+
+Reason: Docker daemon was unavailable in this environment; dependency reinstall/new-machine proof still needs owner-run capture.

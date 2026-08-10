@@ -1,0 +1,39 @@
+# E-04 commands - Golden end-to-end event trace
+
+Generated at UTC: 2026-08-10T03:48:36+00:00
+Commit: 44e6cb32
+
+Run from `HACKATHON/`.
+
+## Backend deterministic trace tests
+
+```bash
+cd SE/BE
+.venv/bin/python -m pytest tests/test_ai_alerts.py::test_live_snapshot_is_forwarded_to_carsky tests/test_ai_alerts.py::test_driver_alert_is_forwarded_to_carsky_once
+```
+
+## Runtime CarSky critical scenario
+
+```bash
+cd SE/BE
+.venv/bin/python scripts/carsky_phase05.py scenario critical
+```
+
+Expected successful runtime shape:
+
+```json
+{"ok": true, "mode": "vehicle-speed-mux", "sent": 14}
+```
+
+## Runtime UI capture still required
+
+Open CarSky deployment and capture one synchronized screen/video containing:
+
+- Signal Watch: `Vehicle.Speed` changing to mux values such as `41.xxx`, `42.xxx`, `43.xxx`, `49.xxx`, `50.xxx`.
+- HMI Bridge log: `DMS_HMI_SPEED_MUX Vehicle.Speed=... -> 0x11600207=...`.
+- Android HMI screen: driver state/risk/TTC/safe score updated from the same event.
+
+Place captures under:
+
+- `evidence/E-04/screenshots/`
+- `evidence/E-04/video/`

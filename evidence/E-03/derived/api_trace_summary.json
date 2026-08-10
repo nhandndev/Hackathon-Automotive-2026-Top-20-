@@ -1,0 +1,141 @@
+[
+  {
+    "label": "valid decision event accepted",
+    "method": "POST",
+    "path": "/api/v1/alerts",
+    "status_code": 202,
+    "body": {
+      "accepted": true,
+      "duplicate": false,
+      "event_id": "evt-e03-critical-0001"
+    }
+  },
+  {
+    "label": "duplicate decision event is idempotent",
+    "method": "POST",
+    "path": "/api/v1/alerts",
+    "status_code": 202,
+    "body": {
+      "accepted": true,
+      "duplicate": true,
+      "event_id": "evt-e03-critical-0001"
+    }
+  },
+  {
+    "label": "header mismatch rejected",
+    "method": "POST",
+    "path": "/api/v1/alerts",
+    "status_code": 400,
+    "body": {
+      "code": "HTTP_400",
+      "message": "Idempotency-Key mismatch",
+      "request_id": "15a31b62-5100-45c2-80fb-1f3a98826c0b"
+    }
+  },
+  {
+    "label": "missing required event_id rejected",
+    "method": "POST",
+    "path": "/api/v1/alerts",
+    "status_code": 422,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Request validation failed",
+      "details": [
+        {
+          "type": "missing",
+          "loc": [
+            "body",
+            "event_id"
+          ],
+          "msg": "Field required",
+          "input": {
+            "schema_version": "1.0",
+            "idempotency_key": "evt-e03-critical-0001-open-16600",
+            "trip_id": "T02-Sample",
+            "driver_id": "driver_001",
+            "frame_id": 166,
+            "trip_timestamp_ms": 16600,
+            "timestamp_utc": "2026-08-10T00:00:00Z",
+            "status": "open",
+            "alert_type": "collision_risk",
+            "severity": "critical",
+            "confidence": 0.92,
+            "audiences": [
+              "driver_display",
+              "fleet_dashboard"
+            ],
+            "driver_message": "Critical TTC risk. Brake safely.",
+            "evidence": {
+              "driver_state": "microsleep",
+              "speed_kmh": 29,
+              "predicted_ttc_sec": 1.2,
+              "risk_score": 88.0,
+              "safe_driving_score": 12.0,
+              "source": "golden E-03 payload"
+            },
+            "recommended_action": "BRAKE_SAFE",
+            "model_versions": {
+              "risk": "test-contract",
+              "driver_state": "test-contract"
+            }
+          }
+        }
+      ],
+      "request_id": "59f327c6-85b1-4220-994a-db03ec044cf4"
+    }
+  },
+  {
+    "label": "live snapshot accepted",
+    "method": "POST",
+    "path": "/api/v1/alerts/snapshot",
+    "status_code": 202,
+    "body": {
+      "accepted": true,
+      "trip_id": "T02-Sample",
+      "frame_id": 166
+    }
+  },
+  {
+    "label": "recent alerts readable",
+    "method": "GET",
+    "path": "/api/v1/alerts/recent",
+    "status_code": 200,
+    "body": {
+      "count": 1,
+      "items": [
+        {
+          "schema_version": "1.0",
+          "event_id": "evt-e03-critical-0001",
+          "idempotency_key": "evt-e03-critical-0001-open-16600",
+          "trip_id": "T02-Sample",
+          "driver_id": "driver_001",
+          "frame_id": 166,
+          "trip_timestamp_ms": 16600,
+          "timestamp_utc": "2026-08-10T00:00:00Z",
+          "status": "open",
+          "alert_type": "collision_risk",
+          "severity": "critical",
+          "confidence": 0.92,
+          "audiences": [
+            "driver_display",
+            "fleet_dashboard"
+          ],
+          "evidence": {
+            "driver_state": "microsleep",
+            "speed_kmh": 29,
+            "predicted_ttc_sec": 1.2,
+            "risk_score": 88.0,
+            "safe_driving_score": 12.0,
+            "source": "golden E-03 payload"
+          },
+          "recommended_action": "BRAKE_SAFE",
+          "driver_message": "Critical TTC risk. Brake safely.",
+          "model_versions": {
+            "risk": "test-contract",
+            "driver_state": "test-contract"
+          }
+        }
+      ]
+    }
+  }
+]

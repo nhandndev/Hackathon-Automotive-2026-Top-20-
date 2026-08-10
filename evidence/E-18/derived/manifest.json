@@ -1,0 +1,44 @@
+{
+  "evidence_id": "E-18",
+  "title": "Release packet immutable",
+  "generated_at_utc": "2026-08-10T04:08:30+00:00",
+  "repo_commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "status": "PARTIAL / RELEASE MANIFEST CREATED; WORKTREE NOT CLEAN SO PACKET NOT IMMUTABLE",
+  "files": [
+    {
+      "path": "E-18/access/access_check.csv",
+      "sha256": "7098a6dedc8c4a3dcff1e964c30ae570afb9c6e543a4eb83128a635c790a50ac",
+      "bytes": 3101
+    },
+    {
+      "path": "E-18/commands/commands.log",
+      "sha256": "eed1c14907bfcf97c8d34c3b1c8ba9fa5fecca18888bc021907f8511983fa671",
+      "bytes": 261
+    },
+    {
+      "path": "E-18/derived/release_manifest.json",
+      "sha256": "57f32352dc5848c22d2b14f982166b54f0a2e7e302c5663fd029bb51675b5a6b",
+      "bytes": 5514
+    },
+    {
+      "path": "E-18/derived/release_manifest.sha256",
+      "sha256": "a935b5853b5b449e2142383a2ab6f1d9f2a6a23c3f311a5e3ac628e77718734b",
+      "bytes": 88
+    },
+    {
+      "path": "E-18/raw/git_head.log",
+      "sha256": "1305b0db0a558b97e88b1b04df00e0b5047cd121cc97f8096a38a4662d05fc32",
+      "bytes": 266
+    },
+    {
+      "path": "E-18/raw/git_status_short.log",
+      "sha256": "1e45d6dec882bbf7e3320a856fdcba8f402dcd734c415dc4b4d97f699d0ffd78",
+      "bytes": 3506
+    },
+    {
+      "path": "E-18/reports/source_report.md",
+      "sha256": "3c6195aba4531dff21654d34f1678cf6d1b0703fbd31ea4f03ef81e220b55dfc",
+      "bytes": 1017
+    }
+  ]
+}

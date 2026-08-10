@@ -1,0 +1,12 @@
+$ /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/.venv/bin/python /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/evidence/E-16/raw/e16_fault_trace_script.py
+
+[2026-08-10 11:03:15] [INFO] [dms_backend]: Registered Detector Plugin: HARSH_BRAKE
+[2026-08-10 11:03:15] [INFO] [dms_backend]: Registered Detector Plugin: HARSH_CORNER
+[2026-08-10 11:03:15] [INFO] [dms_backend]: Registered Detector Plugin: SPEEDING
+[2026-08-10 11:03:15] [INFO] [dms_backend]: Registered Detector Plugin: SMOKING_IN_CABIN
+{"case": "malformed_decision_event_missing_event_id", "status_code": 422, "body": {"code": "VALIDATION_ERROR", "message": "Request validation failed", "details": [{"type": "missing", "loc": ["body", "event_id"], "msg": "Field required", "input": {"schema_version": "1.0", "idempotency_key": "e16-valid-open-1", "trip_id": "T01-Sample", "driver_id": "driver_001", "frame_id": 1, "trip_timestamp_ms": 50, "timestamp_utc": "2026-08-10T00:00:00Z", "status": "open", "alert_type": "collision_risk", "severity": "critical", "confidence": 1.0, "audiences": ["driver_display", "fleet_dashboard"], "evidence": {"predicted_ttc_sec": 1.0}, "recommended_action": "Brake safely"}}], "request_id": "e95bcd2f-8f26-46e8-9240-1749526b1532"}, "safe_state": "rejected; no accepted alert fabricated"}
+{"case": "idempotency_key_mismatch", "status_code": 400, "body": {"code": "HTTP_400", "message": "Idempotency-Key mismatch", "request_id": "2cc41192-37dd-40ec-a126-4b46b6e34aa8"}, "safe_state": "rejected before store/broadcast"}
+{"case": "missing_live_snapshot", "status_code": 404, "body": {"code": "HTTP_404", "message": "No live snapshot for this trip", "request_id": "5c81100f-ef58-41ad-993a-c0285116a14f"}, "safe_state": "404; frontend can fall back to saved frame/offline state"}
+{"case": "recovery_valid_event_after_errors", "status_code": 202, "body": {"accepted": true, "duplicate": false, "event_id": "e16-valid"}, "safe_state": "accepted after rejected errors"}
+/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa

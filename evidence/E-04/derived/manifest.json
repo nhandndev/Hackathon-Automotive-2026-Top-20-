@@ -1,0 +1,64 @@
+{
+  "evidence_id": "E-04",
+  "title": "Golden end-to-end event trace",
+  "generated_at_utc": "2026-08-10T03:50:33+00:00",
+  "repo_commit": "44e6cb32",
+  "status": "PARTIAL / TEST AND RUNTIME COMMAND TRACE CREATED; VIDEO-SCREENSHOT SYNC STILL REQUIRED",
+  "files": [
+    {
+      "path": "E-04/commands/commands.log",
+      "sha256": "9d32580626a82832576a0c92d0bece9b456c4cd6400b054a38c53776c706df28",
+      "bytes": 1051
+    },
+    {
+      "path": "E-04/derived/golden_event.jsonl",
+      "sha256": "0c8afc92d6c997022fb57a48965a1aab24a308cadae7da6a60990796c8aacfdf",
+      "bytes": 1705
+    },
+    {
+      "path": "E-04/derived/manifest.json",
+      "sha256": "fd9a7efe63b3241563eb72ad249f0ba06b25d4c12f5691cbb80c962b47423a71",
+      "bytes": 1979
+    },
+    {
+      "path": "E-04/raw/backend_to_carsky_unit_trace.log",
+      "sha256": "8e96839f9798d2edaa177283a62d5f32797ae818c0bc34c13c72f3ee22f3a7d0",
+      "bytes": 1339
+    },
+    {
+      "path": "E-04/raw/carsky_nodes_command.json",
+      "sha256": "ac9469a9991352340b63ebe1f64436dbd5c5f36887b84662217442aa5d9de492",
+      "bytes": 1050
+    },
+    {
+      "path": "E-04/raw/carsky_scenario_critical_command.json",
+      "sha256": "9098beb16f5da4d5ac499ab3153cba307691520dc32f45946a107c7ca662c21a",
+      "bytes": 877
+    },
+    {
+      "path": "E-04/raw/carsky_scenario_critical_parsed.json",
+      "sha256": "b52f314a12599aa66a7c76601ab07d850d694ca2f6f2512e88bb5e219fe5239f",
+      "bytes": 448
+    },
+    {
+      "path": "E-04/raw/carsky_status_command.json",
+      "sha256": "64465baf2b03ff3792b4aed2b2759c1e70775548138e53b87e3a9249683c7d71",
+      "bytes": 464
+    },
+    {
+      "path": "E-04/raw/source_snippets/golden_event_sources.log",
+      "sha256": "2c7ee42e16c9e85af12c665dc493b78311a0b12154238013c068db52042ec532",
+      "bytes": 4810
+    },
+    {
+      "path": "E-04/reports/source_report.md",
+      "sha256": "de128621e97a2cd21e0cea30a0b9cf5b35efdb3790391173a9a745d0df22b9e8",
+      "bytes": 1404
+    },
+    {
+      "path": "E-04/reports/trace_index.md",
+      "sha256": "0bfe1d037618af2e86cb89eb111c52626f5cc57b5b2f8e5bb9c602ed6b90af0b",
+      "bytes": 1161
+    }
+  ]
+}

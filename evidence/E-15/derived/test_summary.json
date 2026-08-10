@@ -1,0 +1,16 @@
+{
+  "commit": "44e6cb32",
+  "generated_at_utc": "2026-08-10T03:58:39+00:00",
+  "be_pytest_returncode": 0,
+  "be_pytest_passed_count": 29,
+  "fe_lint_returncode": 0,
+  "fe_build_returncode": 0,
+  "hmi_apk": {
+    "path": "SE/HMI/release/dms-hmi-realtime-vhal.apk",
+    "exists": true,
+    "sha256": "51a44e1570551c16abc83db7fa9f167f3ae40a62cd1b57bde5dc465adb91cbb0",
+    "bytes": 16811
+  },
+  "hmi_static_scan_returncode": 0,
+  "status": "DONE / BE TESTS, FE LINT-BUILD, HMI ARTIFACT VERIFIED"
+}

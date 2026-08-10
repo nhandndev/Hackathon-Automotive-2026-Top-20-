@@ -1,0 +1,9 @@
+$ git log -1 --pretty=fuller
+
+commit 44e6cb3224a58fc0a5d804fc8fab5e233f89e477
+Author:     tdan14 <todan2711@gmail.com>
+AuthorDate: Mon Aug 10 10:32:08 2026 +0700
+Commit:     tdan14 <todan2711@gmail.com>
+CommitDate: Mon Aug 10 10:32:08 2026 +0700
+
+    chinh sua task

@@ -1,0 +1,54 @@
+{
+  "evidence_id": "E-26",
+  "title": "Clean-room build/run",
+  "generated_at_utc": "2026-08-10T04:08:30+00:00",
+  "repo_commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "status": "PARTIAL / CLEAN SOURCE ARCHIVE AND STATIC COMPILE CHECK CREATED; FULL CLEAN-ROOM BUILD NOT EXECUTED",
+  "files": [
+    {
+      "path": "E-26/commands/commands.log",
+      "sha256": "40b10a0762afe82a67a839b5dc16e9b23134e2095068532d0f378d7ff341b926",
+      "bytes": 667
+    },
+    {
+      "path": "E-26/derived/environment.lock.json",
+      "sha256": "f3a896e5f92c2c1c8b7c357f7fd27ad8c8f0f8715c5c725816f06ea52f5d2a32",
+      "bytes": 686
+    },
+    {
+      "path": "E-26/raw/clean_room_check_01.log",
+      "sha256": "78b210b0115350cb8b105b248fcf863a29bbaa16c4e5ab9fc73ea1ce3fe78821",
+      "bytes": 5608
+    },
+    {
+      "path": "E-26/raw/clean_room_check_02.log",
+      "sha256": "d7afa53cd46f08ab6c34f7d786a0e1e4995f9a41e43562fa88edc5219b3dc61d",
+      "bytes": 48
+    },
+    {
+      "path": "E-26/raw/clean_room_check_03.log",
+      "sha256": "37cd48d73442a99ddada9ba65df4744fd699c6a61fbfa1d83995b74fbbd7cc8c",
+      "bytes": 44
+    },
+    {
+      "path": "E-26/raw/clean_room_check_04.log",
+      "sha256": "dd9a7556bccb0fe957eec07e6638e8defa92fed71ceb51d26097efd43fc39017",
+      "bytes": 47
+    },
+    {
+      "path": "E-26/raw/docker_info.log",
+      "sha256": "df230d951868cf833bc073d2f4565056abc8e4b2daa9ae58fd07cba219f1b40c",
+      "bytes": 281
+    },
+    {
+      "path": "E-26/raw/git_archive_extract.log",
+      "sha256": "cecaa3e31af5debdfcf38e6632658e20b070c7afc51e2c361cd59b5989c63fde",
+      "bytes": 154
+    },
+    {
+      "path": "E-26/reports/source_report.md",
+      "sha256": "48eb3ca69f3a3644477246148b3c96ae912929c1bc6014ee10b9a2caf7ff823c",
+      "bytes": 1033
+    }
+  ]
+}

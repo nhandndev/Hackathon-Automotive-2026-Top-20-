@@ -1,0 +1,6 @@
+SE/FE/src/components/CopilotFleetReportPage.tsx:5: import { buildCopilotInput, buildVehicleReportModels, inferReportMode, VehicleReportModel } from '../reportModel';
+SE/FE/src/components/CopilotFleetReportPage.tsx:463:   const canonicalInput = useMemo(() => buildCopilotInput(reportModels, reportMode), [reportModels, reportMode]);
+SE/FE/src/components/CopilotFleetReportPage.tsx:613:         if (payload.ai_status === 'validated' && !payload.vehicle_diagnostics && !payload.action_orders && isValidBedrockPayloadForRows(payload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:618:         if (!cancelled && payload.ai_status !== 'validated') {
+SE/FE/src/components/CopilotFleetReportPage.tsx:1115:   const handleExportWord = () => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:1210:                     onClick={handleExportWord}

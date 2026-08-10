@@ -1,0 +1,54 @@
+{
+  "evidence_id": "E-14",
+  "title": "Backend reliability boundary",
+  "generated_at_utc": "2026-08-10T04:03:41+00:00",
+  "repo_commit": "44e6cb32",
+  "status": "DONE / CONTRACT, DEDUP, WEBSOCKET, RESTART LIMIT VERIFIED",
+  "files": [
+    {
+      "path": "E-14/commands/commands.log",
+      "sha256": "e12d1eecbe4d061d562661e54053637d72f03e044f64c07778f7c78bbe83e0d0",
+      "bytes": 210
+    },
+    {
+      "path": "E-14/derived/backend_contract_trace.json",
+      "sha256": "02a870ef94252e440b9ed60fdf1f12dcf61b62096778c8ad439ecff37940c3fd",
+      "bytes": 1599
+    },
+    {
+      "path": "E-14/derived/manifest.json",
+      "sha256": "19ccfc516b0243de781fd058a88f5a23929fc149005815c84d8ea819cb8f5603",
+      "bytes": 1758
+    },
+    {
+      "path": "E-14/derived/websocket_trace.jsonl",
+      "sha256": "d01b954f4cb531d310b6b5b7177166e4cf009a42105ea26883bbdcb2a178193a",
+      "bytes": 157
+    },
+    {
+      "path": "E-14/raw/backend_contract.log",
+      "sha256": "19d9e77c144013be2d2ddf0e25c91ded0122e3516811c447e13e18facc55115f",
+      "bytes": 2008
+    },
+    {
+      "path": "E-14/raw/e14_backend_trace_script.py",
+      "sha256": "9b7b8b8e531d7a9411f474a6c208595b1b92cf604cca57156e82cf6c95409fdf",
+      "bytes": 2434
+    },
+    {
+      "path": "E-14/raw/source_snippets/backend_reliability_boundary.log",
+      "sha256": "32147543aa469336bf1abcf20608de2e6a5cf67437e5edb65fa1029dc4e1d7c7",
+      "bytes": 2581
+    },
+    {
+      "path": "E-14/reports/restart_test.md",
+      "sha256": "8ac64831479e5c0a93c912e2643a8d700ed8d4644c275f22ec5fbf3ac45c5e05",
+      "bytes": 398
+    },
+    {
+      "path": "E-14/reports/source_report.md",
+      "sha256": "0d98543f573f51788da7adadfd7c5041efdb4a9af3d16d9cb699d98ed8d341cb",
+      "bytes": 1013
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "cmd": "/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/.venv/bin/python scripts/carsky_phase05.py nodes",
+  "cwd": "/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE",
+  "started_at_utc": "2026-08-10T03:48:46+00:00",
+  "ended_at_utc": "2026-08-10T03:48:46+00:00",
+  "returncode": 0,
+  "stdout": "[\n  {\n    \"displayName\": \"DMS Android HMI\",\n    \"message\": null,\n    \"name\": \"jx3o0rtdk1tawnx6upshp-n0\",\n    \"nodeType\": \"skycraft\",\n    \"phase\": \"Running\",\n    \"prefix\": \"skycraft-1\"\n  },\n  {\n    \"displayName\": \"DMS Signal Broker\",\n    \"message\": null,\n    \"name\": \"jx3o0rtdk1tawnx6upshp-n1\",\n    \"nodeType\": \"kuksa-databroker\",\n    \"phase\": \"Running\",\n    \"prefix\": \"dms-signal-broker\"\n  },\n  {\n    \"displayName\": \"DMS HMI Bridge\",\n    \"message\": null,\n    \"name\": \"jx3o0rtdk1tawnx6upshp-n2\",\n    \"nodeType\": \"script-node\",\n    \"phase\": \"Running\",\n    \"prefix\": \"dms-hmi-bridge\"\n  }\n]\n",
+  "stderr": ""
+}

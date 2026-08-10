@@ -1,0 +1,28 @@
+$ rg -n decision_alerts|decision_alert_keys|live_clients|receive_alert|recent_alerts|websocket|WebSocket|snapshot_history|complete_live_trip|CARSKY_SNAPSHOT_MIN_INTERVAL_SEC SE/BE/app/modules/ai_alerts/router.py SE/BE/tests/test_ai_alerts.py SE/BE/app/main.py
+
+SE/BE/tests/test_ai_alerts.py:124:    assert len(by_id["T01-Sample"]["snapshot_history"]) == 1
+SE/BE/app/modules/ai_alerts/router.py:15:    WebSocket,
+SE/BE/app/modules/ai_alerts/router.py:16:    WebSocketDisconnect,
+SE/BE/app/modules/ai_alerts/router.py:96:live_clients: set[WebSocket] = set()
+SE/BE/app/modules/ai_alerts/router.py:99:CARSKY_SNAPSHOT_MIN_INTERVAL_SEC = 0.25
+SE/BE/app/modules/ai_alerts/router.py:103:    stale: list[WebSocket] = []
+SE/BE/app/modules/ai_alerts/router.py:104:    for client in tuple(live_clients):
+SE/BE/app/modules/ai_alerts/router.py:110:        live_clients.discard(client)
+SE/BE/app/modules/ai_alerts/router.py:114:    if not hasattr(request.app.state, "decision_alerts"):
+SE/BE/app/modules/ai_alerts/router.py:115:        request.app.state.decision_alerts = deque(maxlen=1000)
+SE/BE/app/modules/ai_alerts/router.py:116:        request.app.state.decision_alert_keys = set()
+SE/BE/app/modules/ai_alerts/router.py:117:    return request.app.state.decision_alerts, request.app.state.decision_alert_keys
+SE/BE/app/modules/ai_alerts/router.py:139:            "snapshot_history": deque(maxlen=2400),
+SE/BE/app/modules/ai_alerts/router.py:150:        "snapshot_history": list(session["snapshot_history"]),
+SE/BE/app/modules/ai_alerts/router.py:155:async def receive_alert(
+SE/BE/app/modules/ai_alerts/router.py:185:async def recent_alerts(request: Request, limit: int = 100) -> dict[str, Any]:
+SE/BE/app/modules/ai_alerts/router.py:224:async def complete_live_trip(trip_id: str, request: Request) -> dict[str, Any]:
+SE/BE/app/modules/ai_alerts/router.py:345:    session["snapshot_history"].append(document)
+SE/BE/app/modules/ai_alerts/router.py:349:    if publisher is not None and now - last_carsky_at >= CARSKY_SNAPSHOT_MIN_INTERVAL_SEC:
+SE/BE/app/modules/ai_alerts/router.py:372:@router.websocket("/live")
+SE/BE/app/modules/ai_alerts/router.py:373:async def live_alerts(websocket: WebSocket) -> None:
+SE/BE/app/modules/ai_alerts/router.py:374:    await websocket.accept()
+SE/BE/app/modules/ai_alerts/router.py:375:    live_clients.add(websocket)
+SE/BE/app/modules/ai_alerts/router.py:379:            await websocket.receive_text()
+SE/BE/app/modules/ai_alerts/router.py:380:    except WebSocketDisconnect:
+SE/BE/app/modules/ai_alerts/router.py:381:        live_clients.discard(websocket)

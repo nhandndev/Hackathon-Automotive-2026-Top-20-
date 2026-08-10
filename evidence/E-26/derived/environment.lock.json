@@ -1,0 +1,27 @@
+{
+  "generated_at_utc": "2026-08-10T04:08:30+00:00",
+  "repo_commit": "44e6cb3224a58fc0a5d804fc8fab5e233f89e477",
+  "host_python": "Python 3.9.6\n",
+  "node": "v24.15.0",
+  "npm": "11.12.1",
+  "docker_info_returncode": 1,
+  "clean_archive_path": "/var/folders/mf/g0jh08hx57j7q7jwc8fq9ws40000gn/T/e26_clean_room__1i9xlg5/HACKATHON",
+  "checks": [
+    {
+      "cmd": "python3 -m compileall SE/BE/app AI/core",
+      "returncode": 0
+    },
+    {
+      "cmd": "test -f SE/FE/package-lock.json",
+      "returncode": 0
+    },
+    {
+      "cmd": "test -f AI/requirements.txt",
+      "returncode": 0
+    },
+    {
+      "cmd": "test -f SE/BE/requirements.txt",
+      "returncode": 0
+    }
+  ]
+}

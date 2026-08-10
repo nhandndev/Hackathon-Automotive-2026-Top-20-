@@ -1,0 +1,197 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "trip_id": {
+      "minLength": 1,
+      "title": "Trip Id",
+      "type": "string"
+    },
+    "frame_id": {
+      "minimum": 0,
+      "title": "Frame Id",
+      "type": "integer"
+    },
+    "trip_timestamp_ms": {
+      "minimum": 0,
+      "title": "Trip Timestamp Ms",
+      "type": "integer"
+    },
+    "speed_kmh": {
+      "minimum": 0,
+      "title": "Speed Kmh",
+      "type": "number"
+    },
+    "predicted_ttc_sec": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Predicted Ttc Sec"
+    },
+    "risk_score": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Risk Score",
+      "type": "number"
+    },
+    "driver_state": {
+      "minLength": 1,
+      "title": "Driver State",
+      "type": "string"
+    },
+    "driver_confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Driver Confidence",
+      "type": "number"
+    },
+    "alertness_score": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Alertness Score",
+      "type": "number"
+    },
+    "eye_state": {
+      "default": "unknown",
+      "title": "Eye State",
+      "type": "string"
+    },
+    "head_pose": {
+      "default": "unknown",
+      "title": "Head Pose",
+      "type": "string"
+    },
+    "mouth_state": {
+      "default": "normal",
+      "title": "Mouth State",
+      "type": "string"
+    },
+    "longitudinal_accel": {
+      "default": 0.0,
+      "title": "Longitudinal Accel",
+      "type": "number"
+    },
+    "lateral_accel": {
+      "default": 0.0,
+      "title": "Lateral Accel",
+      "type": "number"
+    },
+    "speed_limit_kmh": {
+      "default": 0.0,
+      "title": "Speed Limit Kmh",
+      "type": "number"
+    },
+    "safe_driving_score": {
+      "default": 100.0,
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Safe Driving Score",
+      "type": "number"
+    },
+    "penalty_points": {
+      "default": 0.0,
+      "minimum": 0,
+      "title": "Penalty Points",
+      "type": "number"
+    },
+    "harsh_brake": {
+      "default": false,
+      "title": "Harsh Brake",
+      "type": "boolean"
+    },
+    "harsh_accel": {
+      "default": false,
+      "title": "Harsh Accel",
+      "type": "boolean"
+    },
+    "harsh_corner": {
+      "default": false,
+      "title": "Harsh Corner",
+      "type": "boolean"
+    },
+    "speeding": {
+      "default": false,
+      "title": "Speeding",
+      "type": "boolean"
+    },
+    "tailgating": {
+      "default": false,
+      "title": "Tailgating",
+      "type": "boolean"
+    },
+    "harsh_brake_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Harsh Brake Count",
+      "type": "integer"
+    },
+    "harsh_accel_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Harsh Accel Count",
+      "type": "integer"
+    },
+    "harsh_corner_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Harsh Corner Count",
+      "type": "integer"
+    },
+    "near_miss_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Near Miss Count",
+      "type": "integer"
+    },
+    "microsleep_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Microsleep Count",
+      "type": "integer"
+    },
+    "speeding_pct_time": {
+      "default": 0.0,
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Speeding Pct Time",
+      "type": "number"
+    },
+    "tailgating_pct_time": {
+      "default": 0.0,
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Tailgating Pct Time",
+      "type": "number"
+    },
+    "avg_headway_sec": {
+      "default": 0.0,
+      "minimum": 0,
+      "title": "Avg Headway Sec",
+      "type": "number"
+    }
+  },
+  "required": [
+    "trip_id",
+    "frame_id",
+    "trip_timestamp_ms",
+    "speed_kmh",
+    "risk_score",
+    "driver_state",
+    "driver_confidence",
+    "alertness_score"
+  ],
+  "title": "LiveSnapshotPayload",
+  "type": "object"
+}

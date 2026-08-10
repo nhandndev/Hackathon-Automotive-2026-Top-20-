@@ -1,0 +1,23 @@
+SE/BE/app/modules/ai_alerts/router.py:3: from collections import deque
+SE/BE/app/modules/ai_alerts/router.py:113: def _store(request: Request) -> tuple[deque[dict[str, Any]], set[str]]:
+SE/BE/app/modules/ai_alerts/router.py:114:     if not hasattr(request.app.state, "decision_alerts"):
+SE/BE/app/modules/ai_alerts/router.py:115:         request.app.state.decision_alerts = deque(maxlen=1000)
+SE/BE/app/modules/ai_alerts/router.py:116:         request.app.state.decision_alert_keys = set()
+SE/BE/app/modules/ai_alerts/router.py:117:     return request.app.state.decision_alerts, request.app.state.decision_alert_keys
+SE/BE/app/modules/ai_alerts/router.py:121:     if not hasattr(request.app.state, "live_trip_sessions"):
+SE/BE/app/modules/ai_alerts/router.py:122:         request.app.state.live_trip_sessions = {}
+SE/BE/app/modules/ai_alerts/router.py:123:     return request.app.state.live_trip_sessions
+SE/BE/app/modules/ai_alerts/router.py:139:             "snapshot_history": deque(maxlen=2400),
+SE/BE/app/modules/ai_alerts/router.py:170:         publisher = getattr(request.app.state, "carsky_publisher", None)
+SE/BE/app/modules/ai_alerts/router.py:203:             frames = getattr(request.app.state, attribute, {})
+SE/BE/app/modules/ai_alerts/router.py:252:     frames = getattr(request.app.state, "latest_cabin_frames", None)
+SE/BE/app/modules/ai_alerts/router.py:254:         frames = request.app.state.latest_cabin_frames = {}
+SE/BE/app/modules/ai_alerts/router.py:269:     frames = getattr(request.app.state, "latest_cabin_frames", {})
+SE/BE/app/modules/ai_alerts/router.py:303:     frames = getattr(request.app.state, "latest_road_frames", None)
+SE/BE/app/modules/ai_alerts/router.py:305:         frames = request.app.state.latest_road_frames = {}
+SE/BE/app/modules/ai_alerts/router.py:317:     frames = getattr(request.app.state, "latest_road_frames", {})
+SE/BE/app/modules/ai_alerts/router.py:346:     publisher = getattr(request.app.state, "carsky_publisher", None)
+SE/BE/app/modules/ai_alerts/router.py:397: def _intervention_store(request: Request) -> deque:
+SE/BE/app/modules/ai_alerts/router.py:398:     if not hasattr(request.app.state, "intervention_commands"):
+SE/BE/app/modules/ai_alerts/router.py:399:         request.app.state.intervention_commands = deque(maxlen=50)
+SE/BE/app/modules/ai_alerts/router.py:400:     return request.app.state.intervention_commands

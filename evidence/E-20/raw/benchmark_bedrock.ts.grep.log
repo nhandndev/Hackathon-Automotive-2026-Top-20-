@@ -1,0 +1,10 @@
+SE/FE/benchmark_bedrock.ts:35: async function callBedrock(prompt: string): Promise<{ latencyMs: number; text: string; inputChars: number; outputChars: number; inputTokens: number; outputTokens: number }> {
+SE/FE/benchmark_bedrock.ts:60:   const inputTokens = payload?.usage?.inputTokens || 0;
+SE/FE/benchmark_bedrock.ts:61:   const outputTokens = payload?.usage?.outputTokens || 0;
+SE/FE/benchmark_bedrock.ts:63:   return { latencyMs, text, inputChars, outputChars, inputTokens, outputTokens };
+SE/FE/benchmark_bedrock.ts:87:         const { latencyMs, text, inputTokens, outputTokens } = await callBedrock(prompt);
+SE/FE/benchmark_bedrock.ts:89:         lastInputTokens = inputTokens;
+SE/FE/benchmark_bedrock.ts:90:         lastOutputTokens = outputTokens;
+SE/FE/benchmark_bedrock.ts:92:         console.log(`✅ ${latencyMs}ms (input tokens: ${inputTokens}, output tokens: ${outputTokens})`);
+SE/FE/benchmark_bedrock.ts:105:       const costUSD = (lastInputTokens * 0.0008 / 1000) + (lastOutputTokens * 0.0016 / 1000);
+SE/FE/benchmark_bedrock.ts:110:       console.log(`      Cost real → ~$${costUSD.toFixed(5)} per request`);

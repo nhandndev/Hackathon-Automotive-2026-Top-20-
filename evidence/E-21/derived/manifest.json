@@ -1,0 +1,28 @@
+{
+  "evidence_id": "E-21",
+  "title": "Report export accuracy/readability",
+  "generated_at": "2026-08-10T05:17:00Z",
+  "commit": "d41b8e168afb046da1cf26946e987246f42d7a14",
+  "status": "PARTIAL_SOURCE_EXPORT_VERIFIED_TEMP_REPORT_SCREENSHOTS_CAPTURED_CANONICAL_KPI_AUDIT_PENDING",
+  "claimed": [
+    "Copilot report UI renders safety detail, safety overview and maintenance detail report layouts.",
+    "Word/DOC export handler is source-level verified in CopilotFleetReportPage.tsx.",
+    "Temporary report screenshots show title, metrics, cards and triage sections are visible.",
+    "Real Bedrock 403 provider failure was observed during temporary report QA."
+  ],
+  "not_claimed": [
+    "Temporary screenshots do not prove canonical KPI accuracy.",
+    "Downloaded DOC visual sample was not opened/reviewed in this evidence package.",
+    "PDF export is not claimed as final scope.",
+    "Bedrock factual accuracy, latency and cost are not proven by this evidence."
+  ],
+  "evidence_files": [
+    "raw/source_locators.log",
+    "raw/bedrock_403_during_report_qa.log",
+    "derived/report_qa.csv",
+    "reports/source_report.md",
+    "report_samples/safety_detail_tmp_critical.png",
+    "report_samples/safety_overview_tmp_fleet.png",
+    "report_samples/maintenance_detail_tmp_critical.png"
+  ]
+}

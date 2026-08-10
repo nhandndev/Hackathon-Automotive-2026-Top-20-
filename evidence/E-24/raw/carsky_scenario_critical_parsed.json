@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "mode": "vehicle-speed-mux",
+  "sent": 14,
+  "responses": [
+    {
+      "ok": true,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "sent": 1
+    }
+  ],
+  "fallback_reason": "CarSky 400 for /api/v1/signals/97fg4ghsgeo9w4bvze3qq/dms-signal-broker/actuate after 1 attempt(s): {'error': 'VALIDATION_ERROR', 'message': 'Signal source: Unknown signal path: Vehicle.Driver.State'}"
+}

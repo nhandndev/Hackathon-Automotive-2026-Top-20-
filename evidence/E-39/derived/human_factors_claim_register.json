@@ -1,0 +1,32 @@
+{
+  "evidence_id": "E-39",
+  "title": "Driver-warning human-factors review",
+  "generated_at": "2026-08-10T05:10:00Z",
+  "commit": "d41b8e168afb046da1cf26946e987246f42d7a14",
+  "status": "NOT_EXECUTED_CLAIM_CONTROL_ONLY",
+  "allowed_claims": [
+    "Android HMI implements driver-facing SAFE/WARNING/CRITICAL warning display.",
+    "HMI source contains TTC, alertness, driver state and action wording.",
+    "E-24 may support technical CarSky/HMI integration, not human-factors outcome."
+  ],
+  "disallowed_claims": [
+    "Measured alert-fatigue reduction.",
+    "Driver acceptance or preference.",
+    "Reaction-time improvement.",
+    "Real-world safety outcome.",
+    "Human-factors validation."
+  ],
+  "required_before_claiming": [
+    "participant_protocol",
+    "consent_record",
+    "baseline_condition",
+    "measured_tasks",
+    "raw_participant_results",
+    "reviewer_summary"
+  ],
+  "evidence_files": [
+    "raw/source_locators.log",
+    "derived/human_factors_claim_register.json",
+    "reports/source_report.md"
+  ]
+}

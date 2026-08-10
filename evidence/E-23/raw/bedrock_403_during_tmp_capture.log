@@ -1,0 +1,29 @@
+Observed during E-22/E-23 screenshot capture on 2026-08-10.
+
+Context:
+- Local FE server was opened at `/?view=copilot-report&type=safety&trip_ids=TMP-E22-CRITICAL`.
+- The temporary `TMP-E22-*` saved trip JSON files were created only for UI screenshot capture and deleted afterwards.
+
+Server output:
+
+```text
+Bedrock report insight request: {
+  mode: 'safety_detail',
+  tripCount: 1,
+  payloadKind: 'single_trip_detail',
+  promptBytes: 3144,
+  tripIds: 'TMP-E22-CRITICAL'
+}
+Bedrock report insight error: {
+  reason: 'Bedrock 403: Forbidden',
+  durationMs: 536,
+  promptBytes: 3144,
+  region: 'ap-southeast-2',
+  modelId: 'deepseek.v3.2'
+}
+```
+
+Interpretation:
+- This is a real provider failure observation from local runtime.
+- It supports the existence of AI-provider failure handling, but it is not a complete benchmark or full fallback audit.
+

@@ -1,0 +1,11 @@
+# E-39 commands
+
+```bash
+cd /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON
+
+rg -n "CRITICAL RISK|WARNING|SAFE DRIVING|BRAKE SAFELY|High risk detected|Immediate driver response|TTC|alertness|driverText|TextToSpeech|warning|CarPropertyManager|BRAKE ASSIST REQUESTED|do not|Không|human|driver" \
+  SE/HMI SE/BE/app SE/BE/scripts \
+  -g '*.java' -g '*.kt' -g '*.md' -g '*.py' \
+  > ../evidence/E-39/raw/source_locators.log
+```
+

@@ -1,0 +1,332 @@
+# E-21 report/export source locator commands
+Mon Aug 10 05:15:30 UTC 2026
+d41b8e168afb046da1cf26946e987246f42d7a14
+
+SE/FE/server.ts:120:type ReportMode = "safety_detail" | "safety_overview" | "maintenance_detail" | "maintenance_overview";
+SE/FE/server.ts:158:  ai_status: "validated" | "unavailable" | "pending";
+SE/FE/server.ts:175:function compactTripForBedrock(trip: CopilotTripInput, mode?: string) {
+SE/FE/server.ts:263:  if (reportMode === "safety_detail") {
+SE/FE/server.ts:278:  if (reportMode === "safety_overview") {
+SE/FE/server.ts:291:  if (reportMode === "maintenance_detail") {
+SE/FE/server.ts:298:      "If DTC is N/A or cost is 0, explicitly say real vehicle-health/workshop data is unavailable and cost remains N/A until inspection.",
+SE/FE/server.ts:337:function validateBedrockInsight(parsed: any, trips: CopilotTripInput[], mode?: string) {
+SE/FE/server.ts:339:  if (!String(parsed?.fleet_insight || "").trim()) throw new Error("Bedrock returned no fleet_insight");
+SE/FE/server.ts:344:      throw new Error("Bedrock safety insight mentioned maintenance-only fields");
+SE/FE/server.ts:348:  if (mode === "safety_overview" || mode === "maintenance_overview") return;
+SE/FE/server.ts:363:        throw new Error(`Bedrock contradicted ${trip.tripId}: ${reason}`);
+SE/FE/server.ts:371:    insight: "AI Copilot chưa có phản hồi Bedrock hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:372:    fleet_insight: "AI Copilot chưa có phản hồi Bedrock hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:375:    ai_status: "unavailable",
+SE/FE/server.ts:388:    insight: "AI Copilot đang chờ Bedrock phản hồi hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:389:    fleet_insight: "AI Copilot đang chờ Bedrock phản hồi hợp lệ. Không hiển thị insight giả.",
+SE/FE/server.ts:392:    ai_status: "pending",
+SE/FE/server.ts:410:function getBedrockBearerToken(): string {
+SE/FE/server.ts:414:async function callBedrockConverse(prompt: string, modelId = BEDROCK_MODEL_ID, timeoutMs = 3500, externalSignal?: AbortSignal): Promise<string> {
+SE/FE/server.ts:415:  const token = getBedrockBearerToken();
+SE/FE/server.ts:442:    throw new Error(`Bedrock ${response.status}: ${message}`);
+SE/FE/server.ts:576:    safeScore: Number(rankingScore.toFixed(1)),
+SE/FE/server.ts:577:    rankingScore: Number(rankingScore.toFixed(1)),
+SE/FE/server.ts:579:    maxRisk: Number(maxRisk.toFixed(1)),
+SE/FE/server.ts:580:    avgRisk: Number(avgRisk.toFixed(1)),
+SE/FE/server.ts:581:    criticalEventPct: Number(criticalEventPct.toFixed(1)),
+SE/FE/server.ts:582:    distractedPct: Number(distractedPct.toFixed(1)),
+SE/FE/server.ts:782:Ghi rõ: Báo cáo đã sắp xếp TOÀN BỘ ${rankedDrivers.length} trip theo telemetry JSON/local AI, từ ưu tiên review cao đến thấp: ${rankedDrivers.map(d => `Trip ${d.trip_id} (Ranking Score: ${d.safeScore}/100, Max risk: ${d.maxRisk}/100, Harsh behavior: ${d.harshBraking}, DTC: ${d.dtcCode})`).join(", ")}.
+SE/FE/server.ts:793:Ghi rõ: Báo cáo đã sắp xếp TOÀN BỘ ${rankedDrivers.length} chuyến đi theo điểm an toàn Ranking Score từ JSON/local AI risk và behavior fields. ${allCritical ? "Tất cả chuyến đều thuộc nhóm nguy hiểm/rủi ro cao; không được gọi là an toàn tuyệt đối." : "Nếu có chuyến an toàn hơn, chỉ nói là tương đối an toàn hơn trong nhóm."} Danh sách: ${rankedDrivers.map(d => `${d.trip_id} (${d.safeScore}/100, avg risk ${d.avgRisk}/100, max risk ${d.maxRisk}/100, ${d.riskLevel})`).join(", ")}.
+SE/FE/server.ts:801:      // Report cards must open immediately from JSON/local AI. Bedrock is only
+SE/FE/server.ts:817:              ? "Tất cả trip trong JSON/local AI đang thuộc nhóm rủi ro cao; danh sách vẫn xếp theo điểm an toàn Ranking Score từ cao xuống thấp."
+SE/FE/server.ts:818:              : "AI Copilot đã diễn giải danh sách trip theo điểm an toàn Ranking Score từ JSON/local AI.")),
+SE/FE/server.ts:822:              ? "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP; Avg Risk/Max Risk dùng để audit"
+SE/FE/server.ts:823:              : "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP",
+SE/FE/server.ts:837:      console.error("Bedrock report card error:", err);
+SE/FE/server.ts:848:            ? "Đang chờ AI Copilot/Bedrock diễn giải. Card chỉ dùng safety telemetry JSON/local AI; không hiển thị DTC, chi phí hoặc chẩn đoán giả."
+SE/FE/server.ts:850:              ? "Đang chờ AI Copilot/Bedrock diễn giải. Tất cả trip trong JSON/local AI đang ở nhóm rủi ro cao; list vẫn xếp theo điểm an toàn Ranking Score."
+SE/FE/server.ts:851:              : "Đang chờ AI Copilot/Bedrock diễn giải. Card chỉ dùng telemetry JSON/local AI; không hiển thị dữ liệu giả."),
+SE/FE/server.ts:855:              ? "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP; Avg Risk/Max Risk dùng để audit"
+SE/FE/server.ts:856:              : "Xếp hạng theo điểm an toàn Ranking Score từ CAO ➔ THẤP",
+SE/FE/server.ts:872:  if (getBedrockBearerToken()) {
+SE/FE/server.ts:878:      const reply = await callBedrockConverse(`
+SE/FE/server.ts:894:      console.error("Bedrock API Error:", err);
+SE/FE/server.ts:923:    "AI Copilot chưa có phản hồi hợp lệ từ Bedrock/Gemini.",
+SE/FE/server.ts:953:      ai_status: "unavailable",
+SE/FE/server.ts:1000:  if (!getBedrockBearerToken()) {
+SE/FE/server.ts:1006:    const isOverviewReport = reportMode === "safety_overview" || reportMode === "maintenance_overview";
+SE/FE/server.ts:1025:        trips: trips.map((trip) => compactTripForBedrock(trip, reportMode)),
+SE/FE/server.ts:1036:    console.info("Bedrock report insight request:", {
+SE/FE/server.ts:1045:      const rawAiOutput = await callBedrockConverse(promptText, BEDROCK_MODEL_ID, 45000, clientAbortController.signal);
+SE/FE/server.ts:1048:      validateBedrockInsight(parsed, trips, reportMode);
+SE/FE/server.ts:1050:      if (!fleetInsight.trim()) throw new Error("Bedrock returned no fleet_insight");
+SE/FE/server.ts:1051:      console.info("Bedrock report insight validated:", {
+SE/FE/server.ts:1063:        ai_status: "validated",
+SE/FE/server.ts:1075:      console.error("Bedrock report insight error:", {
+SE/FE/server.ts:1093:    if (payload.ai_status === "validated" || payload.ai_status === "unavailable") {
+SE/FE/server.ts:1095:        expiresAt: Date.now() + (payload.ai_status === "validated" ? REPORT_INSIGHT_CACHE_TTL_MS : REPORT_UNAVAILABLE_CACHE_TTL_MS),
+SE/FE/server.ts:1105:  if (foregroundResult.ai_status === "validated") {
+SE/FE/src/App.tsx:182:        // Keep the last valid dashboard state while Backend is unavailable.
+SE/FE/src/components/TripDetailView.tsx:203:            {!displaySnapshot ? <div className="grid flex-1 place-items-center text-xs text-slate-500">No live or saved frame data received.</div> : <div className="space-y-2 overflow-y-auto rounded-lg border border-sky-900/30 bg-[#0F172A] p-3 text-[10px] text-slate-200"><p className="font-mono text-sky-300">frame={displaySnapshot.frame_id} · t={(displaySnapshot.trip_timestamp_ms / 1000).toFixed(2)}s · {snapshotConnected ? 'live' : 'saved'}</p><p>Speed: <b>{displaySnapshot.speed_kmh.toFixed(1)} km/h</b> · TTC: <b>{displaySnapshot.predicted_ttc_sec === null ? '∞' : `${displaySnapshot.predicted_ttc_sec.toFixed(2)}s`}</b></p><p>Driver: <b>{displaySnapshot.driver_state}</b> · confidence <b>{Math.round(displaySnapshot.driver_confidence * 100)}%</b> · alertness <b>{Math.round(displaySnapshot.alertness_score * 100)}%</b></p><p>Risk Score: <b className="text-amber-400">{displaySnapshot.risk_score.toFixed(1)}/100</b></p>{latestAlert && <div className="border-t border-slate-700 pt-2"><b className="uppercase text-amber-300">{latestAlert.status} · {latestAlert.alert_type.replaceAll('_', ' ')}</b><p className="mt-1 text-slate-400">{latestAlert.recommended_action}</p></div>}</div>}
+SE/FE/src/components/PerformanceInsightsView.tsx:25:  const formatted = Number.isFinite(numeric) ? `${numeric.toFixed(1)}/100` : String(value);
+SE/FE/src/components/PerformanceInsightsView.tsx:78:    rankingScore: Number(row.score.toFixed(1)),
+SE/FE/src/components/PerformanceInsightsView.tsx:79:    averageRiskScore: Number(row.avgRisk.toFixed(1)),
+SE/FE/src/components/PerformanceInsightsView.tsx:80:    maximumRiskScore: Number(row.maxRisk.toFixed(1)),
+SE/FE/src/components/PerformanceInsightsView.tsx:141:    `Fleet currently has ${totalTrips} trip(s) with ${allFrames.length} telemetry frames. Average Fleet Ranking Score is ${format(avgRankingScore)}/100, so this page is a fleet-wide overview, not only ${vehicle.trip_id}.`,
+SE/FE/src/components/PerformanceInsightsView.tsx:172:        <InsightMetric icon={Gauge} label="Average Fleet Ranking Score" value={`${format(avgRankingScore)}/100`} sub={`${totalTrips} trips analyzed`} />
+SE/FE/src/components/PerformanceInsightsView.tsx:175:        <InsightMetric icon={Trophy} label="Lowest-Risk Trip" value={bestTrip?.trip_id ?? 'N/A'} sub={bestTrip ? `${format(bestTrip.score)}/100 Fleet Ranking Score` : 'No ranking data'} />
+SE/FE/src/components/PerformanceInsightsView.tsx:180:          <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Fleet Ranking Score vs Average Risk Score by Trip</h2>
+SE/FE/src/components/PerformanceInsightsView.tsx:192:                <Bar dataKey="rankingScore" name="Fleet Ranking Score" fill="#38BDF8" radius={[4, 4, 0, 0]} />
+SE/FE/src/reportModel.ts:4:export type ReportMode = 'safety_detail' | 'safety_overview' | 'maintenance_detail' | 'maintenance_overview';
+SE/FE/src/reportModel.ts:15:export interface VehicleReportModel {
+SE/FE/src/reportModel.ts:84:          timeLabel: `${ts.toFixed(1)}s`,
+SE/FE/src/reportModel.ts:87:          detail: `risk=${risk.toFixed(1)}, ttc=${Number.isFinite(frame.min_ttc) ? `${frame.min_ttc.toFixed(2)}s` : 'Infinity'}, alertness=${finite(frame.driver?.alertness_score).toFixed(2)}`,
+SE/FE/src/reportModel.ts:140:export const buildVehicleReportModels = (vehicles: TripData[], selectedTrips: TripData[]) => {
+SE/FE/src/reportModel.ts:144:  return rankingRows.map<VehicleReportModel>((row) => {
+SE/FE/src/reportModel.ts:148:    const safetyAction: VehicleReportModel['safetyAction'] =
+SE/FE/src/reportModel.ts:177:export const inferReportMode = (reportType: string | null, modelCount: number): ReportMode =>
+SE/FE/src/reportModel.ts:179:    ? modelCount === 1 ? 'maintenance_detail' : 'maintenance_overview'
+SE/FE/src/reportModel.ts:180:    : modelCount === 1 ? 'safety_detail' : 'safety_overview';
+SE/FE/src/reportModel.ts:182:export const buildCopilotInput = (models: VehicleReportModel[], reportMode: ReportMode) => ({
+SE/FE/src/components/VehicleLiveView.tsx:19:const formatEventTime = (timestampMs: number) => `${(timestampMs / 1000).toFixed(1)}s`;
+SE/FE/src/components/VehicleLiveView.tsx:127:            <span className="absolute text-xl font-extrabold">{riskScore === undefined ? '--' : riskScore.toFixed(1)}</span>
+SE/FE/src/components/VehicleLiveView.tsx:151:            <span className="text-xl font-black">{displaySnapshot ? displaySnapshot.speed_kmh.toFixed(1) : '--'} <span className="text-xs font-normal text-slate-400">km/h</span></span>
+SE/FE/src/components/AICopilotDrawer.tsx:172:                      {msg.cardData.trip_id || 'Trip đang chọn'} đang có rủi ro cao nhất — Ranking Score <span className="text-amber-400 font-mono">{msg.cardData.score}/100</span>
+SE/FE/src/components/AICopilotDrawer.tsx:244:                          <span className="truncate">{msg.cardData.sortRule || (msg.cardData.reportType === 'maintenance' ? 'Sắp xếp: Ưu tiên kiểm tra trip TỪ CAO ➔ THẤP' : 'Xếp hạng theo điểm an toàn Ranking Score TỪ CAO ➔ THẤP')}</span>
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:68:    return `frame_id=${frame.frame_id}, timestamp=${Number(frame.timestamp ?? 0).toFixed(1)}s, driver.state=${frame.driver?.state}, alertness_score=${Number(frame.driver?.alertness_score ?? 0).toFixed(2)}, min_ttc=${ttc}, headway_sec=${headway}, risk.final_risk_score=${Number(frame.risk?.final_risk_score ?? 0).toFixed(1)}`;
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:90:      timestamp: `${Number(distractedFrame.timestamp ?? 0).toFixed(1)}s`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:91:      event: `Attention penalty: -${(row.distractedPct * 0.10).toFixed(1)} pts`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:92:      evidence: `${countBy((frame) => frame.driver?.state === 'distracted')}/${totalFrames} frames distracted (${row.distractedPct.toFixed(1)}%). ${frameEvidence(distractedFrame)}. Mốc này làm giảm điểm vì driver.state=distracted trong trip làm tăng rủi ro phản ứng trước tình huống phía trước.`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:97:      timestamp: `${Number(fatigueFrame.timestamp ?? 0).toFixed(1)}s`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:98:      event: `Fatigue penalty: -${(((row.fatigueEvents / totalFrames) * 100) * 0.05).toFixed(1)} pts`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:104:      timestamp: `${Number(highRiskFrame.timestamp ?? 0).toFixed(1)}s`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:105:      event: `Risk score penalty: -${((row.avgRisk * 0.45) + (row.maxRisk * 0.20)).toFixed(1)} pts`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:111:      timestamp: `${Number(ttcFrame.timestamp ?? 0).toFixed(1)}s`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:112:      event: `TTC/Near-miss penalty: -${(((row.nearMissCount / totalFrames) * 100) * 0.05).toFixed(1)} pts`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:118:      timestamp: `${Number(tailgatingFrame.timestamp ?? 0).toFixed(1)}s`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:119:      event: `Tailgating penalty: -${(row.tailgatingPct * 0.04).toFixed(1)} pts`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:120:      evidence: `${row.tailgatingPct.toFixed(1)}% frames tailgating. ${frameEvidence(tailgatingFrame)}. Mốc này làm giảm điểm vì khoảng cách bám đuôi thấp làm tăng nguy cơ phanh gấp và va chạm.`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:125:      timestamp: `${Number(speedingFrame.timestamp ?? 0).toFixed(1)}s`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:126:      event: `Speeding penalty: -${(row.speedingPct * 0.03).toFixed(1)} pts`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:127:      evidence: `${row.speedingPct.toFixed(1)}% frames speeding. ${frameEvidence(speedingFrame)}. Mốc này làm giảm điểm vì vượt tốc làm tăng quãng đường phanh và rủi ro bảo hiểm.`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:132:      timestamp: `${Number(harshFrame.timestamp ?? 0).toFixed(1)}s`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:133:      event: `Harsh behavior penalty: -${(((row.harshEvents / totalFrames) * 100) * 0.03).toFixed(1)} pts`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:140:      event: `Final score: ${row.score.toFixed(1)}/100`,
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:169:    { label: 'Average Risk Score', value: row.avgRisk * 0.45, detail: `${row.avgRisk.toFixed(1)} × 0.45` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:170:    { label: 'Maximum Risk Score', value: row.maxRisk * 0.20, detail: `${row.maxRisk.toFixed(1)} × 0.20` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:171:    { label: 'Critical frames', value: row.criticalEventPct * 0.15, detail: `${row.criticalEventPct.toFixed(1)}% × 0.15` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:172:    { label: 'Distracted', value: row.distractedPct * 0.10, detail: `${row.distractedPct.toFixed(1)}% × 0.10` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:173:    { label: 'Fatigue', value: fatigueEventPct * 0.05, detail: `${fatigueEventPct.toFixed(1)}% × 0.05` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:174:    { label: 'Speeding', value: row.speedingPct * 0.03, detail: `${row.speedingPct.toFixed(1)}% × 0.03` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:175:    { label: 'Tailgating', value: row.tailgatingPct * 0.04, detail: `${row.tailgatingPct.toFixed(1)}% × 0.04` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:176:    { label: 'Harsh behavior', value: harshEventPct * 0.03, detail: `${harshEventPct.toFixed(1)}% × 0.03` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:177:    { label: 'Near Miss Count', value: nearMissPct * 0.05, detail: `${nearMissPct.toFixed(1)}% × 0.05` },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:182:    { name: 'Ranking Score', value: row.score, color: metricColor(row.score) },
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:217:          <Stat icon={Brain} label="Ranking Score" value={row.score.toFixed(1)} />
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:219:          <Stat icon={CheckCircle2} label="Fleet Avg Ranking Score" value={fleetAverage.toFixed(1)} />
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:224:            <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Overall Ranking Score</h2>
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:240:              <span className="font-mono text-4xl font-black" style={{ color: metricColor(row.score) }}>{row.score.toFixed(1)}</span>
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:241:              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ranking Score</span>
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:260:                    <LabelList dataKey="penalty" position="right" formatter={(value: number) => `-${value.toFixed(1)}`} fill="#F8FAFC" fontSize={12} fontWeight={800} />
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:276:                Fleet ranking được sắp xếp giảm dần theo <b className="text-slate-100">Ranking Score riêng của bảng Ranking</b>.
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:281:                <InfoLine label="Estimated penalty" value={`-${estimatedTotalPenalty.toFixed(1)}`} />
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:282:                <InfoLine label="Raw ranking score" value={rawRankingScore.toFixed(1)} />
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:283:                <InfoLine label="Final ranking score" value={row.score.toFixed(1)} />
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:290:                  ? `${row.trip_id} đứng sau ${previousRow.trip_id} vì Ranking Score thấp hơn ${Math.abs(previousRow.score - row.score).toFixed(1)} điểm.`
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:291:                  : `${row.trip_id} đang đứng đầu fleet vì có Ranking Score cao nhất trong danh sách hiện tại.`}
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:294:                  ? `Trip ngay phía sau là ${nextRow.trip_id}, thấp hơn ${Math.abs(row.score - nextRow.score).toFixed(1)} điểm.`
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:295:                  : 'Đây là trip cuối bảng theo Ranking Score hiện tại.'}
+SE/FE/src/components/DriverRankingAnalysisPage.tsx:303:                    <span className="font-mono font-black text-red-300">-{item.value.toFixed(1)}</span>
+SE/FE/src/components/FleetMapView.tsx:62:    row.avgRisk >= 60 ? `Average Risk Score ${row.avgRisk.toFixed(1)}` : null,
+SE/FE/src/components/FleetMapView.tsx:63:    row.maxRisk >= 80 ? `Maximum Risk Score ${row.maxRisk.toFixed(1)}` : null,
+SE/FE/src/components/FleetMapView.tsx:65:    row.distractedPct > 0 ? `${row.distractedPct.toFixed(1)}% distracted` : null,
+SE/FE/src/components/FleetMapView.tsx:178:            <Metric label="Fleet Ranking Score" value={finite(selectedRanking?.score)} />
+SE/FE/src/components/FleetMapView.tsx:191:              <p className="text-xs text-slate-500">{coordinateLabel ? 'Location unavailable. GPS information was not provided for this trip.' : 'GPS coordinates are available for this trip.'}</p>
+SE/FE/src/components/DriverRankingView.tsx:95:7. Do not invent missing data. If a metric is unavailable, mark it as unavailable.
+SE/FE/src/components/DriverRankingView.tsx:280:    return `frame_id=${frame.frame_id}, timestamp=${Number(frame.timestamp ?? 0).toFixed(1)}s, driver.state=${frame.driver?.state}, alertness_score=${Number(frame.driver?.alertness_score ?? 0).toFixed(2)}, min_ttc=${ttc}, headway_sec=${headway}, risk.final_risk_score=${Number(frame.risk?.final_risk_score ?? 0).toFixed(1)}`;
+SE/FE/src/components/DriverRankingView.tsx:286:      evidence: `Maximum Risk Score ${row.maxRisk.toFixed(1)}, Average Risk Score ${row.avgRisk.toFixed(1)}`,
+SE/FE/src/components/DriverRankingView.tsx:293:      evidence: `Distracted ${row.distractedPct.toFixed(1)}% thời lượng ghi nhận`,
+SE/FE/src/components/DriverRankingView.tsx:307:      evidence: `${row.nearMissCount} near misses, tailgating ${row.tailgatingPct.toFixed(1)}%`,
+SE/FE/src/components/DriverRankingView.tsx:323:    `Ranking formula bắt đầu từ 100 điểm và trừ ${totalPenalty.toFixed(1)} điểm đã normalize theo tỷ lệ frame/phần trăm. Ranking Score cuối là ${row.score.toFixed(1)}/100.`,
+SE/FE/src/components/DriverRankingView.tsx:324:    `1. Risk Score penalty: -${(estimatedPenalties.avgRisk + estimatedPenalties.maxRisk).toFixed(1)} điểm. Mốc đại diện: ${frameText(firstHighRisk)}. Lý do: risk.final_risk_score cao cho thấy tình huống đã được AI đánh giá nguy hiểm hơn baseline.`,
+SE/FE/src/components/DriverRankingView.tsx:325:    estimatedPenalties.distracted > 0 ? `2. Driver attention penalty: -${estimatedPenalties.distracted.toFixed(1)} điểm. Có ${distractedFrames.length}/${totalFrames} frames distracted (${row.distractedPct.toFixed(1)}%). Mốc đầu tiên: ${frameText(firstDistracted)}. Lý do: driver.state=distracted làm giảm khả năng phản ứng với tình huống rủi ro phía trước.` : null,
+SE/FE/src/components/DriverRankingView.tsx:326:    estimatedPenalties.criticalEvents > 0 ? `3. Critical frame penalty: -${estimatedPenalties.criticalEvents.toFixed(1)} điểm. Critical frames=${row.criticalEvents}/${totalFrames} (${row.criticalEventPct.toFixed(1)}%). Mốc đại diện: ${frameText(firstHighRisk)}.` : null,
+SE/FE/src/components/DriverRankingView.tsx:327:    estimatedPenalties.fatigue > 0 ? `4. Fatigue/microsleep penalty: -${estimatedPenalties.fatigue.toFixed(1)} điểm. Fatigue events=${row.fatigueEvents}. Mốc đại diện: ${frameText(firstFatigue)}.` : null,
+SE/FE/src/components/DriverRankingView.tsx:328:    (estimatedPenalties.nearMiss + estimatedPenalties.tailgating) > 0 ? `5. TTC/following-distance penalty: -${(estimatedPenalties.nearMiss + estimatedPenalties.tailgating).toFixed(1)} điểm. Near miss=${row.nearMissCount}, tailgating=${row.tailgatingPct.toFixed(1)}%. Mốc đại diện: ${frameText(firstTtc)}.` : null,
+SE/FE/src/components/DriverRankingView.tsx:329:    (estimatedPenalties.speeding + estimatedPenalties.harsh) > 0 ? `6. Behavior penalty: -${(estimatedPenalties.speeding + estimatedPenalties.harsh).toFixed(1)} điểm từ speeding=${row.speedingPct.toFixed(1)}% và harsh behavior events=${row.harshEvents}.` : null,
+SE/FE/src/components/DriverRankingView.tsx:333:    summary: `${row.trip_id} đạt Ranking Score ${row.score.toFixed(1)}/100, xếp hạng #${row.rank}. Mức ưu tiên safety review: ${row.coachingPriority}.`,
+SE/FE/src/components/DriverRankingView.tsx:342:      score_vs_average: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} điểm so với Average Fleet Ranking Score ${fleetAverage.toFixed(1)}`,
+SE/FE/src/components/DriverRankingView.tsx:343:      risk_vs_average: `Average Risk Score ${row.avgRisk.toFixed(1)}, Maximum Risk Score ${row.maxRisk.toFixed(1)}`,
+SE/FE/src/components/DriverRankingView.tsx:344:      behavior_vs_average: `Distracted ${row.distractedPct.toFixed(1)}%, speeding ${row.speedingPct.toFixed(1)}%, tailgating ${row.tailgatingPct.toFixed(1)}%`,
+SE/FE/src/components/DriverRankingView.tsx:361:      success_metric: 'Ranking Score tăng, Max Risk giảm, distracted/tailgating/near miss giảm.',
+SE/FE/src/components/DriverRankingView.tsx:419:              Relative rank xếp theo Ranking Score từ JSON/local AI. Absolute safety vẫn là risk classification; #1 không có nghĩa là safe.
+SE/FE/src/components/DriverRankingView.tsx:433:          <MetricCard icon={Gauge} label="Average Fleet Ranking Score" value={fleetAverage.toFixed(1)} tone="emerald" />
+SE/FE/src/components/DriverRankingView.tsx:443:                <span>Fleet Ranking Score</span>
+SE/FE/src/components/DriverRankingView.tsx:463:                  <span className={`font-mono text-xl font-black ${scoreColor(row.score)}`}>{row.score.toFixed(1)}</span>
+SE/FE/src/components/DriverRankingView.tsx:467:                  <span className="font-mono text-sm font-bold text-sky-300">{row.avgRisk.toFixed(1)}</span>
+SE/FE/src/components/DriverRankingView.tsx:495:                    formatter={(value: number) => [`${Number(value).toFixed(1)}`, 'Metric Value']}
+SE/FE/src/components/DriverRankingView.tsx:506:              <Info label="Average Risk Score" value={selectedRow.avgRisk.toFixed(1)} />
+SE/FE/src/components/DriverRankingView.tsx:507:              <Info label="Maximum Risk Score" value={selectedRow.maxRisk.toFixed(1)} />
+SE/FE/src/components/DriverRankingView.tsx:508:              <Info label="Distracted" value={`${selectedRow.distractedPct.toFixed(1)}%`} />
+SE/FE/src/components/DriverRankingView.tsx:509:              <Info label="Tailgating" value={`${selectedRow.tailgatingPct.toFixed(1)}%`} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:5:import { buildCopilotInput, buildVehicleReportModels, inferReportMode, VehicleReportModel } from '../reportModel';
+SE/FE/src/components/CopilotFleetReportPage.tsx:19:const displayScore = (value: number) => value.toFixed(1);
+SE/FE/src/components/CopilotFleetReportPage.tsx:23:    .replace(/(Ranking Score|Trip Ranking Score|Score|Điểm an toàn)\s*(:|là|đạt)?\s*\d+(?:\.\d+)?\/100/gi, (_match, label, separator = ':') => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:25:      return `${label} ${sep} ${displayScore(canonicalScore)}/100`;
+SE/FE/src/components/CopilotFleetReportPage.tsx:27:    .replace(/\d+\.\d{2,}\/100/g, `${displayScore(canonicalScore)}/100`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:30:  text.replace(/\d+\.\d{2,}\/100/g, (match) => `${Number.parseFloat(match).toFixed(1)}/100`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:136:const reportForRow = (models: VehicleReportModel[], tripId: string) => models.find((model) => model.tripId === tripId);
+SE/FE/src/components/CopilotFleetReportPage.tsx:184:const isValidBedrockPayloadForRows = (payload: any, rows: ReturnType<typeof buildRankingRows>, reportType: string | null) => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:206:  pros: 'AI Copilot đang tạo insight từ Bedrock...',
+SE/FE/src/components/CopilotFleetReportPage.tsx:220:type AiInsightStatus = 'loading' | 'pending' | 'validated' | 'unavailable';
+SE/FE/src/components/CopilotFleetReportPage.tsx:223:  status === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:224:    ? 'Kết quả từ Bedrock đã được trả về'
+SE/FE/src/components/CopilotFleetReportPage.tsx:226:      ? 'Đang chờ Bedrock phản hồi hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:227:      : 'Chờ Bedrock hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:231:  status === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:238:const buildLocalReportNarrative = (models: VehicleReportModel[], mode: string) => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:260:      mode === 'maintenance_detail' ? `### 1. Inspection triage detail - ${models[0].tripId}` : `### 1. Safety-based inspection triage - ${models.length} trip`,
+SE/FE/src/components/CopilotFleetReportPage.tsx:271:  if (mode === 'safety_detail') {
+SE/FE/src/components/CopilotFleetReportPage.tsx:274:      model.avgRisk >= 70 ? `avg risk rất cao (${model.avgRisk.toFixed(1)}/100)` : null,
+SE/FE/src/components/CopilotFleetReportPage.tsx:277:      model.distractedPct > 0 ? `${model.distractedPct.toFixed(1)}% distracted` : null,
+SE/FE/src/components/CopilotFleetReportPage.tsx:283:      `Trip đạt Ranking Score ${displayScore(model.score)}/100, mức Trip Safety Risk: ${model.riskLevel}. Nếu trip đang xếp #${model.rank} trong fleet hiện tại, đây chỉ là relative fleet rank, không có nghĩa là safe nếu score dưới ngưỡng an toàn.`,
+SE/FE/src/components/CopilotFleetReportPage.tsx:286:        ? `Rủi ro chính đến từ ${mainReasons}. Max risk đạt ${model.maxRisk.toFixed(1)}/100 nên trip cần được xem là nguy hiểm dù một số event hành vi như near miss hoặc phanh gấp có thể bằng 0.`
+SE/FE/src/components/CopilotFleetReportPage.tsx:305:    `Fleet Ranking Score trung bình là ${avgScore.toFixed(1)}/100, avg risk trung bình ${avgRisk.toFixed(1)}/100 và max risk cao nhất ${maxRisk.toFixed(1)}/100. Kết luận: ${allNeedReview ? 'toàn bộ fleet đang ở ngưỡng cần safety review, không có trip đủ điều kiện gọi là an toàn.' : 'fleet có phân hóa rủi ro, cần ưu tiên theo ranking score.'}`,
+SE/FE/src/components/CopilotFleetReportPage.tsx:309:    `${best.tripId} đứng cao nhất với ${best.score.toFixed(1)}/100, nghĩa là ít rủi ro tương đối nhất trong fleet chứ không phải an toàn tuyệt đối. ${worst ? `${worst.tripId} đứng cuối với ${worst.score.toFixed(1)}/100.` : ''} Trip có avg risk cao nhất là ${highestRisk.tripId} (${highestRisk.avgRisk.toFixed(1)}/100); trip có nhiều khung rủi ro cao nhất là ${mostHighRiskFrames.tripId} (${mostHighRiskFrames.rawCriticalRiskFrames} frames).`,
+SE/FE/src/components/CopilotFleetReportPage.tsx:319:const buildPendingReportNarrative = (models: VehicleReportModel[], mode: string) => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:321:  if (mode === 'safety_detail') {
+SE/FE/src/components/CopilotFleetReportPage.tsx:325:      `Đã tải số liệu JSON/local AI: Ranking Score ${model.score.toFixed(1)}/100, max risk ${model.maxRisk.toFixed(1)}/100, ${model.rawCriticalRiskFrames} khung rủi ro cao.`,
+SE/FE/src/components/CopilotFleetReportPage.tsx:326:      'Bedrock đang chạy nền để tạo nhận xét chi tiết. Trong lúc chờ, hệ thống chỉ hiển thị KPI thật từ JSON/local AI và không tự bịa ưu/nhược điểm.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:329:  if (mode === 'safety_overview') {
+SE/FE/src/components/CopilotFleetReportPage.tsx:334:      `Đã tải ${models.length} trip từ JSON/local AI: Fleet Ranking Score ${avgScore.toFixed(1)}/100, tổng ${totalHighRiskFrames} khung rủi ro cao.`,
+SE/FE/src/components/CopilotFleetReportPage.tsx:335:      'Bedrock đang chạy nền để tạo đánh giá thống kê đầy đủ. Trong lúc chờ, hệ thống chỉ hiển thị KPI thật và không hiển thị insight thay thế.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:338:  if (mode === 'maintenance_detail') {
+SE/FE/src/components/CopilotFleetReportPage.tsx:343:      'Bedrock đang chạy nền để diễn giải triage. Trong lúc chờ, hệ thống không tạo mã lỗi, phụ tùng, work order, chi phí hoặc kết luận hỏng hóc.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:350:    'Bedrock đang chạy nền để bổ sung nhận xét triage. Trong lúc chờ, hệ thống không tạo chẩn đoán, báo giá hoặc action order thay thế.',
+SE/FE/src/components/CopilotFleetReportPage.tsx:355:  const [copilotInsight, setCopilotInsight] = useState('Đang chờ phản hồi AI Copilot từ Bedrock...');
+SE/FE/src/components/CopilotFleetReportPage.tsx:359:  const [bedrockRequested, setBedrockRequested] = useState(false);
+SE/FE/src/components/CopilotFleetReportPage.tsx:365:  const validatedInsightRef = useRef<{ signature: string; payload: any } | null>(null);
+SE/FE/src/components/CopilotFleetReportPage.tsx:432:  const reportModels = useMemo(() => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:433:    const models = buildVehicleReportModels(vehicles, selectedTrips);
+SE/FE/src/components/CopilotFleetReportPage.tsx:452:  const reportMode = useMemo(() => inferReportMode(reportType, reportModels.length), [reportType, reportModels.length]);
+SE/FE/src/components/CopilotFleetReportPage.tsx:453:  const isSingleTripReport = reportModels.length === 1;
+SE/FE/src/components/CopilotFleetReportPage.tsx:454:  const canRequestBedrockInsight = dataReady && reportModels.length > 0 && missingSelectedIds.length === 0;
+SE/FE/src/components/CopilotFleetReportPage.tsx:456:    () => buildLocalReportNarrative(reportModels, reportMode),
+SE/FE/src/components/CopilotFleetReportPage.tsx:457:    [reportModels, reportMode],
+SE/FE/src/components/CopilotFleetReportPage.tsx:460:    () => buildPendingReportNarrative(reportModels, reportMode),
+SE/FE/src/components/CopilotFleetReportPage.tsx:461:    [reportModels, reportMode],
+SE/FE/src/components/CopilotFleetReportPage.tsx:463:  const canonicalInput = useMemo(() => buildCopilotInput(reportModels, reportMode), [reportModels, reportMode]);
+SE/FE/src/components/CopilotFleetReportPage.tsx:479:    ? 'Ưu tiên kiểm tra kỹ thuật dựa trên safety telemetry JSON/local AI; Bedrock chỉ diễn giải insight, không chẩn đoán hỏng hóc.'
+SE/FE/src/components/CopilotFleetReportPage.tsx:500:  const aiHasReturned = aiInsightStatus === 'validated';
+SE/FE/src/components/CopilotFleetReportPage.tsx:504:      ? 'Đang chờ Bedrock...'
+SE/FE/src/components/CopilotFleetReportPage.tsx:506:        ? 'Chờ Bedrock hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:515:    setBedrockRequested(canRequestBedrockInsight);
+SE/FE/src/components/CopilotFleetReportPage.tsx:516:  }, [canRequestBedrockInsight, inputSignature]);
+SE/FE/src/components/CopilotFleetReportPage.tsx:522:      validatedInsightRef.current = { signature, payload };
+SE/FE/src/components/CopilotFleetReportPage.tsx:523:      setAiInsightStatus('validated');
+SE/FE/src/components/CopilotFleetReportPage.tsx:530:      const validated = validatedInsightRef.current;
+SE/FE/src/components/CopilotFleetReportPage.tsx:532:        validated?.signature === inputSignature
+SE/FE/src/components/CopilotFleetReportPage.tsx:533:        && isValidBedrockPayloadForRows(validated.payload, rows, reportType)
+SE/FE/src/components/CopilotFleetReportPage.tsx:535:        applyValidatedPayload(inputSignature, validated.payload);
+SE/FE/src/components/CopilotFleetReportPage.tsx:540:    const showLocalFallback = (status: AiInsightStatus = 'unavailable', message = localReportNarrative) => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:553:        setCopilotInsight('Đang tải saved trips từ backend trước khi gọi Bedrock...');
+SE/FE/src/components/CopilotFleetReportPage.tsx:557:      if (!canRequestBedrockInsight) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:559:          'unavailable',
+SE/FE/src/components/CopilotFleetReportPage.tsx:561:            ? `Chưa tìm thấy dữ liệu JSON/local AI cho trip: ${missingSelectedIds.join(', ')}. Không gọi Bedrock khi thiếu canonical input.`
+SE/FE/src/components/CopilotFleetReportPage.tsx:569:        if (cachedPayload && isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:585:          if (!cancelled && isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:588:          if (isValidBedrockPayloadForRows(cachedPayload, rows, reportType)) return;
+SE/FE/src/components/CopilotFleetReportPage.tsx:613:        if (payload.ai_status === 'validated' && !payload.vehicle_diagnostics && !payload.action_orders && isValidBedrockPayloadForRows(payload, rows, reportType)) {
+SE/FE/src/components/CopilotFleetReportPage.tsx:618:        if (!cancelled && payload.ai_status !== 'validated') {
+SE/FE/src/components/CopilotFleetReportPage.tsx:640:    canRequestBedrockInsight,
+SE/FE/src/components/CopilotFleetReportPage.tsx:648:    reportModels.map(m => `${m.tripId}:${m.score}:${m.maxRisk}:${m.eventSummary.total}:${m.maintenance.priority}`).join('|'),
+SE/FE/src/components/CopilotFleetReportPage.tsx:668:      const model = reportForRow(reportModels, row.trip_id);
+SE/FE/src/components/CopilotFleetReportPage.tsx:682:        defaultPros.push(`Ranking Score thuộc nhóm xuất sắc (${displayScore(safeScore)}/100), kiểm soát rủi ro cực tốt.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:684:        defaultPros.push(`Ranking Score ở mức trung bình khá (${displayScore(safeScore)}/100).`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:690:        defaultCons.push(`Vi phạm tốc độ ở mức ${speedingPct.toFixed(1)}%, gây nguy hiểm nghiêm trọng.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:700:        defaultCons.push(`CẢNH BÁO NGHIÊM TRỌNG: Tỷ lệ xao nhãng mất tập trung lên tới ${row.distractedPct.toFixed(1)}% (cao gấp đôi mức trung bình Fleet), nguy cơ va chạm rất cao.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:702:        defaultCons.push(`Driver state distracted chiếm ${row.distractedPct.toFixed(1)}% thời gian trong trip.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:718:        ? `🛑 SAFETY REVIEW BẮT BUỘC TRƯỚC CHUYẾN TIẾP THEO: Trip ${row.trip_id} đạt Ranking Score ${displayScore(safeScore)}/100 và có ${row.criticalEvents} khung rủi ro cao. Cần review high-risk frames; không kết luận lỗi vận hành nếu chưa xác minh evidence.`
+SE/FE/src/components/CopilotFleetReportPage.tsx:720:          ? `⚠️ NHẮC NHỞ: Trip ${row.trip_id} cần review các đoạn xao nhãng (${row.distractedPct.toFixed(1)}%) và khoảng cách an toàn.`
+SE/FE/src/components/CopilotFleetReportPage.tsx:723:      const prosList = aiInsightStatus === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:726:      const consList = aiInsightStatus === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:729:      const evalText = aiInsightStatus === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:747:              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Ranking Score:</strong> ${displayScore(row.score)}/100</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:749:              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Risk Cao Nhất:</strong> ${row.maxRisk.toFixed(1)}</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:753:              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Avg Risk:</strong> ${row.avgRisk.toFixed(1)}/100</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:754:              <td style="padding: 6px; font-size: 13px; color: #475569;"><strong>Distracted:</strong> ${row.distractedPct.toFixed(1)}%</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:843:              <tr><td><strong>Fleet Avg Ranking Score</strong></td><td>${displayScore(selectedFleetAverage)}/100</td></tr>
+SE/FE/src/components/CopilotFleetReportPage.tsx:862:              <td>${(rows.length === 1 ? rows[0].score : fleetAverage).toFixed(1)}/100</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:863:	              <td>${exportComparisonRow ? `${exportComparisonRow.trip_id} · ${exportComparisonRow.score.toFixed(1)}/100 · Still ${exportComparisonRow.riskLevel}` : 'N/A'}</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:872:              <td>${(rows.reduce((sum, row) => sum + row.distractedPct, 0) / Math.max(rows.length, 1)).toFixed(1)}%</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:873:	              <td>${exportComparisonRow ? `${exportComparisonRow.distractedPct.toFixed(1)}%` : 'N/A'}</td>
+SE/FE/src/components/CopilotFleetReportPage.tsx:908:              const model = reportForRow(reportModels, row.trip_id);
+SE/FE/src/components/CopilotFleetReportPage.tsx:941:        <div class="section-title">5. Khuyến Nghị & Insight Từ AI Copilot (Bedrock Engine)</div>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1042:      line(`Exported: ${new Date().toLocaleString()} | Source: JSON/local AI + validated Bedrock insight when available`, 8, 'normal', [100, 116, 139]);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1049:        kv('Fleet Avg Ranking Score', `${displayScore(selectedFleetAverage)}/100`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1055:      kv(rows.length === 1 ? 'Trip Ranking Score' : 'Fleet Ranking Score', `${(rows.length === 1 ? rows[0].score : fleetAverage).toFixed(1)}/100`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1056:      kv('Highest-ranked trip', exportComparisonRow ? `${exportComparisonRow.trip_id} - ${exportComparisonRow.score.toFixed(1)}/100 - ${exportComparisonRow.riskLevel}` : 'N/A');
+SE/FE/src/components/CopilotFleetReportPage.tsx:1058:      kv('Distracted average', `${(rows.reduce((sum, row) => sum + row.distractedPct, 0) / Math.max(rows.length, 1)).toFixed(1)}%`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1074:        doc.text(`Ranking Score: ${displayScore(row.score)}/100`, margin + 3, y + 11);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1076:        doc.text(`Max Risk: ${row.maxRisk.toFixed(1)}`, margin + 128, y + 11);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1083:      section('AI Copilot / Bedrock Insight');
+SE/FE/src/components/CopilotFleetReportPage.tsx:1089:        const model = reportForRow(reportModels, row.trip_id);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1092:          : (tripAi?.evaluation ?? tripAi?.recommendation ?? `Safety review result: ${row.trip_id} ranking score ${displayScore(row.score)}/100, risk ${row.riskLevel}.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1108:      setDownloadSuccess('Xuat PDF bi loi. Hay bam Export Report va thu lai.');
+SE/FE/src/components/CopilotFleetReportPage.tsx:1115:  const handleExportWord = () => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:1123:        type: 'application/msword;charset=utf-8'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1127:      const fileName = `DMS_Fleet_Report_${tripLabel}_${new Date().toISOString().slice(0, 10)}.doc`;
+SE/FE/src/components/CopilotFleetReportPage.tsx:1140:      setDownloadSuccess('Xuat Word bi loi. Hay bam Export Report va thu lai.');
+SE/FE/src/components/CopilotFleetReportPage.tsx:1183:              onClick={() => setBedrockRequested(true)}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1184:              disabled={aiHasReturned || aiIsLoading || !canRequestBedrockInsight}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1188:                  ? 'Bedrock đã trả insight hợp lệ cho report này'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1189:                  : canRequestBedrockInsight
+SE/FE/src/components/CopilotFleetReportPage.tsx:1190:                    ? 'Gọi Bedrock AI Copilot cho report đang chọn'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1204:                {isExporting ? 'Exporting...' : 'Export Report'}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1210:                    onClick={handleExportWord}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1215:                    <span>Tải báo cáo Word đầy đủ (.doc)</span>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1230:                  Review priority shows lowest score / highest risk first. Relative rank shows highest Ranking Score first, so #1 does not mean safe when Trip Safety Risk is CRITICAL.
+SE/FE/src/components/CopilotFleetReportPage.tsx:1240:              <MiniMetric label="Fleet Avg Ranking Score" value={`${displayScore(selectedFleetAverage)}/100`} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1242:              <MiniMetric label="Highest-ranked trip" value={highestRankedRow ? `${highestRankedRow.trip_id} · ${displayScore(highestRankedRow.score)}/100` : 'N/A'} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1279:                      <MiniMetric label="Mã lỗi DTC" value={reportForRow(reportModels, row.trip_id)?.maintenance.dtcCode ?? 'N/A'} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1280:                      <MiniMetric label="Brake Stress Estimate" value={`${reportForRow(reportModels, row.trip_id)?.maintenance.brakeStress ?? 0}/100`} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1281:                      <MiniMetric label="Tire Stress Estimate" value={`${reportForRow(reportModels, row.trip_id)?.maintenance.tireStress ?? 0}/100`} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1282:                      <MiniMetric label="Inspection Triage" value={reportForRow(reportModels, row.trip_id)?.maintenance.priority ?? 'NORMAL'} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1286:                      <MiniMetric label="Ranking Score" value={`${displayScore(row.score)}/100`} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1288:                      <MiniMetric label="Max Risk" value={row.maxRisk.toFixed(1)} />
+SE/FE/src/components/CopilotFleetReportPage.tsx:1359:                    const model = reportForRow(reportModels, row.trip_id);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1404:                              Estimate: Cơ sở 15% + {brakeLogCount} phanh/lái gắt thật (+{(brakeLogCount * 3.5).toFixed(1)}%) + max risk {row.maxRisk.toFixed(1)}. Khung rủi ro cao ({criticalCount}) là safety context, không phải bằng chứng phanh/lốp hỏng.
+SE/FE/src/components/CopilotFleetReportPage.tsx:1416:                              Estimate: Cơ sở 10% + {speedingPct.toFixed(1)}% quá tốc độ (+{(speedingPct * 0.4).toFixed(1)}%) + {tireLogCount} lần lái gấp (+{(tireLogCount * 2.0).toFixed(1)}%). Không có cảm biến áp suất/mòn lốp trong dataset hiện tại.
+SE/FE/src/components/CopilotFleetReportPage.tsx:1461:                          Ranking Score: {displayScore(row.score)}/100
+SE/FE/src/components/CopilotFleetReportPage.tsx:1469:                            <span className="font-mono text-amber-300 font-bold">{row.distractedPct.toFixed(1)}%</span>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1478:                            <span className="font-mono text-sky-300 font-bold">{row.speedingPct.toFixed(1)}%</span>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1490:                        <div><span className="text-slate-400">Mức rủi ro cực đại:</span> <b className="font-mono text-red-400 font-bold">{row.maxRisk.toFixed(1)}/100</b></div>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1511:                  const activeModels = rows.map(r => reportForRow(reportModels, r.trip_id)).filter(Boolean) as VehicleReportModel[];
+SE/FE/src/components/CopilotFleetReportPage.tsx:1562:                    if (r.maxRisk >= 80) reasons.push(`max risk ${r.maxRisk.toFixed(1)}/100`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1564:                    if (r.distractedPct > 0) reasons.push(`${r.distractedPct.toFixed(1)}% xao nhãng`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1641:                  ['Điểm an toàn ranking', `${fleetAverage.toFixed(1)}/100`, comparisonRow ? `${comparisonRow.score.toFixed(1)}/100` : 'N/A'],
+SE/FE/src/components/CopilotFleetReportPage.tsx:1642:                  ['TTC / near miss risk', `${fleetNearMissAvg.toFixed(1)} near misses`, comparisonRow ? `${comparisonRow.nearMissCount} near misses` : 'N/A'],
+SE/FE/src/components/CopilotFleetReportPage.tsx:1643:                  ['Distraction theo trip', `${fleetDistractionAvg.toFixed(1)}% distracted`, comparisonRow ? `${comparisonRow.distractedPct.toFixed(1)}% distracted` : 'N/A'],
+SE/FE/src/components/CopilotFleetReportPage.tsx:1644:                  ['Sự kiện an toàn (Bình thường)', `${fleetSafeCountAvg.toFixed(1)} sự kiện`, `${targetSafe} sự kiện`],
+SE/FE/src/components/CopilotFleetReportPage.tsx:1645:                  ['Sự kiện cảnh báo (Chú ý)', `${fleetWarningCountAvg.toFixed(1)} sự kiện`, `${targetWarning} sự kiện`],
+SE/FE/src/components/CopilotFleetReportPage.tsx:1646:                  ['Sự kiện nguy hiểm (Khẩn cấp)', `${fleetDangerCountAvg.toFixed(1)} sự kiện`, `${targetDanger} sự kiện`],
+SE/FE/src/components/CopilotFleetReportPage.tsx:1738:              <span className="text-slate-500 block uppercase font-bold text-[10px]">{rows.length === 1 ? 'Trip Ranking Score' : 'Fleet Ranking Score'}</span>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1739:              <span className="text-xl font-black font-mono text-sky-400 mt-1 block">{(rows.length === 1 ? rows[0].score : fleetAverage).toFixed(1)}/100</span>
+SE/FE/src/components/CopilotFleetReportPage.tsx:1744:                {rows[0] ? `${rows[0].trip_id} (${displayScore(rows[0].score)}/100)` : 'N/A'}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1762:            {aiInsightStatus === 'validated' ? (
+SE/FE/src/components/CopilotFleetReportPage.tsx:1764:                AI Copilot đã trả về insight hợp lệ từ Bedrock. Nội dung bên dưới là kết quả AI đã xác thực và sẽ không bị JSON/local fallback ghi đè.
+SE/FE/src/components/CopilotFleetReportPage.tsx:1769:                  ? 'Đánh giá hiện tại lấy từ JSON/local AI. Đang chờ Bedrock phản hồi hợp lệ; chỉ khi AI thật trả về thì phần nhận xét mới được cập nhật.'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1770:                  : 'Đánh giá overview hiện lấy từ JSON/local AI. Bedrock chỉ nhận số liệu tổng hợp fleet, không xử lý lần lượt từng trip; nếu rời trang thì request đang chờ sẽ bị hủy.'}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1783:          const model = reportForRow(reportModels, tripId);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1810:                ? `Tỷ lệ quá tốc độ ở mức ${speedingPct.toFixed(1)}% chỉ tạo Tire Stress Estimate ${tireWear}/100, cần kiểm tra thực tế trước khi kết luận mòn lốp.`
+SE/FE/src/components/CopilotFleetReportPage.tsx:1826:                defaultPros.push(`Ranking Score thuộc nhóm xuất sắc (${displayScore(safeScore)}/100), kiểm soát rủi ro cực tốt.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1828:                defaultPros.push(`Ranking Score ở mức trung bình khá (${displayScore(safeScore)}/100).`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1841:              defaultCons.push(`Điểm an toàn thuộc nhóm cực kỳ nguy hiểm (${displayScore(safeScore)}/100).`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1844:              defaultCons.push(`Vi phạm tốc độ ở mức ${speedingPct.toFixed(1)}%, gây nguy hiểm nghiêm trọng.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1850:              defaultCons.push(`🚨 CẢNH BÁO NGHIÊM TRỌNG: Tỷ lệ xao nhãng mất tập trung lên tới ${expandedRow.distractedPct.toFixed(1)}% (cao gấp đôi mức trung bình Fleet ${fleetAverage.toFixed(1)}%), nguy cơ va chạm rất cao.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1852:              defaultCons.push(`Driver state distracted chiếm ${expandedRow.distractedPct.toFixed(1)}% thời gian trong trip.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1876:                ? `⚠️ NHẮC NHỞ: Trip ${tripId} cần review các hành vi vi phạm để nâng Ranking Score.`
+SE/FE/src/components/CopilotFleetReportPage.tsx:1877:                : `🛑 SAFETY REVIEW REQUIRED BEFORE NEXT DISPATCH: Trip ${tripId} có rủi ro nghiêm trọng (Ranking Score: ${displayScore(safeScore)}/100). Review high-risk segments trước; không kết luận lỗi vận hành nếu chưa xác minh evidence từ frame review.`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1879:          const prosList: string[] = aiInsightStatus === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1882:          const consList: string[] = aiInsightStatus === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1885:          const evaluationText: string = aiInsightStatus === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1888:          const insightSourceLabel = aiInsightStatus === 'validated'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1889:            ? 'Kết quả từ Bedrock đã được trả về'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1891:              ? 'Đang chờ Bedrock phản hồi hợp lệ'
+SE/FE/src/components/CopilotFleetReportPage.tsx:1892:              : 'Chờ Bedrock hợp lệ';
+SE/FE/src/components/CopilotFleetReportPage.tsx:1911:                    {isMaint ? `Ưu tiên: ${reportForRow(reportModels, tripId)?.maintenance.priority ?? 'N/A'}` : `Ranking Score: ${displayScore(safeScore)}/100`}

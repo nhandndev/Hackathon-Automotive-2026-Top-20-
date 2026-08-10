@@ -1,0 +1,50 @@
+# E-22 source locator commands
+Mon Aug 10 04:55:35 UTC 2026
+d41b8e168afb046da1cf26946e987246f42d7a14
+
+## Dashboard workflow routes and saved trip loading
+SE/FE/server.ts:28:// Saved completed trips live in <project>/src/data/saved_trips/{trip_id}.json
+SE/FE/server.ts:29:const SAVED_TRIPS_DIR = path.join(process.cwd(), "src", "data", "saved_trips");
+SE/FE/server.ts:634: * Saves to data/saved_trips/{trip_id}.json so future Copilot sessions
+SE/FE/server.ts:658: * Returns list of all persisted trip IDs (files in data/saved_trips/).
+SE/FE/server.ts:693: * Clears ALL saved completed trip JSON files in data/saved_trips/.
+SE/FE/src/data/btcTripData.ts:4: * btcTripData holds completed trip records saved in `src/data/saved_trips/`.
+SE/FE/src/data/btcTripData.ts:6: * the frontend auto-persists the full TripData to `src/data/saved_trips/{trip_id}.json`.
+SE/FE/src/data/btcTripData.ts:7: * Both the Dashboard and AI Copilot read from `src/data/saved_trips/` to trace completed trips.
+SE/FE/src/types.ts:1:export type ViewMode = 'MAP' | 'INSIGHTS' | 'RANKING' | 'SAFETY' | 'TRIP_DETAIL' | 'VEHICLE_LIVE' | 'SETTINGS';
+SE/FE/src/App.tsx:30:  const standaloneView = urlParams.get('view');
+SE/FE/src/App.tsx:36:    standaloneView === 'TRIP_DETAIL' ||
+SE/FE/src/App.tsx:37:    standaloneView === 'MAP' ||
+SE/FE/src/App.tsx:38:    standaloneView === 'VEHICLE_LIVE' ||
+SE/FE/src/App.tsx:39:    standaloneView === 'INSIGHTS' ||
+SE/FE/src/App.tsx:40:    standaloneView === 'RANKING'
+SE/FE/src/App.tsx:41:  ) ? (standaloneView as ViewMode) : 'MAP';
+SE/FE/src/App.tsx:52:  const [savedTripsLoaded, setSavedTripsLoaded] = useState(false);
+SE/FE/src/App.tsx:57:  // Ref: historical trips loaded from server disk (data/saved_trips/).
+SE/FE/src/App.tsx:58:  const savedTripsCacheRef = useRef<TripData[]>([]);
+SE/FE/src/App.tsx:101:          savedTripsCacheRef.current = [
+SE/FE/src/App.tsx:102:            ...savedTripsCacheRef.current.filter(t => t.trip_id !== tripData.trip_id),
+SE/FE/src/App.tsx:126:        savedTripsCacheRef.current = loaded;
+SE/FE/src/App.tsx:153:        const savedTripIds = new Set(savedTripsCacheRef.current.map(t => t.trip_id));
+SE/FE/src/App.tsx:170:        const savedOnlyTrips = savedTripsCacheRef.current.filter(t => !liveTripIds.has(t.trip_id));
+SE/FE/src/App.tsx:221:    setCurrentView('TRIP_DETAIL');
+SE/FE/src/App.tsx:235:      savedTripsCacheRef.current = [];
+SE/FE/src/App.tsx:251:  if (standaloneView === 'ranking-analysis') {
+SE/FE/src/App.tsx:260:  if (standaloneView === 'copilot-report') {
+SE/FE/src/App.tsx:266:        dataReady={savedTripsLoaded}
+SE/FE/src/App.tsx:319:          {currentView === 'TRIP_DETAIL' && (
+SE/FE/src/App.tsx:378:          setCurrentView('TRIP_DETAIL');
+SE/FE/src/components/SidebarNav.tsx:19:    { id: 'TRIP_DETAIL', label: 'TRIPS', icon: Route, view: 'TRIP_DETAIL' as ViewMode },
+SE/FE/src/components/PerformanceInsightsView.tsx:167:        <h1 className="text-3xl font-extrabold">Performance Insights</h1>
+SE/FE/src/components/TripDetailView.tsx:159:          <h1 className="text-xl font-black tracking-tight">Trip Detail: {vehicle.trip_id}</h1>
+SE/FE/src/components/AICopilotDrawer.tsx:45:      view: 'copilot-report',
+SE/FE/src/components/FleetMapView.tsx:87:        No trip data loaded.
+SE/FE/src/components/DriverRankingView.tsx:403:        view: 'ranking-analysis',
+SE/FE/src/components/CopilotFleetReportPage.tsx:138:const COPILOT_REPORT_CACHE_PREFIX = 'copilot-report-ai:';
+SE/FE/src/components/CopilotFleetReportPage.tsx:1060:      section(`Trip Detail (${rows.length} trip)`);
+SE/FE/src/components/CopilotFleetReportPage.tsx:1115:  const handleExportWord = () => {
+SE/FE/src/components/CopilotFleetReportPage.tsx:1150:    <div id="copilot-report-print-target" className="min-h-screen overflow-y-auto bg-[#070A12] px-6 py-7 text-slate-100">
+SE/FE/src/components/CopilotFleetReportPage.tsx:1162:              href="/?view=MAP"
+SE/FE/src/components/CopilotFleetReportPage.tsx:1210:                    onClick={handleExportWord}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1307:                      href={`/?view=TRIP_DETAIL&trip_id=${row.trip_id}`}
+SE/FE/src/components/CopilotFleetReportPage.tsx:1314:                      <span>Trip Detail (Tab mới)</span>

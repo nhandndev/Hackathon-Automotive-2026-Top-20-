@@ -1,0 +1,7 @@
+failure_case,expected_behavior,source_locator,evidence_level,status_note
+empty trips,"Show no-trip/no-data state, no fake values","SE/FE/src/components/FleetMapView.tsx; SE/FE/src/components/DriverRankingView.tsx",SOURCE_VERIFIED,"Runtime screenshot pending"
+backend unavailable,"Keep last valid dashboard state or recover via reconnect/reload","SE/FE/src/App.tsx",SOURCE_VERIFIED,"Runtime disconnect/reconnect video pending"
+websocket reconnect,"Reconnect/reload can recover later without clearing into mock data","SE/FE/src/App.tsx",SOURCE_VERIFIED,"Runtime WS capture pending"
+ai pending unavailable,"Keep JSON/local baseline and show pending/unavailable status","SE/FE/src/components/CopilotFleetReportPage.tsx; SE/FE/server.ts",SOURCE_VERIFIED,"Runtime screenshot pending"
+invalid trip no data,"Show no-data state, not synthetic trip","SE/FE/src/components/FleetMapView.tsx; SE/FE/src/components/DriverRankingView.tsx",SOURCE_VERIFIED,"Runtime screenshot pending"
+runtime media,"Attach video/screenshots for reviewer","evidence/E-23/screenshots/; evidence/E-23/video/",PENDING,"Required before DONE"

@@ -1,0 +1,8 @@
+step,boundary,artifact,evidence,status
+1,Backend scenario script,raw/carsky_scenario_critical_command.json,Real command output from scripts/carsky_phase05.py scenario critical,RUNTIME_COMMAND_VERIFIED
+2,Backend -> CarSky Signal API,raw/carsky_scenario_critical_parsed.json,"ok=True, mode=vehicle-speed-mux, sent=14",RUNTIME_COMMAND_VERIFIED
+3,Custom signal fallback -> Vehicle.Speed speed-mux,raw/carsky_scenario_critical_parsed.json,"CarSky 400 for /api/v1/signals/97fg4ghsgeo9w4bvze3qq/dms-signal-broker/actuate after 1 attempt(s): {'error': 'VALIDATION_ERROR', 'message': 'Signal source: Unknown signal path: Vehicle.Driver.State'}",FALLBACK_REASON_CAPTURED
+4,KUKSA Vehicle.Speed -> HMI Bridge,raw/source_locators.log,Lua bridge subscribes Vehicle.Speed and logs DMS_HMI_SPEED_MUX before pushing PERF_VEHICLE_SPEED,SOURCE_VERIFIED
+5,HMI Bridge -> VHAL,raw/source_locators.log,PROP_SPEED=291504647 / 0x11600207 PERF_VEHICLE_SPEED,SOURCE_VERIFIED
+6,VHAL -> Android HMI APK,raw/hmi_apk_static_scan.log,"APK contains PERF_VEHICLE_SPEED, CarPropertyManager callback strings and HMI state strings",APK_ARTIFACT_VERIFIED
+7,Signal Watch + Bridge log + Android UI same-event media,"screenshots/, video/",No screenshot/video file stored in E-24 yet,MEDIA_CAPTURE_PENDING

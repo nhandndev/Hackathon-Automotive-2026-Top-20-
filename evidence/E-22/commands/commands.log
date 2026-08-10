@@ -1,0 +1,34 @@
+# E-22 commands
+
+```bash
+cd /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON
+
+rg -n "saved_trips|savedTrips|standaloneView|ranking-analysis|copilot-report|TRIP_DETAIL|Performance Insights|No trip data loaded|handleExportWord|view=|Trip Detail" \
+  SE/FE/src SE/FE/server.ts \
+  -g '*.ts' -g '*.tsx' \
+  > ../evidence/E-22/raw/source_locators.log
+```
+
+## Temporary UI screenshot capture
+
+Temporary files were created only for UI rendering screenshots and deleted after capture:
+
+```bash
+# Created temporarily:
+SE/FE/src/data/saved_trips/TMP-E22-SAFE.json
+SE/FE/src/data/saved_trips/TMP-E22-WATCH.json
+SE/FE/src/data/saved_trips/TMP-E22-CRITICAL.json
+
+# Captured with Chrome + macOS screencapture:
+evidence/E-22/screenshots/01_fleet_map_tmp_saved_trips.png
+evidence/E-22/screenshots/02_trip_detail_tmp_critical.png
+evidence/E-22/screenshots/03_ranking_tmp_trips.png
+evidence/E-22/screenshots/04_ranking_analysis_tmp_critical.png
+evidence/E-22/screenshots/05_performance_insights_tmp_critical.png
+evidence/E-22/screenshots/06_copilot_report_tmp_critical.png
+
+# Deleted after capture:
+rm -f SE/FE/src/data/saved_trips/TMP-E22-*.json
+```
+
+Important: these screenshots prove UI workflow/rendering only. They do not prove canonical data/model accuracy.

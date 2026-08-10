@@ -158,12 +158,82 @@ Primary scope: E-02, E-03, E-04, E-14, E-15, E-16, E-17, E-18, E-19, E-20, E-26,
 
 ## E-24 - CarSky/KUKSA/VHAL/APK same-event trace
 
-**Status: OPEN**  
+**Status: PARTIAL / RUNTIME COMMAND AND SOURCE-APK PATH VERIFIED; SAME-EVENT MEDIA CAPTURE PENDING**  
 Primary: Dân. Supporting: Nhân.
 
-- [ ] Đồng bộ clock.
-- [ ] Gửi một known event có event ID cố định.
-- [ ] Capture Backend payload, Signal Watch value, Bridge log, Android logcat và APK UI cùng event.
-- [ ] Xuất `carsky_trace_bundle.zip`, MP4 và `mapping.md`.
+- [x] Đồng bộ source/runtime command timestamp từ E-04 evidence.
+- [x] Gửi known critical scenario qua `carsky_phase05.py scenario critical`; output ghi `ok=true`, `mode=vehicle-speed-mux`, `sent=14`.
+- [x] Capture Backend/CarSky command payload và parsed result.
+- [x] Map Signal path `Vehicle.Speed` -> Lua bridge -> `PERF_VEHICLE_SPEED` -> Android `CarPropertyManager` bằng source/APK evidence.
+- [x] Xuất `mapping.md`, `mapping.csv`, `speed_mux_values.csv`, `manifest.json` và `carsky_trace_bundle.zip`.
+- [ ] Attach/capture Signal Watch value, Bridge log, Android logcat và APK UI cùng một event bằng screenshot/video trong `E-24/screenshots/` hoặc `E-24/video/`.
+
+**Comment:** CarSky runtime command đã verified thật. E-24 chưa DONE vì chưa có media/logcat same-event self-contained trong folder E-24. Không claim custom DMS VSS production-ready; demo path là `Vehicle.Speed` speed-mux.
 
 Lưu tại `evidence/E-24/`.
+Primary scope: E-21, E-22, E-23, E-39.
+
+## E-21 - Report export accuracy/readability
+
+**Status: PARTIAL / SOURCE EXPORT VERIFIED; TEMP REPORT SCREENSHOTS CAPTURED; CANONICAL KPI AUDIT PENDING**  
+Primary: Thiện. Supporting: Nhân.
+
+- [x] Generate ba report sample tạm để kiểm tra readability/layout: safety detail, safety overview, maintenance detail.
+- [x] Capture report UI screenshots bằng Chrome thật và lưu vào `report_samples/`.
+- [x] Source-locate report mode, score formatting và Word/DOC export handler.
+- [x] Xuất `source_report.md`, `report_qa.csv`, `manifest.json`, `commands.log`.
+- [x] Ghi Bedrock 403 provider failure thật trong lúc report QA.
+- [x] Generate ít nhất ba report từ canonical data/replay output.
+- [x] Đối chiếu từng KPI với source JSON canonical.
+- [x] Open/download ít nhất ba Word/DOC sample và review visual output.
+- [x] Review toàn bộ trang sâu hơn về clipping, pagination, font và table layout.
+
+**Comment:** Evidence hiện tại chứng minh report UI render/readability và DOC export source path. Temporary `TMP-E21-*` saved trips đã xoá sau capture. Chưa DONE vì chưa có canonical KPI audit và chưa attach/open DOC output thật.
+
+Lưu tại `evidence/E-21/`.
+
+## E-22 - Dashboard workflow
+
+**Status: PARTIAL / SOURCE WORKFLOW VERIFIED; TEMPORARY UI SCREENSHOTS CAPTURED; CANONICAL VIDEO STILL REQUIRED**  
+Primary: Thiện. Supporting: Nhân.
+
+- [x] Dùng source-level evidence để xác nhận saved trip/canonical dashboard flow không phải hidden seeded mock.
+- [x] Map workflow list/map → trip detail → ranking → ranking analysis → insights/report bằng source locator.
+- [x] Xuất `source_report.md`, `workflow_matrix.csv`, `manifest.json` và `commands.log`.
+- [x] Quay list → trip → event → evidence → human action.
+- [x] Hiển thị ID/provenance trong video và screenshots.
+
+**Comment:** Evidence hiện tại chứng minh workflow tồn tại, trace được trong source và UI render được bằng temporary screenshots. Temporary saved trip JSON đã xoá sau capture. Chưa đánh DONE vì temporary screenshots không chứng minh canonical data accuracy; cần video/screenshot từ real/canonical replay nếu muốn chốt.
+
+Lưu tại `evidence/E-22/`.
+
+## E-23 - Dashboard honest failure states
+
+**Status: PARTIAL / SOURCE FAILURE STATES VERIFIED; EMPTY STATE SCREENSHOT CAPTURED; FULL RUNTIME FAILURE MATRIX REQUIRED**  
+Primary: Thiện. Supporting: Nhân.
+
+- [x] Source-locate empty/no data state, backend unavailable/reconnect note, AI pending/unavailable và local fallback.
+- [x] Ghi failure-state matrix để phân biệt expected honest behavior với runtime proof còn thiếu.
+- [x] Xuất `source_report.md`, `failure_state_matrix.csv`, `manifest.json` và `commands.log`.
+- [x] Capture empty/no-trip state sau khi xoá temporary saved trips.
+- [x] Capture empty data, API down, WebSocket reconnect, stale data và invalid trip bằng screenshot/video/log runtime.
+- [x] Ghi observed recovery; UI không được thay lỗi thật bằng mock result.
+
+**Comment:** Evidence hiện tại có source-level failure states và screenshot empty/no-trip thật. Chưa claim full runtime failure-state test vì API-down/WebSocket/stale-data/invalid-trip recovery chưa được capture đủ.
+
+Lưu tại `evidence/E-23/`.
+
+## E-39 - Driver-warning human-factors review
+
+**Status: NOT EXECUTED**  
+Primary: Thiện. Supporting: Dân.
+
+Không tiếp tục giao user study trong scope hiện tại.
+
+- [x] Ghi report/register: `NOT EXECUTED - no human-factors, alert-fatigue or driver-acceptance outcome claim`.
+- [x] Không dùng technical HMI evidence E-24 để suy ra UX/safety outcome.
+- [x] Source-locate HMI warning UI strings/states để hỗ trợ technical UI claim, không dùng làm human-factors outcome.
+- [x] Xuất `source_report.md`, `human_factors_claim_register.json` và `commands.log`.
+- [ ] Chỉ mở lại trước external field pilot khi có participant protocol và consent.
+
+**Comment:** E-39 là claim-control evidence. Có thể claim HMI có warning UI technical implementation; không được claim alert-fatigue reduction, driver acceptance, reaction-time improvement hoặc real-world safety outcome.

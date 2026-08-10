@@ -1,0 +1,239 @@
+[2026-08-10T14:01:59] [CARLA] server=0.10.0; maps=['Town10HD_Opt']
+[2026-08-10T14:01:59] [OUTPUT] /home/student/Workspace/hungplt2/carla/evidence/E-12/clean_run_20260810T070042Z; trip tiếp theo=T01-Sample
+[2026-08-10T14:01:59] [MAP PROGRESS] Town10HD_Opt:0/1
+[2026-08-10T14:01:59] [PLAN] còn 1 trip PASS; đủ mọi map thì tự dừng.
+[2026-08-10T14:01:59] [SCHEMA] V6.8 frame-salvage; lỗi cục bộ được xóa đồng bộ theo frame, lỗi toàn cục hoặc > max-invalid-frames vẫn xóa cả trip.
+[2026-08-10T14:01:59] [DIVERSITY] map=Town10HD_Opt weather=['dusk'] scenario=['motorcycle_weave']
+[2026-08-10T14:01:59] ==========================================================================================
+[2026-08-10T14:01:59] [RUN] T01-Sample map=Town10HD_Opt slot=1/1 weather=dusk scenario=motorcycle_weave traffic=66/32 attempt=1/4
+[TM-GLOBAL] API=set_synchronous_mode status=OK args=(True,)
+[TM-GLOBAL] API=set_random_device_seed status=OK args=(1157160177,)
+[TM-GLOBAL] API=set_global_distance_to_leading_vehicle status=OK args=(2.5,)
+[TM-GLOBAL] API=global_percentage_speed_difference status=OK args=(0.0,)
+[SCENARIO] motorcycle_weave/try2: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_weave/try3: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_cut_in/try1: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_cut_in/try2: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_cut_in/try3: Không tìm thấy blueprint xe hai bánh phù hợp | Fallback scenario: motorcycle_weave -> vehicle_cut_in
+[TM-CONFIG] actor=31 profile=ego behavior=ego_low seed=1817149599 applied=11/11 failed=[]
+[TM-CONFIG] actor=32 profile=scenario behavior=scenario seed=2182592051 applied=11/11 failed=[]
+[TM-CONFIG] actor=33 profile=background behavior=normal seed=568248800 applied=11/11 failed=[]
+[TM-CONFIG] actor=34 profile=background behavior=normal seed=1202081715 applied=11/11 failed=[]
+[TM-CONFIG] actor=35 profile=background behavior=normal seed=3849176322 applied=11/11 failed=[]
+[TM-CONFIG] actor=36 profile=background behavior=cautious seed=2067102421 applied=11/11 failed=[]
+[TM-CONFIG] actor=37 profile=background behavior=normal seed=2600267940 applied=11/11 failed=[]
+[TM-CONFIG] actor=38 profile=background behavior=impatient seed=952399479 applied=11/11 failed=[]
+[TM-CONFIG] actor=39 profile=background behavior=impatient seed=1586229190 applied=11/11 failed=[]
+[TM-CONFIG] actor=40 profile=background behavior=impatient seed=4233323929 applied=11/11 failed=[]
+[TM-CONFIG] actor=41 profile=background behavior=impatient seed=303700840 applied=11/11 failed=[]
+[TM-CONFIG] actor=42 profile=background behavior=cautious seed=2984350011 applied=11/11 failed=[]
+[TM-CONFIG] actor=43 profile=background behavior=normal seed=3618182794 applied=11/11 failed=[]
+[TM-CONFIG] actor=44 profile=background behavior=normal seed=1970310237 applied=11/11 failed=[]
+[TM-CONFIG] actor=45 profile=background behavior=normal seed=2335703596 applied=11/11 failed=[]
+[TM-CONFIG] actor=46 profile=background behavior=impatient seed=688897023 applied=11/11 failed=[]
+[TM-CONFIG] actor=47 profile=background behavior=aggressive seed=1222062414 applied=11/11 failed=[]
+[TM-CONFIG] actor=48 profile=background behavior=normal seed=4003378945 applied=11/11 failed=[]
+[TM-CONFIG] actor=49 profile=background behavior=aggressive seed=208022736 applied=11/11 failed=[]
+[TM-CONFIG] actor=50 profile=background behavior=cautious seed=2720899747 applied=11/11 failed=[]
+[TM-CONFIG] actor=51 profile=background behavior=normal seed=3254081650 applied=11/11 failed=[]
+[TM-CONFIG] actor=52 profile=background behavior=aggressive seed=1740427717 applied=11/11 failed=[]
+[TM-CONFIG] actor=53 profile=background behavior=impatient seed=2240042900 applied=11/11 failed=[]
+[TM-CONFIG] actor=54 profile=background behavior=normal seed=457952615 applied=11/11 failed=[]
+[TM-CONFIG] actor=55 profile=background behavior=cautious seed=3105047350 applied=11/11 failed=[]
+[TM-CONFIG] actor=56 profile=background behavior=cautious seed=3638229129 applied=11/11 failed=[]
+[TM-CONFIG] actor=57 profile=background behavior=normal seed=2124578392 applied=11/11 failed=[]
+[TM-CONFIG] actor=58 profile=background behavior=normal seed=2624189483 applied=11/11 failed=[]
+[TM-CONFIG] actor=59 profile=background behavior=normal seed=842100218 applied=11/11 failed=[]
+[TM-CONFIG] actor=60 profile=background behavior=cautious seed=1375265613 applied=11/11 failed=[]
+[TM-CONFIG] actor=61 profile=background behavior=normal seed=4157577500 applied=11/11 failed=[]
+[TM-CONFIG] actor=62 profile=background behavior=normal seed=362225391 applied=11/11 failed=[]
+[TM-CONFIG] actor=63 profile=background behavior=cautious seed=2875102398 applied=11/11 failed=[]
+[TM-CONFIG] actor=64 profile=background behavior=cautious seed=3374713457 applied=11/11 failed=[]
+[TM-CONFIG] actor=65 profile=background behavior=normal seed=1760396224 applied=11/11 failed=[]
+[TM-CONFIG] actor=66 profile=background behavior=cautious seed=2394241427 applied=11/11 failed=[]
+[TM-CONFIG] actor=67 profile=background behavior=impatient seed=746372962 applied=11/11 failed=[]
+[TM-CONFIG] actor=68 profile=background behavior=normal seed=1111766325 applied=11/11 failed=[]
+[TM-CONFIG] actor=69 profile=background behavior=normal seed=3758860932 applied=11/11 failed=[]
+[TM-CONFIG] actor=70 profile=background behavior=impatient seed=131276887 applied=11/11 failed=[]
+[TM-CONFIG] actor=71 profile=background behavior=aggressive seed=2778375718 applied=11/11 failed=[]
+[TM-CONFIG] actor=72 profile=background behavior=impatient seed=996302841 applied=11/11 failed=[]
+[TM-CONFIG] actor=73 profile=background behavior=normal seed=1495913800 applied=11/11 failed=[]
+[TM-CONFIG] actor=74 profile=background behavior=normal seed=4176562971 applied=11/11 failed=[]
+[TM-CONFIG] actor=75 profile=background behavior=impatient seed=515424490 applied=11/11 failed=[]
+[TM-CONFIG] actor=76 profile=background behavior=impatient seed=3162523325 applied=11/11 failed=[]
+[TM-CONFIG] actor=77 profile=background behavior=impatient seed=3528981516 applied=11/11 failed=[]
+[TM-CONFIG] actor=78 profile=background behavior=cautious seed=1881109983 applied=11/11 failed=[]
+[TM-CONFIG] actor=79 profile=background behavior=normal seed=2548493230 applied=11/11 failed=[]
+[TM-CONFIG] actor=80 profile=background behavior=impatient seed=900620641 applied=11/11 failed=[]
+[TM-CONFIG] actor=81 profile=background behavior=impatient seed=1266018096 applied=11/11 failed=[]
+[TM-CONFIG] actor=82 profile=background behavior=normal seed=3913063555 applied=11/11 failed=[]
+[TM-CONFIG] actor=83 profile=background behavior=aggressive seed=251925074 applied=11/11 failed=[]
+[TM-CONFIG] actor=84 profile=background behavior=normal seed=2932574245 applied=11/11 failed=[]
+[TM-CONFIG] actor=85 profile=background behavior=normal seed=3432186356 applied=11/11 failed=[]
+[TM-CONFIG] actor=86 profile=background behavior=impatient seed=1650100039 applied=11/11 failed=[]
+[TM-CONFIG] actor=87 profile=background behavior=normal seed=2149727510 applied=11/11 failed=[]
+[TM-CONFIG] actor=88 profile=background behavior=normal seed=669627113 applied=11/11 failed=[]
+[TM-CONFIG] actor=89 profile=background behavior=impatient seed=1169238200 applied=11/11 failed=[]
+[TM-CONFIG] actor=90 profile=background behavior=impatient seed=3682119179 applied=11/11 failed=[]
+[TM-CONFIG] actor=91 profile=background behavior=normal seed=2034247642 applied=11/11 failed=[]
+[TM-CONFIG] actor=92 profile=background behavior=normal seed=2669141421 applied=11/11 failed=[]
+[TM-CONFIG] actor=93 profile=background behavior=impatient seed=1054823292 applied=11/11 failed=[]
+[TM-CONFIG] actor=94 profile=background behavior=normal seed=1554434255 applied=11/11 failed=[]
+[TM-CONFIG] actor=95 profile=background behavior=impatient seed=4067315358 applied=11/11 failed=[]
+[TM-CONFIG] actor=96 profile=background behavior=cautious seed=271959121 applied=11/11 failed=[]
+[TM-CONFIG] actor=97 profile=background behavior=normal seed=3086842400 applied=11/11 failed=[]
+[TM-CONFIG] actor=98 profile=background behavior=normal seed=3586454515 applied=11/11 failed=[]
+[CAMERA-WARN] attribute=chromatic_aberration_intensity status=MISSING
+[CAMERA-WARN] attribute=temp status=MISSING
+[CAMERA-WARN] attribute=tint status=MISSING
+[CAMERA-WARN] attribute=focal_distance status=MISSING
+[CAMERA-WARN] attribute=gamma status=MISSING
+[CAMERA-WARN] attribute=exposure_mode status=MISSING
+[CAMERA-WARN] attribute=exposure_compensation status=MISSING
+[CAMERA-WARN] attribute=exposure_min_bright status=MISSING
+[CAMERA-WARN] attribute=exposure_max_bright status=MISSING
+[CAMERA-WARN] attribute=bloom_intensity status=MISSING
+[CAMERA-WARN] attribute=lens_flare_intensity status=MISSING
+[CAMERA-WARN] attribute=motion_blur_intensity status=MISSING
+[CAMERA-WARN] attribute=motion_blur_max_distortion status=MISSING
+[CAMERA-WARN] attribute=fstop status=MISSING
+[CAMERA-WARN] attribute=shutter_speed status=MISSING
+[CAMERA-WARN] attribute=slope status=MISSING
+[CAMERA-WARN] attribute=toe status=MISSING
+[CAMERA-FALLBACK] Thiếu gamma/exposure; tắt post-process để tránh bầu trời đen.
+[CAMERA-PROFILE] profile=v2-exact weather=dusk applied={'enable_postprocess_effects': 'False', 'post_process_profile': 'btc_v6', 'use_ray_tracing': 'False'}
+[CAMERA-FALLBACK] Thiếu gamma/exposure; tắt post-process để tránh bầu trời đen.
+[CAMERA-PROFILE] profile=v2-exact weather=dusk applied={'enable_postprocess_effects': 'False', 'post_process_profile': 'btc_v6', 'use_ray_tracing': 'False'}
+[OUTPUT] /home/student/Workspace/hungplt2/carla/evidence/E-12/clean_run_20260810T070042Z/T01-Sample
+[WEATHER] dusk: rain=0.0, fog=0.0, sun=10.0
+[CAMERA] 1280x720 -> 640x360, FOV=90, baseline=0.30, x=2.72, z=1.58, ego=vehicle.lincoln.mkz, mount=fixed_blueprint_table
+[INFO] Warm-up 35 frame ...
+[CAMERA PREFLIGHT] 1/5 near_depth_ratio=0.0000, mean_luma=57.6933, dark_ratio=0.4582, overexposed_ratio=0.0208, sky_mean_luma=102.4608, sky_dark_ratio=0.0487, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 2/5 near_depth_ratio=0.0000, mean_luma=58.1250, dark_ratio=0.4562, overexposed_ratio=0.0213, sky_mean_luma=103.3964, sky_dark_ratio=0.0495, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 3/5 near_depth_ratio=0.0000, mean_luma=58.3182, dark_ratio=0.4526, overexposed_ratio=0.0212, sky_mean_luma=103.4418, sky_dark_ratio=0.0494, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 4/5 near_depth_ratio=0.0000, mean_luma=58.7287, dark_ratio=0.4481, overexposed_ratio=0.0218, sky_mean_luma=103.8619, sky_dark_ratio=0.0470, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 5/5 near_depth_ratio=0.0000, mean_luma=59.0377, dark_ratio=0.4439, overexposed_ratio=0.0216, sky_mean_luma=103.6191, sky_dark_ratio=0.0455, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] PASS frames=5
+[INSTANCE-MAP] projected=8 mapped=6 skipped_invisible=2 unresolved=0 registration_dx=+4.03 registration_dy=-14.35
+[PROGRESS] 1/600 speed=12.0 TTC=9.23 labels=6 event=0
+[INSTANCE-MAP] projected=4 mapped=0 skipped_invisible=4 unresolved=0 registration_dx=+0.00 registration_dy=+0.00
+[PROGRESS] 100/600 speed=0.0 TTC=inf labels=0 event=0
+[INSTANCE-MAP] projected=3 mapped=0 skipped_invisible=3 unresolved=0 registration_dx=+0.00 registration_dy=+0.00
+[PROGRESS] 200/600 speed=0.0 TTC=inf labels=0 event=0
+[INSTANCE-MAP] projected=5 mapped=1 skipped_invisible=4 unresolved=0 registration_dx=+20.00 registration_dy=+0.25
+[PROGRESS] 300/600 speed=16.6 TTC=inf labels=1 event=0
+[INSTANCE-MAP] projected=12 mapped=10 skipped_invisible=2 unresolved=0 registration_dx=+1.56 registration_dy=-5.42
+[PROGRESS] 400/600 speed=43.1 TTC=inf labels=10 event=1
+[INSTANCE-MAP] projected=10 mapped=10 skipped_invisible=0 unresolved=0 registration_dx=+0.60 registration_dy=-11.69
+[PROGRESS] 500/600 speed=0.1 TTC=inf labels=10 event=0
+[INSTANCE-MAP] projected=12 mapped=11 skipped_invisible=0 unresolved=1 registration_dx=-0.16 registration_dy=-11.81
+[PROGRESS] 600/600 speed=0.0 TTC=inf labels=11 event=0
+[TRIP-QUALITY] blocked=240/600 blocked_max_run=240 camera_intersection_frames=411 stationary=331/600 stationary_max_run=204
+[EVENT-DOWNGRADE] scenario=vehicle_cut_in -> none; giữ trip và tiếp tục salvage. reason=Event vehicle_cut_in chỉ có 0 frame evidence, cần >= 3.
+[INSTANCE-SUMMARY] projected=4069 mapped=2679 skipped_invisible=1299 unresolved=91
+[FAIL] RuntimeError: Trip có 427 frame lỗi, vượt --max-invalid-frames=300; first=[4, 5, 6, 14, 15, 17, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]
+Traceback (most recent call last):
+  File "/home/student/Workspace/hungplt2/carla/PythonAPI/examples/carla_project_scripts/carla_project_scripts/script_carla//collect.py", line 4303, in collect_one
+    kept_frames, removed_frames = _btc_salvage_completed_run(
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        paths=paths,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        args=args,
+        ^^^^^^^^^^
+    )
+    ^
+  File "/home/student/Workspace/hungplt2/carla/PythonAPI/examples/carla_project_scripts/carla_project_scripts/script_carla//collect.py", line 5517, in _btc_salvage_completed_run
+    raise RuntimeError(
+    ...<2 lines>...
+    )
+RuntimeError: Trip có 427 frame lỗi, vượt --max-invalid-frames=300; first=[4, 5, 6, 14, 15, 17, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 117 (sensor.camera.rgb) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 118 (sensor.camera.rgb) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 119 (sensor.camera.depth) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 120 (sensor.camera.instance_segmentation) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 121 (sensor.other.collision) 
+[2026-08-10T14:03:00] [FAIL] code=1; partial_deleted=True
+[2026-08-10T14:03:40] ==========================================================================================
+[2026-08-10T14:03:40] [RUN] T01-Sample map=Town10HD_Opt slot=1/1 weather=dusk scenario=motorcycle_weave traffic=35/48 attempt=2/4
+[TM-GLOBAL] API=set_synchronous_mode status=OK args=(True,)
+[TM-GLOBAL] API=set_random_device_seed status=OK args=(927027817,)
+[TM-GLOBAL] API=set_global_distance_to_leading_vehicle status=OK args=(2.5,)
+[TM-GLOBAL] API=global_percentage_speed_difference status=OK args=(0.0,)
+[SCENARIO] motorcycle_weave/try2: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_weave/try3: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_cut_in/try1: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_cut_in/try2: Không tìm thấy blueprint xe hai bánh phù hợp | motorcycle_cut_in/try3: Không tìm thấy blueprint xe hai bánh phù hợp | Fallback scenario: motorcycle_weave -> vehicle_cut_in
+[TM-CONFIG] actor=128 profile=ego behavior=ego_low seed=754805480 applied=11/11 failed=[]
+[TM-CONFIG] actor=129 profile=scenario behavior=scenario seed=2394250426 applied=11/11 failed=[]
+[TM-CONFIG] actor=130 profile=background behavior=normal seed=1869226827 applied=11/11 failed=[]
+[TM-CONFIG] actor=131 profile=background behavior=aggressive seed=3240275258 applied=11/11 failed=[]
+[TM-CONFIG] actor=132 profile=background behavior=aggressive seed=2749061101 applied=11/11 failed=[]
+[TM-CONFIG] actor=133 profile=background behavior=aggressive seed=93573212 applied=11/11 failed=[]
+[TM-CONFIG] actor=134 profile=background behavior=cautious seed=3863501327 applied=11/11 failed=[]
+[TM-CONFIG] actor=135 profile=background behavior=cautious seed=1476445438 applied=11/11 failed=[]
+[TM-CONFIG] actor=136 profile=background behavior=aggressive seed=976834209 applied=11/11 failed=[]
+[TM-CONFIG] actor=137 profile=background behavior=normal seed=2633103120 applied=11/11 failed=[]
+[TM-CONFIG] actor=138 profile=background behavior=aggressive seed=2124837315 applied=11/11 failed=[]
+[TM-CONFIG] actor=139 profile=background behavior=aggressive seed=3747543986 applied=11/11 failed=[]
+[TM-CONFIG] actor=140 profile=background behavior=normal seed=2971100261 applied=11/11 failed=[]
+[TM-CONFIG] actor=141 profile=background behavior=impatient seed=332394196 applied=11/11 failed=[]
+[TM-CONFIG] actor=142 profile=background behavior=normal seed=4119095431 applied=11/11 failed=[]
+[TM-CONFIG] actor=143 profile=background behavior=impatient seed=1472008566 applied=11/11 failed=[]
+[TM-CONFIG] actor=144 profile=background behavior=cautious seed=3363150649 applied=11/11 failed=[]
+[TM-CONFIG] actor=145 profile=background behavior=impatient seed=2854880744 applied=11/11 failed=[]
+[TM-CONFIG] actor=146 profile=background behavior=normal seed=216174171 applied=11/11 failed=[]
+[TM-CONFIG] actor=147 profile=background behavior=normal seed=4003137546 applied=11/11 failed=[]
+[TM-CONFIG] actor=148 profile=background behavior=cautious seed=1330885373 applied=11/11 failed=[]
+[TM-CONFIG] actor=149 profile=background behavior=aggressive seed=554187948 applied=11/11 failed=[]
+[TM-CONFIG] actor=150 profile=background behavior=cautious seed=2210440479 applied=11/11 failed=[]
+[TM-CONFIG] actor=151 profile=background behavior=normal seed=1710829518 applied=11/11 failed=[]
+[TM-CONFIG] actor=152 profile=background behavior=normal seed=3350309297 applied=11/11 failed=[]
+[TM-CONFIG] actor=153 profile=background behavior=normal seed=3093713504 applied=11/11 failed=[]
+[TM-CONFIG] actor=154 profile=background behavior=impatient seed=438230227 applied=11/11 failed=[]
+[TM-CONFIG] actor=155 profile=background behavior=impatient seed=4241966722 applied=11/11 failed=[]
+[TM-CONFIG] actor=156 profile=background behavior=normal seed=1586483061 applied=11/11 failed=[]
+[TM-CONFIG] actor=157 profile=background behavior=impatient seed=1061439780 applied=11/11 failed=[]
+[TM-CONFIG] actor=158 profile=background behavior=normal seed=2440885143 applied=11/11 failed=[]
+[TM-CONFIG] actor=159 profile=background behavior=normal seed=1932885062 applied=11/11 failed=[]
+[TM-CONFIG] actor=160 profile=background behavior=normal seed=3589137929 applied=11/11 failed=[]
+[TM-CONFIG] actor=161 profile=background behavior=cautious seed=3080872184 applied=11/11 failed=[]
+[TM-CONFIG] actor=162 profile=background behavior=normal seed=677046955 applied=11/11 failed=[]
+[TM-CONFIG] actor=163 profile=background behavior=impatient seed=2316538650 applied=11/11 failed=[]
+[TM-CONFIG] actor=164 profile=background behavior=impatient seed=1825054157 applied=11/11 failed=[]
+[CAMERA-FALLBACK] Thiếu gamma/exposure; tắt post-process để tránh bầu trời đen.
+[CAMERA-PROFILE] profile=v2-exact weather=dusk applied={'enable_postprocess_effects': 'False', 'post_process_profile': 'btc_v6', 'use_ray_tracing': 'False'}
+[CAMERA-FALLBACK] Thiếu gamma/exposure; tắt post-process để tránh bầu trời đen.
+[CAMERA-PROFILE] profile=v2-exact weather=dusk applied={'enable_postprocess_effects': 'False', 'post_process_profile': 'btc_v6', 'use_ray_tracing': 'False'}
+[OUTPUT] /home/student/Workspace/hungplt2/carla/evidence/E-12/clean_run_20260810T070042Z/T01-Sample
+[WEATHER] dusk: rain=0.0, fog=0.0, sun=7.4
+[CAMERA] 1280x720 -> 640x360, FOV=90, baseline=0.30, x=2.36, z=1.45, ego=vehicle.ue4.audi.tt, mount=fixed_blueprint_table
+[INFO] Warm-up 35 frame ...
+[CAMERA PREFLIGHT] 1/5 near_depth_ratio=0.0000, mean_luma=53.2159, dark_ratio=0.4623, overexposed_ratio=0.0389, sky_mean_luma=104.6780, sky_dark_ratio=0.0693, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 2/5 near_depth_ratio=0.0000, mean_luma=54.9650, dark_ratio=0.4635, overexposed_ratio=0.0410, sky_mean_luma=108.2414, sky_dark_ratio=0.0635, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 3/5 near_depth_ratio=0.0000, mean_luma=56.7044, dark_ratio=0.4576, overexposed_ratio=0.0426, sky_mean_luma=112.8772, sky_dark_ratio=0.0490, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 4/5 near_depth_ratio=0.0000, mean_luma=59.2557, dark_ratio=0.4511, overexposed_ratio=0.0448, sky_mean_luma=118.7984, sky_dark_ratio=0.0363, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] 5/5 near_depth_ratio=0.0000, mean_luma=62.1156, dark_ratio=0.4382, overexposed_ratio=0.0471, sky_mean_luma=125.5904, sky_dark_ratio=0.0216, required_min_luma=12.0000, allowed_max_dark_ratio=0.9400
+[CAMERA PREFLIGHT] PASS frames=5
+[INSTANCE-MAP] projected=2 mapped=2 skipped_invisible=0 unresolved=0 registration_dx=-4.24 registration_dy=-10.37
+[PROGRESS] 1/600 speed=27.9 TTC=inf labels=2 event=0
+[INSTANCE-MAP] projected=3 mapped=3 skipped_invisible=0 unresolved=0 registration_dx=+0.64 registration_dy=-11.95
+[PROGRESS] 100/600 speed=33.0 TTC=4.05 labels=3 event=1
+[INSTANCE-MAP] projected=2 mapped=2 skipped_invisible=0 unresolved=0 registration_dx=+0.56 registration_dy=-8.22
+[PROGRESS] 200/600 speed=0.0 TTC=inf labels=2 event=0
+[INSTANCE-MAP] projected=0 mapped=0 skipped_invisible=0 unresolved=0 registration_dx=+0.00 registration_dy=+0.00
+[PROGRESS] 300/600 speed=19.5 TTC=inf labels=0 event=0
+[INSTANCE-MAP] projected=5 mapped=5 skipped_invisible=0 unresolved=0 registration_dx=+0.26 registration_dy=-7.54
+[PROGRESS] 400/600 speed=60.5 TTC=inf labels=5 event=0
+[INSTANCE-MAP] projected=4 mapped=4 skipped_invisible=0 unresolved=0 registration_dx=+1.77 registration_dy=-7.68
+[PROGRESS] 500/600 speed=7.4 TTC=12.47 labels=4 event=0
+[INSTANCE-MAP] projected=9 mapped=6 skipped_invisible=1 unresolved=2 registration_dx=-5.48 registration_dy=-11.96
+[PROGRESS] 600/600 speed=0.0 TTC=inf labels=6 event=0
+[TRIP-QUALITY] blocked=0/600 blocked_max_run=0 camera_intersection_frames=22 stationary=120/600 stationary_max_run=86
+[EVENT-DOWNGRADE] scenario=vehicle_cut_in -> none; giữ trip và tiếp tục salvage. reason=Event vehicle_cut_in chỉ có 0 frame evidence, cần >= 3.
+[INSTANCE-SUMMARY] projected=2132 mapped=1609 skipped_invisible=483 unresolved=40
+[FRAME-SALVAGE] removed=61/600; kept=539; reasons={'bbox_intersects_camera_near_plane': 22, 'frames[136].targets[0] TTC hữu hạn khi không closing': 1, 'instance_association_unresolved': 37, 'label_2/000532.txt truncation=0.87 nhưng occluded=2 không có occluder gần hơn': 1}
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 191 (sensor.camera.rgb) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 192 (sensor.camera.rgb) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 193 (sensor.camera.depth) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 194 (sensor.camera.instance_segmentation) 
+WARNING: attempting to unsubscribe from stream but sensor wasn't listening: Actor 195 (sensor.other.collision) 
+[OK] Hoàn tất T01-Sample: kept=539, removed=61, source=600 frames
+[VALIDATION] PASS {'trip_id': 'T01-Sample', 'counts': {'image_2': 539, 'image_3': 539, 'calib': 539, 'label_2': 539, 'depth': 108, 'driver': 0}, 'frames': 539, 'source_frames': 600, 'removed_frames': 61, 'labels': 1375, 'error_total': 0, 'errors': []}
+[2026-08-10T14:04:32] [PASS] T01-Sample; Town10HD_Opt=1/1
+[2026-08-10T14:04:32] [WAIT] 40.0s
+[2026-08-10T14:05:12] [FINAL MAP PROGRESS] Town10HD_Opt:1/1
+[2026-08-10T14:05:12] [DONE] Mọi map đã đủ 1 trip PASS; tự động dừng.

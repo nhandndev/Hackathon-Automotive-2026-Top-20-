@@ -1,0 +1,26 @@
+{
+  "schema_version": "E-12-sample-reference-v1",
+  "created_at_utc": "2026-08-10T07:20:48.257684+00:00",
+  "trip_id": "T01-Sample",
+  "relative_path_from_e12": "clean_run_20260810T070042Z/T01-Sample",
+  "map": "Town10HD",
+  "carla_version": "0.10.0",
+  "per_trip_random_seed": 927027817,
+  "fps": 20,
+  "retained_frames": 539,
+  "file_counts": {
+    "other": 3,
+    "calib": 539,
+    "depth": 108,
+    "image_2": 539,
+    "image_3": 539,
+    "label_2": 539
+  },
+  "validator_pass": false,
+  "trip_json_sha256": "825ff41ce26ac1ab8b96e297a1fd312039442b1c08fbdfcaf59a8754ff2ae3e0",
+  "trip_json_gz_sha256": "261954512ae33eaef8cc1fbf0c1c285c21660d7dde85c7d4b931bec1ba5783f4",
+  "trip_tree_sha256": "19366d8b30224d0e98092bafe063baeadec4def98eecb0468b8dc9cc7d308d4b",
+  "validation_report_sha256": "52c9c079a5b7ee57b6e3b68a9c91c713071ca2f54041d8671027141aa69da2bd",
+  "command_sh_sha256": "66ddb68242ed385ee4c16927a983bf9e84c0033bf2c7b0ba47b32830d6c2a453",
+  "sample_video_sha256": "571cd2d98bf42f28e18aa95a09c0c04f0f3252f8e4f50c91fed66d4d10ac0cad"
+}

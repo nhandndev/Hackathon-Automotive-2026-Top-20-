@@ -1,0 +1,26 @@
+{
+  "evidence_id": "E-23",
+  "title": "Dashboard honest failure states",
+  "generated_at": "2026-08-10T05:10:00Z",
+  "commit": "d41b8e168afb046da1cf26946e987246f42d7a14",
+  "status": "PARTIAL_SOURCE_FAILURE_STATES_VERIFIED_EMPTY_STATE_SCREENSHOT_CAPTURED_FULL_RUNTIME_MATRIX_REQUIRED",
+  "claimed": [
+    "Dashboard source contains explicit no-data and fallback states.",
+    "AI report status distinguishes loading, pending, validated and unavailable.",
+    "Source locators indicate UI should not replace failure with mock insight.",
+    "Empty/no-trip state screenshot captured after deleting temporary saved trips.",
+    "A real Bedrock 403 provider failure was observed during temporary report capture."
+  ],
+  "not_claimed": [
+    "No exhaustive runtime failure-state test until API-down/WebSocket/stale-data media/logs are attached.",
+    "No production SLA or long-run frontend reliability claim.",
+    "No claim that every invalid-data case is covered."
+  ],
+  "evidence_files": [
+    "raw/source_locators.log",
+    "derived/failure_state_matrix.csv",
+    "reports/source_report.md",
+    "screenshots/03_empty_after_temp_delete.png",
+    "raw/bedrock_403_during_tmp_capture.log"
+  ]
+}

@@ -1,0 +1,364 @@
+# E-39 driver warning / human factors claim-control locators
+Mon Aug 10 04:55:35 UTC 2026
+d41b8e168afb046da1cf26946e987246f42d7a14
+
+## HMI driver warning UI and claim-control source locators
+SE/BE/scripts/verify_temporal_sync.py:17:        print(f"❌ Không tìm thấy file {json_path}")
+SE/BE/scripts/verify_temporal_sync.py:41:        driver_file = f"frame_{padded}.jpg"
+SE/BE/scripts/verify_temporal_sync.py:48:        state = ai.get("predicted_driver_state", "alert")
+SE/BE/scripts/verify_temporal_sync.py:52:            event_desc += f" | TTC:{ttc}s (OBJECT DETECTED!)"
+SE/BE/scripts/verify_temporal_sync.py:54:        print(f"#{fid:<6} | {ts:<8.2f} s | {road_file:<20} | {driver_file:<22} | {event_desc:<25}")
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:65:  - TTC.
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:69:  - alertness.
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:72:  - warning buzzer;
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:74:  - haptic warning.
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:144:driverText(String driver)
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:169:- warning nói action.
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:183:Vehicle.ADAS.MinTTC
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:204:WARNING
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:205:→ ECU: DRIVER WARNING BUZZER ON • HAPTIC ALERT ON
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:208:→ ECU: BRAKE ASSIST REQUESTED • BUZZER ON • HAZARD ON
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:217:  driver,
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:221:  alertness,
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:359:Tài xế: Vi ngủ • TTC 1.2s
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:366:SAFE → WARNING → CRITICAL
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:387:  - TTC;
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:404:  - TTC/risk;
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:416:- Không hiển thị quá nhiều số cho driver.
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:418:- Risk/TTC/Alertness dùng làm evidence, không lấn át action chính.
+SE/HMI/HMI_UI_CUSTOMIZATION_GUIDE.md:421:- Không commit API key/secret vào source công khai nếu sau này tách repo public.
+SE/BE/scripts/verify_frame_image_alignment.py:17:    driver_dir = os.path.join(dataset_dir, "driver")
+SE/BE/scripts/verify_frame_image_alignment.py:23:    if not os.path.exists(driver_dir):
+SE/BE/scripts/verify_frame_image_alignment.py:24:        print(f"❌ Thư mục driver không tồn tại tại: {driver_dir}")
+SE/BE/scripts/verify_frame_image_alignment.py:28:    driver_files = set(os.listdir(driver_dir))
+SE/BE/scripts/verify_frame_image_alignment.py:31:    print(f"👤 Tìm thấy {len(driver_files)} ảnh trong driver/\n")
+SE/BE/scripts/verify_frame_image_alignment.py:53:        print(f"⚠️ Không tìm thấy file JSON hoặc CSV của {trip_id}")
+SE/BE/scripts/verify_frame_image_alignment.py:58:    missing_driver = []
+SE/BE/scripts/verify_frame_image_alignment.py:63:        driver_name = f"frame_{padded}.jpg"
+SE/BE/scripts/verify_frame_image_alignment.py:67:        if driver_name not in driver_files:
+SE/BE/scripts/verify_frame_image_alignment.py:68:            missing_driver.append(driver_name)
+SE/BE/scripts/verify_frame_image_alignment.py:72:    if not missing_kitti and not missing_driver:
+SE/BE/scripts/verify_frame_image_alignment.py:82:        if missing_driver:
+SE/BE/scripts/verify_frame_image_alignment.py:83:            print(f"   • Thiếu {len(missing_driver)} ảnh Driver (Ví dụ: {missing_driver[:3]})")
+SE/HMI/README_UI_UX_APK_DESIGN.md:11:APK HMI là màn hình trong xe cho driver. Nó nhận dữ liệu từ hệ thống DMS/AI qua CarSky/KUKSA rồi hiển thị:
+SE/HMI/README_UI_UX_APK_DESIGN.md:18:- TTC.
+SE/HMI/README_UI_UX_APK_DESIGN.md:22:- Nút bật/tắt voice warning.
+SE/HMI/README_UI_UX_APK_DESIGN.md:72:- Text tiếng Việt hiển thị cho driver.
+SE/HMI/README_UI_UX_APK_DESIGN.md:75:- Màn hình safe/warning/critical sao cho demo dễ nhìn.
+SE/HMI/README_UI_UX_APK_DESIGN.md:77:Không nên sửa nếu chưa hỏi Backend/HMI owner:
+SE/HMI/README_UI_UX_APK_DESIGN.md:105:- Không làm UI quá căng thẳng.
+SE/HMI/README_UI_UX_APK_DESIGN.md:107:### WARNING
+SE/HMI/README_UI_UX_APK_DESIGN.md:116:- Hiển thị lý do: mất tập trung, buồn ngủ, TTC thấp...
+SE/HMI/README_UI_UX_APK_DESIGN.md:129:- TTC nếu thấp phải dễ thấy.
+SE/HMI/README_UI_UX_APK_DESIGN.md:130:- ECU simulated action phải nổi bật, ví dụ `BRAKE ASSIST REQUESTED`.
+SE/HMI/README_UI_UX_APK_DESIGN.md:141:Vehicle.ADAS.MinTTC
+SE/HMI/README_UI_UX_APK_DESIGN.md:154:DisplaySeverity = SAFE | WARNING | CRITICAL
+SE/HMI/README_UI_UX_APK_DESIGN.md:160:## 6. Thông tin nên ưu tiên hiển thị cho driver
+SE/HMI/README_UI_UX_APK_DESIGN.md:167:4. Rủi ro/tốc độ/TTC nếu cần.
+SE/HMI/README_UI_UX_APK_DESIGN.md:179:   Tài xế: Mất tập trung • TTC 3.0s
+SE/HMI/README_UI_UX_APK_DESIGN.md:183:   ECU: DRIVER WARNING BUZZER ON • HAPTIC ALERT ON
+SE/HMI/README_UI_UX_APK_DESIGN.md:216:- Format risk/speed/alertness.
+SE/HMI/README_UI_UX_APK_DESIGN.md:234:### `driverText(String driver)`
+SE/HMI/README_UI_UX_APK_DESIGN.md:236:Mapping driver state sang tiếng Việt.
+SE/HMI/README_UI_UX_APK_DESIGN.md:256:WARNING
+SE/HMI/README_UI_UX_APK_DESIGN.md:257:→ ECU: DRIVER WARNING BUZZER ON • HAPTIC ALERT ON
+SE/HMI/README_UI_UX_APK_DESIGN.md:260:→ ECU: BRAKE ASSIST REQUESTED • BUZZER ON • HAZARD ON
+SE/HMI/README_UI_UX_APK_DESIGN.md:275:Không nên:
+SE/HMI/README_UI_UX_APK_DESIGN.md:278:- Hiển thị JSON raw cho driver.
+SE/HMI/README_UI_UX_APK_DESIGN.md:301:driverText()
+SE/HMI/README_UI_UX_APK_DESIGN.md:430:Sau đó nhìn Android Screen xem UI đổi sang warning/critical.
+SE/HMI/README_UI_UX_APK_DESIGN.md:442:- Speed/risk/alertness hiển thị đúng format.
+SE/HMI/README_UI_UX_APK_DESIGN.md:448:- Không lộ API key trong screenshot.
+SE/HMI/README_UI_UX_APK_DESIGN.md:494:Không dùng trực tiếp Android `CarPropertyManager` cho custom DMS signal, vì Android Car Service hiện chỉ expose một số property chuẩn như speed. Các custom signal DMS như risk, TTC, driver state đang đi qua CarSky/KUKSA REST values.
+SE/HMI/README_UI_UX_APK_DESIGN.md:529:- Progress bar alertness.
+SE/HMI/README_UI_UX_APK_DESIGN.md:530:- TTC chip màu đỏ khi thấp.
+SE/HMI/README_UI_UX_APK_DESIGN.md:532:- Mini timeline: AI detected → HMI warning → ECU action.
+SE/BE/scripts/generate_mock_dataset.py:17:                driver_state = "microsleep" if idx > 445 else "drowsy"
+SE/BE/scripts/generate_mock_dataset.py:23:                driver_state = "alert"
+SE/BE/scripts/generate_mock_dataset.py:41:                    "predicted_driver_state": driver_state,
+SE/BE/scripts/generate_mock_dataset.py:42:                    "alertness_score": 0.15 if driver_state in ["drowsy", "microsleep"] else 0.95
+SE/BE/scripts/validate_submission.py:15:    expected_cols = ["frame_id", "timestamp", "predicted_ttc", "predicted_driver_state", "predicted_risk_score"]
+SE/BE/scripts/validate_submission.py:41:            # Check 4: Valid driver state enum
+SE/BE/scripts/validate_submission.py:42:            invalid_states = set(df["predicted_driver_state"].str.lower()) - valid_states
+SE/BE/scripts/validate_submission.py:44:                print(f"❌ [{fname}] Failed: Invalid driver states found {invalid_states}")
+SE/BE/app/domain/interfaces/base_risk_model.py:11:        driver_state: str,
+SE/BE/scripts/export_submission_csv.py:30:            predicted_driver_state = ai_vision["predicted_driver_state"]
+SE/BE/scripts/export_submission_csv.py:39:                driver_state=predicted_driver_state,
+SE/BE/scripts/export_submission_csv.py:48:                "predicted_driver_state": predicted_driver_state,
+SE/BE/scripts/export_submission_csv.py:54:        df = df[["frame_id", "timestamp", "predicted_ttc", "predicted_driver_state", "predicted_risk_score"]]
+SE/BE/scripts/carsky_phase05.py:29:        {"path": "Vehicle.ADAS.MinTTC", "value": 10.0},
+SE/BE/scripts/carsky_phase05.py:39:    "warning": {"signals": [
+SE/BE/scripts/carsky_phase05.py:42:        {"path": "Vehicle.ADAS.MinTTC", "value": 3.0},
+SE/BE/scripts/carsky_phase05.py:45:        {"path": "Vehicle.ADAS.DisplaySeverity", "value": "WARNING"},
+SE/BE/scripts/carsky_phase05.py:55:        {"path": "Vehicle.ADAS.MinTTC", "value": 1.2},
+SE/BE/scripts/carsky_phase05.py:59:        {"path": "Vehicle.ADAS.AlertReasonCode", "value": "TTC_CRITICAL"},
+SE/BE/scripts/carsky_phase05.py:69:    # 41.xxx risk, 42.xxx severity, 43.xxx driver, 44.xxx alertness,
+SE/BE/scripts/carsky_phase05.py:70:    # 45.xxx TTC, 46.xxx critical, 47.xxx AI status, 48.xxx action,
+SE/BE/scripts/carsky_phase05.py:73:    "warning": [43.003, 44.045, 45.030, 41.055, 46.000, 42.001, 48.001, 47.000, 49.035],
+SE/BE/app/domain/schemas/ai_contract.py:35:    driver_profile: str
+SE/BE/app/domain/schemas/ai_contract.py:56:    alertness_score: float = Field(ge=0, le=1)
+SE/BE/app/domain/schemas/ai_contract.py:73:    driver_factor: float
+SE/BE/app/domain/schemas/ai_contract.py:79:        raise ValueError("boolean is not a valid TTC/headway value")
+SE/BE/app/domain/schemas/ai_contract.py:93:        raise ValueError("NaN and -Infinity are not valid TTC/headway values")
+SE/BE/app/domain/schemas/ai_contract.py:101:    driver: Driver
+SE/BE/app/domain/schemas/submission.py:10:    predicted_driver_state: str        # alert, drowsy, yawning, distracted, microsleep
+SE/BE/app/adapters/csv_file_adapter.py:55:        logger.warning("Trip not found trip_id=%s data_dir=%s", trip_id, self.data_dir)
+SE/BE/app/adapters/csv_file_adapter.py:76:                # AI Vision TTC extraction
+SE/BE/app/adapters/csv_file_adapter.py:87:                driver_state = str(row.get("predicted_driver_state", row.get("driver_state", "alert"))).lower()
+SE/BE/app/adapters/csv_file_adapter.py:88:                if driver_state in ["nan", "none", ""]:
+SE/BE/app/adapters/csv_file_adapter.py:89:                    driver_state = "alert"
+SE/BE/app/adapters/csv_file_adapter.py:91:                alertness = float(row.get("alertness_score", 0.15 if driver_state in ["drowsy", "microsleep"] else 0.95))
+SE/BE/app/adapters/csv_file_adapter.py:96:                driver_img_path = f"/static/driver/frame_{frame_padded}.jpg"
+SE/BE/app/adapters/csv_file_adapter.py:103:                        "driver_cam_url": driver_img_path
+SE/BE/app/adapters/csv_file_adapter.py:119:                        "predicted_driver_state": driver_state,
+SE/BE/app/adapters/csv_file_adapter.py:120:                        "alertness_score": alertness
+SE/BE/app/adapters/csv_file_adapter.py:156:                # AI Vision TTC extraction (supports 'min_ttc', 'predicted_ttc', 'ai_vision')
+SE/BE/app/adapters/csv_file_adapter.py:167:                # Driver State extraction (supports 'driver.state' and 'ai_vision.predicted_driver_state')
+SE/BE/app/adapters/csv_file_adapter.py:168:                driver_raw = item.get("driver", {})
+SE/BE/app/adapters/csv_file_adapter.py:169:                driver_state = str(driver_raw.get("state", ai_raw.get("predicted_driver_state", item.get("predicted_driver_state", "alert")))).lower()
+SE/BE/app/adapters/csv_file_adapter.py:170:                if driver_state in ["nan", "none", ""]:
+SE/BE/app/adapters/csv_file_adapter.py:171:                    driver_state = "alert"
+SE/BE/app/adapters/csv_file_adapter.py:173:                alertness = float(driver_raw.get("alertness_score", ai_raw.get("alertness_score", 0.95)))
+SE/BE/app/adapters/csv_file_adapter.py:182:                driver_img_path = f"/static/driver/frame_{frame_padded}.jpg"
+SE/BE/app/adapters/csv_file_adapter.py:189:                        "driver_cam_url": driver_img_path
+SE/BE/app/adapters/csv_file_adapter.py:205:                        "predicted_driver_state": driver_state,
+SE/BE/app/adapters/csv_file_adapter.py:206:                        "alertness_score": alertness,
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:68:  -> Android CarPropertyManager
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:74:- `registerCallback(...)` để nhận event realtime từ `CarPropertyManager`.
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:104:| `Vehicle.Driver.AlertnessScore` | `13000 + alertness*100` |
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:105:| `Vehicle.ADAS.MinTTC` | `14000 + ttc*10` |
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:113:SAFE=0, WARNING=1, CRITICAL=2, RECOVERY=3
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:229:TTC != 0
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:234:- Không quay lại bản APK hardcode `VALUES_URL` gọi CarSky REST trực tiếp.
+SE/HMI/ANDROID_CARSKY_SOVD_VHAL_MUX_FIX.md:235:- Không quay lại 9 custom Android CarProperty nếu `dumpsys car_service` chưa expose đủ property.
+SE/BE/app/domain/schemas/ai_vision.py:16:    predicted_driver_state: DriverStateEnum = DriverStateEnum.ALERT
+SE/BE/app/domain/schemas/ai_vision.py:17:    alertness_score: float = 1.0
+SE/BE/app/modules/insurance/insurance_service.py:17:            st = frame["ai_vision"]["predicted_driver_state"].lower()
+SE/BE/app/modules/insurance/insurance_service.py:30:            "driver_fatigue_drowsy": round(state_distro["drowsy"] * 1.5 + state_distro["yawning"] * 0.8, 1),
+SE/BE/app/modules/insurance/insurance_service.py:39:            "driver_state_distribution": state_distro,
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:65:## 3. Không hardcode credential
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:67:Không được hardcode API key thật trong source output.
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:103:Không tự ý đổi sang flow khác nếu chưa báo.
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:105:Không quay lại đọc custom Android `CarPropertyManager` cho DMS custom signal, vì custom DMS property chưa expose ổn định trên Android Car Service.
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:169:- Không hardcode API key thật.
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:223:- Không chứa API key thật.
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:224:- Không chứa build cache.
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:225:- Không đổi package/activity âm thầm.
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:229:Không gửi:
+SE/HMI/uiux-android-handoff/APK_MERGE_COMPATIBILITY.md:240:Không đổi âm thầm:
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:14:Không tự ý gửi APK được convert bằng tool mobile nếu chưa được Nhân duyệt trước.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:47:Không được đổi nếu chưa có xác nhận của Nhân:
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:85:Không gửi APK/source dùng các hướng sau nếu chưa hỏi Nhân trước:
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:136:- Không hardcode API key.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:178:Không được tự ý yêu cầu Backend mới, server mới, Firebase, Supabase, cloud riêng, login, OAuth, database riêng hoặc API riêng nếu chưa được Nhân duyệt.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:185:- WARNING.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:197:- TTC.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:224:- Không có preview.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:225:- Không có 3 screenshot state.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:226:- Không có `MERGE_NOTES.md`.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:227:- Không ghi cách build.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:230:- Không thể map về `SE/HMI/demo-live`.
+SE/HMI/uiux-android-handoff/APK_REQUIREMENTS_STRICT.md:238:Không tự convert APK.
+SE/BE/app/modules/insurance/router.py:8:    """Returns aggregated driver state distribution and SHAP breakdown for insurance report UI."""
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:20:- WARNING
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:59:- Không cần Backend.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:60:- Không cần CarSky.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:61:- Không cần API key.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:62:- Không cần internet.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:63:- Không dùng CDN nếu có thể tránh.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:98:screenshots/warning.png
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:125:- Không nên dùng animation quá nặng.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:126:- Không nên phụ thuộc thư viện CDN.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:127:- Không nên gọi CarSky REST trực tiếp từ web nếu chưa kiểm tra CORS.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:141:- TTC.
+SE/HMI/uiux-android-handoff/WEB_PREVIEW_GUIDE.md:158:- States: SAFE/WARNING/CRITICAL
+SE/HMI/README.md:5:Không còn REST polling, sample cycle hoặc mock fallback trong APK được build từ
+SE/HMI/README.md:13:không được tự sinh SAFE/WARNING/CRITICAL.
+SE/HMI/README.md:105:1. Không gửi event: HMI giữ SAFE/OFFLINE theo VHAL hiện có, không tự chuyển state.
+SE/HMI/uiux-android-handoff/android-output-template/README.md:12:Không dùng tool convert web thành APK nếu chưa được Nhân duyệt trước.
+SE/HMI/uiux-android-handoff/android-output-template/README.md:45:    ├── warning.png
+SE/HMI/uiux-android-handoff/android-output-template/README.md:84:- WARNING
+SE/HMI/uiux-android-handoff/android-output-template/README.md:136:Không commit API key thật.
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:10:import android.speech.tts.TextToSpeech;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:36:public final class MainActivity extends Activity implements TextToSpeech.OnInitListener {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:43:    private static final int PROP_MIN_TTC = 559940611; // 0x21600403
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:60:    private TextToSpeech tts;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:77:    private TextView driverValue;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:78:    private TextView alertnessValue;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:92:        tts = new TextToSpeech(this, this);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:141:        driverValue = addMetric(leftCard, "DRIVER", "Alert", 31);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:142:        alertnessValue = addMetric(leftCard, "ALERTNESS", "--", 31);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:143:        ttcValue = addMetric(leftCard, "TTC", "--", 31);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:281:                // Some platform jars do not expose the constant to reflection.
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:326:        Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:367:                // Android AAOS CarPropertyManager callback already passes CarPropertyValue.
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:402:                state.alertness = value > 1.0f ? value / 100.0f : value;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:403:            } else if (propId == PROP_MIN_TTC) {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:412:                state.driverState = driverFromCode(Math.round(value));
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:433:                    state.driverState = driverFromCode(payload);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:436:                    state.alertness = payload / 100.0f;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:487:                state.driverState = driverFromCode(payload);
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:490:                state.alertness = payload / 100.0f;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:534:        title.setText(severity == 2 ? "CRITICAL RISK" : severity == 1 ? "WARNING" : severity == 3 ? "RECOVERY" : "SAFE DRIVING");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:538:        telemetry.setText(String.format(Locale.US, "Driver: %s  •  TTC %.1fs", driverText(state.driverState), state.ttc));
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:539:        driverValue.setText(driverText(state.driverState));
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:540:        alertnessValue.setText(String.format(Locale.US, "%.0f%%", state.alertness * 100));
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:564:        driverValue.setText("--");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:565:        alertnessValue.setText("--");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:579:        return "WARNING".equals(v) ? 1 : "CRITICAL".equals(v) ? 2 : "RECOVERY".equals(v) ? 3 : 0;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:583:        return v == 1 ? "WARNING" : v == 2 ? "CRITICAL" : v == 3 ? "RECOVERY" : "SAFE";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:586:    private static String driverFromCode(int v) {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:601:                : "BRAKE_SAFE".equals(v) ? "BRAKE SAFELY"
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:607:        if ("CRITICAL".equals(severity)) return "High risk detected. Immediate driver response is required.";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:608:        if ("WARNING".equals(severity)) return "AI detected a behavior or traffic condition that needs attention.";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:609:        if ("RECOVERY".equals(severity)) return "Risk is decreasing. Continue monitoring the driver and road.";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:614:        if ("CRITICAL".equals(severity)) return "BRAKE ASSIST REQUESTED";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:615:        if ("WARNING".equals(severity)) return "WARNING BUZZER ON";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:621:        if ("CRITICAL".equals(state.severity) && state.ttc > 0 && state.ttc <= 1.5f) return "TTC_CRITICAL";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:622:        if ("microsleep".equals(state.driverState)) return "MICROSLEEP";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:623:        if ("distracted".equals(state.driverState)) return "DRIVER_DISTRACTED";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:624:        if ("WARNING".equals(state.severity)) return "DRIVER_WARNING";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:628:    private static String driverText(String v) {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:643:            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "warning");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:646:        if (severity == 2) tts.speak("Nguy hiem. " + text, TextToSpeech.QUEUE_FLUSH, null, "critical");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:652:        if (result == TextToSpeech.SUCCESS) tts.setLanguage(new Locale("vi", "VN"));
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:670:            Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:678:        String driverState = "alert";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:685:        float alertness = 0f;
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:10:- [ ] Có nút WARNING.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:15:- [ ] Không có API key thật trong preview.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:20:- [ ] Không dùng tool/framework convert chưa được Nhân duyệt.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:27:- [ ] Không hardcode API key thật.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:28:- [ ] Không phụ thuộc internet chỉ để vẽ UI.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:34:- [ ] Có driver state.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:37:- [ ] Có alertness.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:38:- [ ] Có TTC.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:49:- [ ] Không nhồi quá nhiều chữ.
+SE/HMI/uiux-android-handoff/UI_ACCEPTANCE_CHECKLIST.md:50:- [ ] Không hiển thị JSON raw cho driver.
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:12:  "severity": "WARNING",
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:13:  "driverState": "distracted",
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:18:  "alertnessScore": 0.45,
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:24:  "ecuState": "WARNING_BUZZER_ON"
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:32:WARNING
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:82:WARNING
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:83:→ ECU: DRIVER WARNING BUZZER ON
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:86:→ ECU: BRAKE ASSIST REQUESTED • HAZARD ON
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:100:Vehicle.ADAS.MinTTC
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:114:- driver state.
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:117:- alertness.
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:118:- TTC.
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:130:  "driverState": "alert",
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:135:  "alertnessScore": 0.95,
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:150:  "severity": "WARNING",
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:151:  "driverState": "distracted",
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:156:  "alertnessScore": 0.45,
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:162:  "ecuState": "WARNING_BUZZER_ON"
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:172:  "driverState": "microsleep",
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:177:  "alertnessScore": 0.15,
+SE/HMI/uiux-android-handoff/HMI_DATA_CONTRACT.md:180:  "alertReasonCode": "TTC_CRITICAL",
+SE/BE/app/modules/coaching/router.py:15:    """Generates streaming/text coaching advisory recommendations for driver training."""
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:36:    ├── warning.png
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:94:- Không hardcode API key thật.
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:102:- Không cần backend.
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:103:- Không cần internet.
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:104:- Có nút SAFE/WARNING/CRITICAL.
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:113:- `warning.png`
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:120:Không gửi:
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:130:Không gửi APK/source sinh từ tool convert mobile chưa được duyệt như:
+SE/HMI/uiux-android-handoff/STRUCTURE_REQUIRED.md:186:    ├── warning.png
+SE/HMI/BUILD_ON_OTHER_MACHINE.md:3:Tài liệu này chỉ dành cho việc build ứng dụng Android HMI. Không cài đặt, chạy
+SE/HMI/BUILD_ON_OTHER_MACHINE.md:23:Không đổi tên hoặc gửi riêng lẻ từng file. Nén nguyên thư mục
+SE/HMI/BUILD_ON_OTHER_MACHINE.md:38:Không cần Android Studio, Android Emulator, Python, conda hoặc thư viện AI.
+SE/HMI/BUILD_ON_OTHER_MACHINE.md:139:Không tiếp tục nếu command trả exit code khác `0`.
+SE/HMI/BUILD_ON_OTHER_MACHINE.md:248:- Không sửa `MainActivity.java`, `AndroidManifest.xml` hoặc `build.gradle` chỉ để
+SE/HMI/BUILD_ON_OTHER_MACHINE.md:250:- Không đưa `.env`, API key hoặc credential vào ZIP.
+SE/HMI/BUILD_ON_OTHER_MACHINE.md:263:   `normal → warning → critical`.
+SE/BE/app/integrations/carsky/mapper.py:13:    WARNING = "WARNING"
+SE/BE/app/integrations/carsky/mapper.py:33:    driver_state: str = "Vehicle.Driver.State"
+SE/BE/app/integrations/carsky/mapper.py:34:    alertness_score: str = "Vehicle.Driver.AlertnessScore"
+SE/BE/app/integrations/carsky/mapper.py:37:    min_ttc: str = "Vehicle.ADAS.MinTTC"
+SE/BE/app/integrations/carsky/mapper.py:74:            "driver_state": frame.driver.state.value,
+SE/BE/app/integrations/carsky/mapper.py:75:            "alertness_score": frame.driver.alertness_score,
+SE/BE/app/integrations/carsky/mapper.py:102:        severity = str(event.get("severity", "warning")).lower()
+SE/BE/app/integrations/carsky/mapper.py:113:            else CarSkyHMIState.WARNING
+SE/BE/app/integrations/carsky/mapper.py:121:            "collision_risk": "TTC_CRITICAL",
+SE/BE/app/integrations/carsky/mapper.py:123:            "driver_drowsiness": "DROWSY",
+SE/BE/app/integrations/carsky/mapper.py:124:            "driver_distraction": "DISTRACTED",
+SE/BE/app/integrations/carsky/mapper.py:135:            "driver_drowsiness": "TAKE_BREAK",
+SE/BE/app/integrations/carsky/mapper.py:136:            "driver_distraction": "FOCUS_FORWARD",
+SE/BE/app/integrations/carsky/mapper.py:141:            "driver_state": evidence.get("driver_state"),
+SE/BE/app/integrations/carsky/mapper.py:142:            "alertness_score": evidence.get("alertness_score"),
+SE/BE/app/integrations/carsky/mapper.py:176:        driver_state = str(snapshot.get("driver_state") or "alert").lower()
+SE/BE/app/integrations/carsky/mapper.py:177:        alertness = self._number(snapshot.get("alertness_score"), None)
+SE/BE/app/integrations/carsky/mapper.py:182:        if severity not in {"SAFE", "WARNING", "CRITICAL", "RECOVERY"}:
+SE/BE/app/integrations/carsky/mapper.py:183:            severity = self._derive_severity(risk or 0.0, ttc, driver_state)
+SE/BE/app/integrations/carsky/mapper.py:187:            action = self._derive_action(snapshot, ttc, driver_state, severity)
+SE/BE/app/integrations/carsky/mapper.py:191:            self._mux(43, self._driver_state_code(driver_state)),
+SE/BE/app/integrations/carsky/mapper.py:198:        if alertness is not None and math.isfinite(alertness):
+SE/BE/app/integrations/carsky/mapper.py:199:            values.append(self._mux(44, self._scale(alertness, 100)))
+SE/BE/app/integrations/carsky/mapper.py:237:    def _derive_severity(risk: float, ttc: float | None, driver_state: str) -> str:
+SE/BE/app/integrations/carsky/mapper.py:238:        if risk >= 75 or (ttc is not None and ttc <= 1.5) or driver_state == "microsleep":
+SE/BE/app/integrations/carsky/mapper.py:240:        if risk >= 40 or (ttc is not None and ttc <= 3.0) or driver_state in {"drowsy", "yawning", "distracted"}:
+SE/BE/app/integrations/carsky/mapper.py:241:            return "WARNING"
+SE/BE/app/integrations/carsky/mapper.py:245:    def _derive_action(snapshot: Mapping[str, Any], ttc: float | None, driver_state: str, severity: str) -> str:
+SE/BE/app/integrations/carsky/mapper.py:248:        if driver_state in {"microsleep", "drowsy", "yawning"}:
+SE/BE/app/integrations/carsky/mapper.py:250:        if driver_state == "distracted":
+SE/BE/app/integrations/carsky/mapper.py:258:        return {"SAFE": 0, "WARNING": 1, "CRITICAL": 2, "RECOVERY": 3}.get(severity.upper(), 0)
+SE/BE/app/integrations/carsky/mapper.py:261:    def _driver_state_code(driver_state: str) -> int:
+SE/BE/app/integrations/carsky/mapper.py:269:        }.get(driver_state.lower(), 0)
+SE/HMI/uiux-android-handoff/README.md:67:- Không nên dùng cho demo gấp nếu chưa setup sẵn.
+SE/HMI/uiux-android-handoff/README.md:172:    ├── warning.png
+SE/HMI/uiux-android-handoff/README.md:182:- Không hardcode API key thật.
+SE/HMI/uiux-android-handoff/README.md:183:- Không đổi package nếu không cần.
+SE/HMI/uiux-android-handoff/README.md:211:- WARNING
+SE/HMI/uiux-android-handoff/README.md:236:Không được làm mất các field quan trọng:
+SE/HMI/uiux-android-handoff/README.md:240:- driver state.
+SE/HMI/uiux-android-handoff/README.md:243:- alertness.
+SE/HMI/uiux-android-handoff/README.md:244:- TTC.
+SE/HMI/uiux-android-handoff/README.md:249:Không được phụ thuộc internet để render UI.
+SE/HMI/uiux-android-handoff/README.md:251:Không được để API key thật trong file preview/screenshot.
+SE/HMI/uiux-android-handoff/README.md:253:Không được làm UI chỉ đẹp trên web nhưng không thể port sang Android landscape 1920x1080.
+SE/HMI/uiux-android-handoff/README.md:288:3. Không thay BE/CarSky script nếu task chỉ là UI.
+SE/BE/app/modules/risk_fusion/temporal_filter.py:15:    def filter_driver_state(self, raw_state: str, ear: float = 0.28, mar: float = 0.05, speed_kmh: float = 60.0, head_yaw: float = 0.0) -> str:
+SE/BE/app/modules/risk_fusion/temporal_filter.py:56:    def calculate_compound_risk_boost(self, ttc: float, driver_state: str) -> float:
+SE/BE/app/modules/risk_fusion/temporal_filter.py:57:        # EC-06: Compound Critical Risk (TTC <= 1.5s AND driver is microsleep or distracted)
+SE/BE/app/modules/risk_fusion/temporal_filter.py:58:        if ttc <= 1.5 and driver_state in ["microsleep", "distracted"]:
+SE/BE/app/modules/streaming/replay_service.py:61:                    driver_state = ai_vision["predicted_driver_state"]
+SE/BE/app/modules/streaming/replay_service.py:65:                        driver_state=driver_state,
+SE/BE/app/modules/streaming/replay_service.py:77:                            "is_compound_critical": risk_score > 60.0 or ttc_val <= 1.5 or driver_state == "microsleep",
+SE/BE/app/modules/ai_alerts/router.py:32:    driver_id: str | None = None
+SE/BE/app/modules/ai_alerts/router.py:38:    severity: Literal["info", "warning", "critical"]
+SE/BE/app/modules/ai_alerts/router.py:40:    audiences: list[Literal["driver_display", "fleet_dashboard"]]
+SE/BE/app/modules/ai_alerts/router.py:55:    driver_state: str = Field(min_length=1)
+SE/BE/app/modules/ai_alerts/router.py:56:    driver_confidence: float = Field(ge=0, le=1)
+SE/BE/app/modules/ai_alerts/router.py:57:    alertness_score: float = Field(ge=0, le=1)
+SE/BE/app/modules/ai_alerts/router.py:171:        if publisher is not None and "driver_display" in payload.audiences:
+SE/BE/app/modules/event_detection/detectors/smoke_detector.py:5:    """Extensible plugin example for detecting driver smoking / cabin hazard."""
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:17:    def detect_driver_state(self, ai_vision: Dict[str, Any], frame_idx: int = 0) -> Dict[str, Any]:
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:19:        Detects driver state and returns state enum + alertness score.
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:21:        raw_state = str(ai_vision.get("predicted_driver_state", "alert")).lower()
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:50:        # Calculate alertness score (0.0 -> 1.0)
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:51:        alertness_map = {
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:58:        alertness_score = alertness_map.get(state, 0.95)
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:61:            "detected_driver_state": state.upper(),
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:62:            "alertness_score": alertness_score,
+SE/BE/app/modules/event_detection/detectors/driver_state_detector.py:69:driver_state_detector = DriverStateBaselineDetector()
+SE/BE/app/modules/risk_fusion/algorithms/nhtsa_v1.py:7:    Formula: R(t) = min(100, BaseRisk(TTC) * DriverFactor(State) + KinematicsPenalty)
+SE/BE/app/modules/risk_fusion/algorithms/nhtsa_v1.py:13:        driver_state: str,
+SE/BE/app/modules/risk_fusion/algorithms/nhtsa_v1.py:17:        # 1. Base Risk from TTC (Challenge 1)
+SE/BE/app/modules/risk_fusion/algorithms/nhtsa_v1.py:37:        driver_factor = state_factors.get(driver_state.lower(), 1.0)
+SE/BE/app/modules/risk_fusion/algorithms/nhtsa_v1.py:48:        raw_risk = (base_risk * driver_factor) + kinematics_penalty
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:2:BTC TTC (Time-to-Collision) Baseline Implementation.
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:3:Formula: TTC = Distance / Closing_Speed
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:5:1. If Closing_Speed <= 0 (target moving away or equal speed) -> TTC = "inf"
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:6:2. If Distance <= 0 -> TTC = 0.0
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:7:3. Otherwise TTC = min(10.0, max(0.1, round(Distance / Closing_Speed, 2)))
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:17:    Computes BTC Time-to-Collision (TTC) baseline value.
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:21:    :return: TTC in seconds as float or "inf" string if no collision risk
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:27:        # Target moving away or stationary distance increasing -> Infinite TTC
+SE/BE/app/modules/risk_fusion/ttc_baseline.py:30:    # Calculate TTC
+SE/BE/app/modules/risk_fusion/risk_service.py:27:                driver_state=ai_vision["predicted_driver_state"],
+SE/BE/app/modules/fleet/router.py:8:    """Returns list of all fleet drivers ranked by safe score for Leaderboard."""
+SE/BE/app/modules/fleet/fleet_service.py:12:        drivers = ["Nguyen Van A", "Tran Van B", "Le Van C", "Pham Van D", "Hoang Van E",
+SE/BE/app/modules/fleet/fleet_service.py:22:                "driver_name": drivers[idx % len(drivers)],
+SE/BE/app/modules/fleet/fleet_service.py:27:                "status": "SAFE" if safe_score >= 80.0 else ("WARNING" if safe_score >= 60.0 else "DANGER")

@@ -1,0 +1,47 @@
+# E-21 commands
+
+## Source locator
+
+```bash
+cd /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON
+
+rg -n "ReportMode|safety_detail|safety_overview|maintenance_detail|maintenance_overview|handleExportWord|application/msword|\\.doc|Export Report|displayScore|toFixed\\(1\\)|Ranking Score|Trip Ranking Score|Fleet Ranking Score|ai_status|validated|unavailable|Bedrock|local fallback|reportModels|buildReportModels|buildFleetSummary" \
+  SE/FE/src SE/FE/server.ts \
+  -g '*.ts' -g '*.tsx' \
+  > ../evidence/E-21/raw/source_locators.log
+```
+
+## Temporary screenshot capture
+
+Temporary files were created only for report readability screenshots and deleted after capture:
+
+```bash
+SE/FE/src/data/saved_trips/TMP-E21-SAFE.json
+SE/FE/src/data/saved_trips/TMP-E21-WATCH.json
+SE/FE/src/data/saved_trips/TMP-E21-CRITICAL.json
+```
+
+Captured URLs:
+
+```text
+http://127.0.0.1:3000/?view=copilot-report&type=safety&trip_ids=TMP-E21-CRITICAL
+http://127.0.0.1:3000/?view=copilot-report&type=safety&trip_ids=TMP-E21-CRITICAL%2CTMP-E21-WATCH%2CTMP-E21-SAFE
+http://127.0.0.1:3000/?view=copilot-report&type=maintenance&trip_ids=TMP-E21-CRITICAL
+```
+
+Captured files:
+
+```text
+evidence/E-21/screenshots/01_safety_detail_tmp_critical.png
+evidence/E-21/screenshots/02_safety_overview_tmp_fleet.png
+evidence/E-21/screenshots/03_maintenance_detail_tmp_critical.png
+```
+
+Cleanup:
+
+```bash
+rm -f SE/FE/src/data/saved_trips/TMP-E21-*.json
+```
+
+Important: screenshots prove report readability/rendering only, not canonical KPI accuracy.
+

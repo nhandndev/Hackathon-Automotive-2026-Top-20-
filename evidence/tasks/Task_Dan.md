@@ -52,6 +52,19 @@ Lưu tại `evidence/E-12/`.
 
 
 
+## E-24 - CarSky/KUKSA/VHAL/APK same-event trace
+
+**Status: PARTIAL / RUNTIME COMMAND AND SOURCE-APK PATH VERIFIED; SAME-EVENT MEDIA CAPTURE PENDING**  
+Primary: Dân. Supporting: Nhân.
+
+- [x] Runtime command evidence có thật: `carsky_phase05.py scenario critical` -> `ok=true`, `mode=vehicle-speed-mux`, `sent=14`.
+- [x] Source/APK path evidence có thật: Backend mapper -> Vehicle.Speed -> Lua bridge -> PERF_VEHICLE_SPEED -> Android CarPropertyManager.
+- [x] Bundle đã tạo: `evidence/E-24/derived/carsky_trace_bundle.zip`.
+- [ ] Cần bổ sung screenshot/video/logcat cùng event để đóng DONE.
+
+Lưu tại `evidence/E-24/`.
+
+
 ## E-25 - Audio/TTS path
 
 **Status: NOT EXECUTED**  

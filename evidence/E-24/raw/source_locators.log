@@ -1,0 +1,36 @@
+$ rg -n Vehicle.Speed|vehicle-speed-mux|DMS_HMI_SPEED_MUX|PERF_VEHICLE_SPEED|CarPropertyManager|41\.088|42\.002|43\.004|44\.015|45\.012|46\.001|48\.003|49\.029|50\.012 SE/BE/scripts/carsky_phase05.py SE/BE/app/integrations/carsky/mapper.py SE/BE/app/integrations/carsky/client.py SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java
+
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:4:-- Backend sends DMS multiplex values directly to Vehicle.Speed:
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:5:--   41.088 = risk 88
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:6:--   42.002 = CRITICAL
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:7:--   43.004 = microsleep
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:10:local PROP_SPEED = 291504647 -- 0x11600207, PERF_VEHICLE_SPEED
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:11:local PATH_SPEED = "Vehicle.Speed"
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:17:    log(string.format("DMS_HMI_SPEED_MUX %s=%s -> 0x%08X=%s", ev.path, tostring(ev.value), PROP_SPEED, tostring(value)))
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:21:log("DMS HMI speed-mux bridge subscribed to Vehicle.Speed")
+SE/BE/app/integrations/carsky/client.py:56:            and payload.get("transport") == "vehicle-speed-mux"
+SE/BE/app/integrations/carsky/client.py:121:        if not isinstance(signal, dict) or signal.get("path") != "Vehicle.Speed":
+SE/BE/app/integrations/carsky/mapper.py:35:    speed: str = "Vehicle.Speed"
+SE/BE/app/integrations/carsky/mapper.py:36:    speed_limit: str = "Vehicle.SpeedLimit"
+SE/BE/app/integrations/carsky/mapper.py:47:    speed_mux: str = "Vehicle.Speed"
+SE/BE/app/integrations/carsky/mapper.py:168:        Current CarSky/AAOS only accepts standard Vehicle.Speed. The APK V2.2
+SE/BE/app/integrations/carsky/mapper.py:209:            "transport": "vehicle-speed-mux",
+SE/BE/scripts/carsky_phase05.py:74:    "critical": [43.004, 44.015, 45.012, 41.088, 46.001, 42.002, 48.003, 47.000, 49.029],
+SE/BE/scripts/carsky_phase05.py:162:        # PERF_VEHICLE_SPEED reliably, so Android polling can miss a rapid
+SE/BE/scripts/carsky_phase05.py:181:            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+SE/BE/scripts/carsky_phase05.py:185:        for value in [41.088 if name == "critical" else SPEED_MUX_SCENARIOS[name][3],
+SE/BE/scripts/carsky_phase05.py:186:                      46.001 if name == "critical" else SPEED_MUX_SCENARIOS[name][4],
+SE/BE/scripts/carsky_phase05.py:187:                      42.002 if name == "critical" else SPEED_MUX_SCENARIOS[name][5],
+SE/BE/scripts/carsky_phase05.py:188:                      48.003 if name == "critical" else SPEED_MUX_SCENARIOS[name][6],
+SE/BE/scripts/carsky_phase05.py:189:                      49.029 if name == "critical" else SPEED_MUX_SCENARIOS[name][8]]:
+SE/BE/scripts/carsky_phase05.py:190:            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+SE/BE/scripts/carsky_phase05.py:193:        result = {"ok": True, "mode": "vehicle-speed-mux", "sent": sent, "responses": responses[-3:]}
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:27: * Backend/AI -> CarSky KUKSA -> dms_hmi_bridge.lua -> VHAL PERF_VEHICLE_SPEED
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:31: * The CarSky AAOS image currently exposes PERF_VEHICLE_SPEED reliably, while
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:39:    private static final int PERF_VEHICLE_SPEED = 291504647; // 0x11600207
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:49:            PERF_VEHICLE_SPEED
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:326:        Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:367:                // Android AAOS CarPropertyManager callback already passes CarPropertyValue.
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:370:            int propId = PERF_VEHICLE_SPEED;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:395:            if (propId == PERF_VEHICLE_SPEED) {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:670:            Class<?> callbackClass = Class.forName("android.car.hardware.property.CarPropertyManager$CarPropertyEventCallback");

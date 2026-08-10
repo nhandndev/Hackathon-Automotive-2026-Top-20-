@@ -1,0 +1,22 @@
+# E-23 commands
+
+```bash
+cd /Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON
+
+rg -n "WebSocket reconnect|Backend is unavailable|No trip data loaded|No trip ranking data loaded|unavailable|pending|loading|fallback|invalid|not found|No trip|stale|error|clear|ai_status" \
+  SE/FE/src SE/FE/server.ts \
+  -g '*.ts' -g '*.tsx' \
+  > ../evidence/E-23/raw/source_locators.log
+```
+
+## Empty-state screenshot capture
+
+```bash
+# After deleting temporary saved trips:
+rm -f SE/FE/src/data/saved_trips/TMP-E22-*.json
+
+# Captured with Chrome + macOS screencapture:
+evidence/E-23/screenshots/03_empty_after_temp_delete.png
+```
+
+Important: this proves the empty/no-trip UI state only. API-down, WebSocket reconnect, stale-data and invalid-trip recovery still need separate runtime capture.

@@ -1,0 +1,48 @@
+$ rg -n critical|SPEED_MUX_SCENARIOS|Vehicle.Speed|41.088|42.002|43.004|49.0|50.0 SE/BE/scripts/carsky_phase05.py SE/BE/tests/test_ai_alerts.py SE/BE/app/integrations/carsky/mapper.py SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java
+
+SE/BE/scripts/carsky_phase05.py:52:    "critical": {"signals": [
+SE/BE/scripts/carsky_phase05.py:67:SPEED_MUX_SCENARIOS: dict[str, list[float]] = {
+SE/BE/scripts/carsky_phase05.py:70:    # 45.xxx TTC, 46.xxx critical, 47.xxx AI status, 48.xxx action,
+SE/BE/scripts/carsky_phase05.py:72:    "normal": [43.000, 44.095, 45.100, 41.005, 46.000, 42.000, 48.000, 47.000, 49.045],
+SE/BE/scripts/carsky_phase05.py:73:    "warning": [43.003, 44.045, 45.030, 41.055, 46.000, 42.001, 48.001, 47.000, 49.035],
+SE/BE/scripts/carsky_phase05.py:74:    "critical": [43.004, 44.015, 45.012, 41.088, 46.001, 42.002, 48.003, 47.000, 49.029],
+SE/BE/scripts/carsky_phase05.py:180:        for value in SPEED_MUX_SCENARIOS[name]:
+SE/BE/scripts/carsky_phase05.py:181:            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+SE/BE/scripts/carsky_phase05.py:185:        for value in [41.088 if name == "critical" else SPEED_MUX_SCENARIOS[name][3],
+SE/BE/scripts/carsky_phase05.py:186:                      46.001 if name == "critical" else SPEED_MUX_SCENARIOS[name][4],
+SE/BE/scripts/carsky_phase05.py:187:                      42.002 if name == "critical" else SPEED_MUX_SCENARIOS[name][5],
+SE/BE/scripts/carsky_phase05.py:188:                      48.003 if name == "critical" else SPEED_MUX_SCENARIOS[name][6],
+SE/BE/scripts/carsky_phase05.py:189:                      49.029 if name == "critical" else SPEED_MUX_SCENARIOS[name][8]]:
+SE/BE/scripts/carsky_phase05.py:190:            responses.append(self.actuate_signals([{"path": "Vehicle.Speed", "value": value}]))
+SE/BE/tests/test_ai_alerts.py:28:        "severity": "critical",
+SE/BE/tests/test_ai_alerts.py:59:        "severity": "critical",
+SE/BE/tests/test_ai_alerts.py:78:    assert set(signals) == {"Vehicle.Speed"}
+SE/BE/tests/test_ai_alerts.py:80:    assert 42.002 in values
+SE/BE/tests/test_ai_alerts.py:82:    assert 49.06 in values
+SE/BE/tests/test_ai_alerts.py:151:    assert 41.088 in values
+SE/BE/tests/test_ai_alerts.py:152:    assert 42.002 in values
+SE/BE/tests/test_ai_alerts.py:153:    assert 43.004 in values
+SE/BE/tests/test_ai_alerts.py:155:    assert 49.048 in values
+SE/BE/tests/test_ai_alerts.py:156:    assert 50.012 in values
+SE/BE/app/integrations/carsky/mapper.py:35:    speed: str = "Vehicle.Speed"
+SE/BE/app/integrations/carsky/mapper.py:36:    speed_limit: str = "Vehicle.SpeedLimit"
+SE/BE/app/integrations/carsky/mapper.py:40:    critical_alert: str = "Vehicle.ADAS.CriticalAlert"
+SE/BE/app/integrations/carsky/mapper.py:47:    speed_mux: str = "Vehicle.Speed"
+SE/BE/app/integrations/carsky/mapper.py:81:            "critical_alert": severity is CarSkyHMIState.CRITICAL,
+SE/BE/app/integrations/carsky/mapper.py:112:            if severity == "critical"
+SE/BE/app/integrations/carsky/mapper.py:147:            "critical_alert": hmi_state is CarSkyHMIState.CRITICAL,
+SE/BE/app/integrations/carsky/mapper.py:168:        Current CarSky/AAOS only accepts standard Vehicle.Speed. The APK V2.2
+SE/BE/app/integrations/carsky/mapper.py:192:            self._mux(46, 1 if severity == "CRITICAL" or bool(snapshot.get("critical_alert")) else 0),
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:4:-- Backend sends DMS multiplex values directly to Vehicle.Speed:
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:5:--   41.088 = risk 88
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:6:--   42.002 = CRITICAL
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:7:--   43.004 = microsleep
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:11:local PATH_SPEED = "Vehicle.Speed"
+SE/BE/carsky/dms_hmi_bridge_speed_passthrough.lua:21:log("DMS HMI speed-mux bridge subscribed to Vehicle.Speed")
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:400:                state.critical = Math.round(value) == 1;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:442:                    state.critical = payload == 1;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:496:                state.critical = payload == 1;
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:610:        return "No critical risk detected.";
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:642:        if (severity == 1 && now - lastWarningVoiceAt >= 15000) {
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:646:        if (severity == 2) tts.speak("Nguy hiem. " + text, TextToSpeech.QUEUE_FLUSH, null, "critical");
+SE/HMI/app/src/main/java/vn/fpt/dms/hmi/MainActivity.java:687:        boolean critical = false;

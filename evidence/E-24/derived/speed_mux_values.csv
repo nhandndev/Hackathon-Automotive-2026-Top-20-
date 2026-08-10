@@ -1,0 +1,11 @@
+mux_value,meaning
+41.088,risk score 88
+42.002,critical severity/state
+43.004,driver state microsleep
+44.015,alertness score 15%
+45.012,TTC 1.2s
+46.001,critical alert flag true
+47.000,AI status online/available marker
+48.003,recommended action brake safely
+49.029,real speed about 29 km/h
+50.012,safe score 12/100

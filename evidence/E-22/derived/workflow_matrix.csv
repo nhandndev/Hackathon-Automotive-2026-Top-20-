@@ -1,0 +1,10 @@
+workflow_step,source_locator,evidence_level,status_note
+saved/live trip context,"SE/FE/src/data/btcTripData.ts; SE/FE/src/App.tsx; SE/FE/server.ts",SOURCE_VERIFIED,"Saved trip parser/loading source located; runtime media pending"
+fleet map/list,"SE/FE/src/components/FleetMapView.tsx",SOURCE_VERIFIED,"No trip data state and selected trip display source located"
+trip detail,"SE/FE/src/components/TripDetailView.tsx",SOURCE_VERIFIED,"Trip Detail component source located; screenshot/video pending"
+ranking,"SE/FE/src/components/DriverRankingView.tsx",SOURCE_VERIFIED,"Ranking source and no-data state located"
+ranking analysis,"SE/FE/src/App.tsx; SE/FE/src/components/DriverRankingView.tsx",SOURCE_VERIFIED,"Route/query navigation located"
+performance insights,"SE/FE/src/components/PerformanceInsightsView.tsx",SOURCE_VERIFIED,"Insights component source located"
+copilot report navigation,"SE/FE/src/App.tsx; SE/FE/src/components/CopilotFleetReportPage.tsx",SOURCE_VERIFIED,"Report route and trip links located"
+runtime video,"evidence/E-22/video/",PENDING,"Attach reviewer-facing workflow video here"
+screenshots,"evidence/E-22/screenshots/",PENDING,"Attach workflow screenshots here"

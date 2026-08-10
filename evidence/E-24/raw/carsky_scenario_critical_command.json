@@ -1,0 +1,9 @@
+{
+  "cmd": "/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE/.venv/bin/python scripts/carsky_phase05.py scenario critical",
+  "cwd": "/Users/lilnhan/Documents/GitHub/Hackathon-Automotive-2026/HACKATHON/SE/BE",
+  "started_at_utc": "2026-08-10T03:48:39+00:00",
+  "ended_at_utc": "2026-08-10T03:48:46+00:00",
+  "returncode": 0,
+  "stdout": "{\n  \"ok\": true,\n  \"mode\": \"vehicle-speed-mux\",\n  \"sent\": 14,\n  \"responses\": [\n    {\n      \"ok\": true,\n      \"sent\": 1\n    },\n    {\n      \"ok\": true,\n      \"sent\": 1\n    },\n    {\n      \"ok\": true,\n      \"sent\": 1\n    }\n  ],\n  \"fallback_reason\": \"CarSky 400 for /api/v1/signals/97fg4ghsgeo9w4bvze3qq/dms-signal-broker/actuate after 1 attempt(s): {'error': 'VALIDATION_ERROR', 'message': 'Signal source: Unknown signal path: Vehicle.Driver.State'}\"\n}\n",
+  "stderr": ""
+}

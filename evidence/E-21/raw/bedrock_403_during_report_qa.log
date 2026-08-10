@@ -1,0 +1,57 @@
+Observed during E-21 report screenshot QA on 2026-08-10.
+
+Context:
+- Local FE server opened three Copilot report URLs with temporary `TMP-E21-*` saved trips.
+- Temporary JSON was created only for screenshot/layout QA and deleted after capture.
+
+Server output:
+
+```text
+Bedrock report insight request: {
+  mode: 'safety_detail',
+  tripCount: 1,
+  payloadKind: 'single_trip_detail',
+  promptBytes: 3158,
+  tripIds: 'TMP-E21-CRITICAL'
+}
+Bedrock report insight error: {
+  reason: 'Bedrock 403: Forbidden',
+  durationMs: 526,
+  promptBytes: 3158,
+  region: 'ap-southeast-2',
+  modelId: 'deepseek.v3.2'
+}
+Bedrock report insight request: {
+  mode: 'safety_overview',
+  tripCount: 3,
+  payloadKind: 'fleet_summary',
+  promptBytes: 3010,
+  tripIds: 'aggregate'
+}
+Bedrock report insight error: {
+  reason: 'Bedrock 403: Forbidden',
+  durationMs: 499,
+  promptBytes: 3010,
+  region: 'ap-southeast-2',
+  modelId: 'deepseek.v3.2'
+}
+Bedrock report insight request: {
+  mode: 'maintenance_detail',
+  tripCount: 1,
+  payloadKind: 'single_trip_detail',
+  promptBytes: 3100,
+  tripIds: 'TMP-E21-CRITICAL'
+}
+Bedrock report insight error: {
+  reason: 'Bedrock 403: Forbidden',
+  durationMs: 497,
+  promptBytes: 3100,
+  region: 'ap-southeast-2',
+  modelId: 'deepseek.v3.2'
+}
+```
+
+Interpretation:
+- Real provider failure was observed during report QA.
+- This supports fallback/readability observation but does not prove full Bedrock accuracy, latency or cost.
+

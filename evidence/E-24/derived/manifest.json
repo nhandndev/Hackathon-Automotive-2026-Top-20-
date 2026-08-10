@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-08-10T04:39:09+00:00",
+  "commit": "d41b8e168afb046da1cf26946e987246f42d7a14",
+  "status": "PARTIAL_RUNTIME_COMMAND_AND_SOURCE_APK_VERIFIED_MEDIA_CAPTURE_PENDING",
+  "runtime_command": {
+    "ok": true,
+    "mode": "vehicle-speed-mux",
+    "sent": 14,
+    "fallback_reason": "CarSky 400 for /api/v1/signals/97fg4ghsgeo9w4bvze3qq/dms-signal-broker/actuate after 1 attempt(s): {'error': 'VALIDATION_ERROR', 'message': 'Signal source: Unknown signal path: Vehicle.Driver.State'}"
+  },
+  "apk_artifact": {
+    "path": "SE/HMI/release/dms-hmi-realtime-vhal.apk",
+    "exists": true,
+    "sha256": "51a44e1570551c16abc83db7fa9f167f3ae40a62cd1b57bde5dc465adb91cbb0",
+    "bytes": 16811
+  },
+  "claimed": [
+    "Backend can send CarSky critical scenario via Vehicle.Speed speed-mux.",
+    "Current demo path uses CarSky/KUKSA Vehicle.Speed -> Lua bridge -> PERF_VEHICLE_SPEED -> Android CarPropertyManager.",
+    "Custom DMS VSS paths are not claimed production-ready."
+  ],
+  "not_claimed": [
+    "No physical vehicle actuation.",
+    "No custom DMS CarProperty production readiness.",
+    "No complete same-event Signal Watch + Bridge log + Android UI media capture stored in E-24 yet."
+  ]
+}

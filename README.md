@@ -230,6 +230,101 @@ if (!(Test-Path SE\BE\.env)) {
 
 For local demo, keep CarSky offline and use `-SkipCarSkyPreflight`.
 
+### 7.1. `.env.example` reference
+
+Backend env template:
+
+```text
+SE/BE/.env.example
+```
+
+Recommended local/offline reviewer config:
+
+```env
+APP_ENV=development
+API_V1_PREFIX=/api/v1
+DATASET_DIR=./data
+OUTPUT_SUBMISSION_DIR=./submissions
+STREAM_FPS=20
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
+
+AI_SOURCE_MODE=file
+AI_API_BASE_URL=
+AI_API_PATH=/v1/analyze/trip
+AI_API_KEY=
+AI_API_TIMEOUT_SEC=30
+AI_API_MAX_RETRIES=2
+AI_API_CONCURRENCY=4
+AI_FALLBACK_TO_FILE=true
+
+LLM_PROVIDER=none
+LLM_BASE_URL=
+LLM_API_KEY=
+LLM_MODEL=
+
+CARSKY_ENABLED=false
+CARSKY_MODE=offline
+CARSKY_BASE_URL=
+CARSKY_API_KEY=
+CARSKY_AUTH_MODE=bearer
+CARSKY_ROOM_ID=
+CARSKY_NODE_KEY=
+CARSKY_ANDROID_NODE_KEY=
+CARSKY_TIMEOUT_SEC=1.5
+CARSKY_MAX_RETRIES=2
+CARSKY_QUEUE_SIZE=100
+CARSKY_TELEMETRY_INTERVAL_SEC=1.0
+```
+
+For full CarSky demo, change only the CarSky block in `SE/BE/.env`:
+
+```env
+CARSKY_ENABLED=true
+CARSKY_MODE=external
+CARSKY_BASE_URL=https://<carsky-domain>
+CARSKY_API_KEY=<secret>
+CARSKY_AUTH_MODE=bearer
+CARSKY_ROOM_ID=<room-id>
+CARSKY_NODE_KEY=<signal-node-key>
+CARSKY_ANDROID_NODE_KEY=<android-node-key>
+CARSKY_TIMEOUT_SEC=1.5
+CARSKY_MAX_RETRIES=2
+CARSKY_QUEUE_SIZE=100
+CARSKY_TELEMETRY_INTERVAL_SEC=1.0
+```
+
+Frontend/Copilot env template:
+
+```text
+SE/FE/.env.example
+```
+
+Create local frontend env only if BTC wants live AI Copilot/provider testing:
+
+```powershell
+if (!(Test-Path SE\FE\.env.local)) {
+  Copy-Item SE\FE\.env.example SE\FE\.env.local
+}
+```
+
+Example `SE/FE/.env.local`:
+
+```env
+AWS_BEARER_TOKEN_BEDROCK="bedrock-api-key-PASTE_SHORT_TERM_KEY_HERE"
+AWS_DEFAULT_REGION="ap-southeast-2"
+BEDROCK_MODEL_ID="deepseek.v3.2"
+
+GEMINI_API_KEY=""
+APP_URL="http://127.0.0.1:3000"
+
+VITE_ALERTS_WS_URL="ws://127.0.0.1:8000/api/v1/alerts/live"
+VITE_ROAD_FRAME_URL="http://127.0.0.1:8000/api/v1/alerts/road-frame"
+VITE_CABIN_FRAME_URL="http://127.0.0.1:8000/api/v1/alerts/cabin-frame"
+VITE_LIVE_SNAPSHOT_URL="http://127.0.0.1:8000/api/v1/alerts/snapshot"
+```
+
+Never commit real `CARSKY_API_KEY`, `AWS_BEARER_TOKEN_BEDROCK`, or other secrets.
+
 ---
 
 ## 8. Run the Full Product Demo

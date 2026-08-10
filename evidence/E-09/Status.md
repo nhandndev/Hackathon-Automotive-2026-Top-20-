@@ -1,1 +1,0 @@
-## Jetson runtime đang trong giai đoạn triển khai và chạy thử; soak test dài hạn, thermal/power measurement và recovery test hiện chưa hoàn tất.

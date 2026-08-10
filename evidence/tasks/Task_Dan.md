@@ -19,24 +19,13 @@ Lưu tại `evidence/E-09/`.
 ## E-10 - Thermal/power/soak/stability
 
 **Status: NOT EXECUTED**  
-Primary: Dân. Supporting: Hùng.
+Primary: Dân.
 
 Không tiếp tục giao chạy trong scope hiện tại.
 
 - [x] Ghi report/register: `NOT EXECUTED - no thermal/power/long-run stability claim`.
 - [x] Không dùng E-09 để suy ra thermal/power/soak stability.
 - [ ] Chỉ mở lại E-10 ở post-hackathon deployment validation.
-
-## E-11 - Full CARLA manifest
-
-**Status: DONE**  
-Primary: Dân. Supporting: Hùng.
-
-Đã có đủ manifest, validation report, dataset summary và invalid-trip report; validation PASS, 50/50 valid trips. Không để task mở.
-
-Owner closure:
-
-- [ ] Dân xác nhận đã review `invalid_trip_report.csv` và ký trạng thái DONE trong index final.
 
 ## E-12 - Reproducible CARLA collection
 
@@ -50,8 +39,6 @@ Primary: Dân.
 
 Lưu tại `evidence/E-12/`.
 
-
-
 ## E-25 - Audio/TTS path
 
 **Status: NOT EXECUTED**  
@@ -62,18 +49,6 @@ Không tiếp tục giao chạy trong scope hiện tại.
 - [x] Ghi report/register: `NOT EXECUTED - audio/TTS not claimed`.
 - [x] Không dùng visual Android HMI evidence để suy ra audio hoạt động.
 
-## E-38 - CARLA scenario-to-event matrix
-
-**Status: PARTIAL**  
-Primary: Dân. Supporting: Hùng.
-
-Đã có `scenario_matrix.csv`, nhưng matrix hiện cho thấy chỉ 2 scenario được observed/retained và nhiều scenario chưa được ghi nhận.
-
-- [ ] Thu fresh-run collector logs cho scenario được claim.
-- [ ] Chỉ đánh dấu observed với scenario có retained metadata và event evidence.
-- [ ] Không claim 22/22 scenario coverage từ code/validator unit test.
-
-Lưu tại `evidence/E-38/`.
 ## Business, pilot and governance
 
 ### E-28 - Market sources

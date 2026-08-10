@@ -1,26 +1,14 @@
 # E-08 - Challenge 2 Dependencies Evidence
 
-Mục tiêu: chứng minh Challenge 2 có đủ artifact runtime, model path rõ ràng, nguồn/license của ONNX được ghi lại, và môi trường demo có thể load được dependency.
+Goal: prove the repo contains enough evidence to trace C2 runtime dependencies. It does not claim every runtime binary is pushed directly if it is currently ignored by `.gitignore`.
 
-## Đã làm được trong repo
+| Group | Repo evidence status | Evidence |
+|---|---:|---|
+| Random Forest C2 | Tracked/pushable | `HACKATHON/AI/models/candidate_013.joblib`, `derived/c2_artifact_manifest.json` |
+| YuNet runtime dependency | Binary local/gitignored; repo has note/hash | `raw/source_licenses/yunet_source.txt`, `derived/model_hashes.txt` |
+| Face Landmark runtime dependency | Binary local/gitignored; repo has note/hash | `raw/source_licenses/face_landmark_468_source.txt`, `derived/model_hashes.txt` |
+| Runtime config | Tracked/pushable | `HACKATHON/AI/configs/challenge2.yaml` |
+| Upstream license screenshot/PDF | Missing | Capture manually if BTC requires it |
+| Redistribution/legal review | Missing | Owner/legal confirmation required |
 
-| Evidence | File |
-|---|---|
-| Artifact manifest tổng hợp | `c2_artifact_manifest.json` |
-| Log preflight môi trường + model/config tồn tại | `preflight.log` |
-| SHA256 + size cho model/config/ONNX | `model_hashes.txt` |
-| Note nguồn/license YuNet | `source_licenses/yunet_source.txt` |
-| Note nguồn/license FaceMesh-compatible 468 ONNX | `source_licenses/face_landmark_468_source.txt` |
-| Note model Random Forest team-trained | `source_licenses/random_forest_model_note.txt` |
-
-## Chưa làm được / cần owner xác nhận
-
-| Việc còn lại | Lý do |
-|---|---|
-| Screenshot/PDF trang source/license upstream | Cần capture thủ công nếu BTC yêu cầu bằng chứng dạng ảnh |
-| Xác nhận redistribution cho `face_landmark_468.onnx` | Repo manifest có ghi nguồn converted artifact và note cần review redistribution |
-| Dataset provenance/license cho model RF | Thuộc nhóm evidence dữ liệu/training, không phải dependency runtime |
-
-## Kết luận
-
-E-08 đã đủ phần runtime evidence cơ bản: artifact hiện diện, hash rõ ràng, config/model schema khớp, môi trường load được dependency và preflight PASS.
+Conclusion: E-08 contains basic dependency evidence in the repo. If a fresh clone demo needs ONNX binaries, they must be supplied through a model/release artifact channel or intentionally added to the repo.

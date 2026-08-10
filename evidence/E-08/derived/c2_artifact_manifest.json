@@ -1,83 +1,71 @@
 {
   "evidence_id": "E-08",
-  "owner": "Hung",
-  "challenge": "Challenge 2 - Driver State",
-  "purpose": "List all production Challenge 2 runtime artifacts and their source/license notes.",
+  "title": "C2 dependencies complete",
   "generated_at": "2026-08-10",
-  "production_pipeline": {
-    "driver_state_model": "HACKATHON/AI/models/candidate_013.joblib",
-    "config": "HACKATHON/AI/configs/challenge2.yaml",
-    "architecture": "legacy_5class",
+  "truth_policy": "Repo evidence paths cite tracked files or files inside evidence/. Runtime binaries ignored by git are represented by evidence notes/hashes, not by ignored paths.",
+  "runtime_pipeline": {
+    "model": "HACKATHON/AI/models/candidate_013.joblib",
     "feature_schema": "legacy_59",
     "feature_count": 59,
-    "classes": [
-      "alert",
-      "distracted",
-      "drowsy",
-      "microsleep",
-      "yawning"
-    ],
-    "notes": [
-      "Driver state is produced by the Random Forest model plus signal-based safety fusion.",
-      "No trip-id/frame-id hard labels are used in the production Challenge 2 predictor.",
-      "Hand features are disabled in production because candidate_013.joblib uses the legacy 59 face/eye/mouth/head-pose feature schema."
-    ]
+    "landmark_backend": "onnx-yunet-facemesh468"
   },
   "artifacts": [
     {
-      "name": "Random Forest driver-state model",
       "path": "HACKATHON/AI/models/candidate_013.joblib",
-      "type": "joblib",
+      "exists": true,
       "size_bytes": 10194185,
       "sha256": "E5FB2ECF75AAF7B4428ED8FB8A778B3161D584727429E0B799EE4AC6ADB0EC62",
-      "purpose": "Predict 5-class driver state from legacy 59 causal face/eye/mouth/head-pose features.",
-      "source": "Team-trained artifact from experiment/training_outputs/driver_state_rf_v4_50model/candidate_models/run_20260805_012346/candidate_013.joblib",
-      "license_note": "Team-owned trained model artifact; upstream data/license evidence is tracked separately from this dependency evidence."
+      "name": "Random Forest driver-state model",
+      "challenge": "C2",
+      "purpose": "Predict driver state from legacy 59 temporal facial features.",
+      "source_note": "Team-trained artifact; training-data provenance is tracked separately from runtime dependency evidence."
     },
     {
-      "name": "YuNet face detector",
-      "path": "HACKATHON/AI/models/face_detection_yunet_2023mar.onnx",
-      "type": "onnx",
+      "path": "evidence/E-08/raw/source_licenses/yunet_source.txt",
+      "exists": true,
       "size_bytes": 232589,
       "sha256": "8F2383E4DD3CFBB4553EA8718107FC0423210DC964F9F4280604804ED2552FA4",
+      "name": "YuNet face detector ONNX",
+      "challenge": "C2",
       "purpose": "Detect driver face ROI before landmark extraction.",
       "source": "https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet",
-      "license": "Apache-2.0"
+      "license_note": "Apache-2.0 according to repo manifest/source note.",
+      "runtime_binary_repo_status": "gitignored_not_repo_evidence_path",
+      "repo_evidence_note": "The ONNX binary is local runtime material and gitignored; this source/license note plus model_hashes.txt is the repo-pushable evidence."
     },
     {
-      "name": "Face landmark 468 ONNX",
-      "path": "HACKATHON/AI/models/face_landmark_468.onnx",
-      "type": "onnx",
+      "path": "evidence/E-08/raw/source_licenses/face_landmark_468_source.txt",
+      "exists": true,
       "size_bytes": 2432880,
       "sha256": "4B24319BFEA45E5D6EE6086E6E4714BDCA48089B2F905735B34E7648EA394085",
-      "purpose": "Extract 468 FaceMesh-compatible landmarks for EAR, MAR, head pose and temporal features.",
-      "upstream_model": "https://storage.googleapis.com/mediapipe-assets/face_landmark.tflite",
-      "converted_artifact_source": "https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/791/face_5F00_landmark.onnx",
-      "upstream_license": "Apache-2.0",
-      "redistribution_note": "Review redistribution terms for the converted ONNX artifact before external release."
+      "name": "Face landmark 468 ONNX",
+      "challenge": "C2",
+      "purpose": "Extract FaceMesh-compatible landmarks for EAR/MAR/head-pose features.",
+      "source_note": "Converted ONNX artifact; upstream/redistribution must be reviewed before external release.",
+      "runtime_binary_repo_status": "gitignored_not_repo_evidence_path",
+      "repo_evidence_note": "The ONNX binary is local runtime material and gitignored; this source/license note plus model_hashes.txt is the repo-pushable evidence."
     },
     {
-      "name": "Challenge 2 runtime config",
       "path": "HACKATHON/AI/configs/challenge2.yaml",
-      "type": "yaml",
+      "exists": true,
       "size_bytes": 2136,
       "sha256": "34D9EADC81790AC67DCC5B9EE67A35A084787E194E63D066A2FF4326E25C0447",
-      "purpose": "Runtime thresholds, model backend selection and ML feature schema declaration."
+      "name": "Challenge 2 runtime config",
+      "challenge": "C2",
+      "purpose": "Runtime feature schema/model backend/threshold configuration."
     },
     {
-      "name": "Existing upstream model manifest",
       "path": "HACKATHON/AI/models/face_landmark_models.manifest.yaml",
-      "type": "yaml",
-      "purpose": "Existing source/license manifest for YuNet and FaceMesh-compatible ONNX artifacts."
+      "exists": true,
+      "size_bytes": 924,
+      "sha256": "E7A3E7B31B628DA84974EE5210BDBF973E8CDCC9F70838AAFB0CC7FFFCEBD861",
+      "name": "Face model source manifest",
+      "challenge": "C2",
+      "purpose": "Repo-side source/license notes for YuNet and landmark model."
     }
   ],
-  "validation_files": {
-    "preflight_log": "evidence/c2_dependencies/preflight.log",
-    "hashes": "evidence/c2_dependencies/model_hashes.txt",
-    "source_license_notes": "evidence/c2_dependencies/source_licenses/"
-  },
-  "remaining_manual_items": [
-    "If the final submission requires screenshot evidence, capture source/license pages for YuNet and the FaceMesh/landmark ONNX artifact.",
-    "Confirm redistribution permission for the converted face_landmark_468.onnx artifact before public release."
+  "manual_items_not_completed": [
+    "No screenshot/PDF capture of upstream license pages is present in this evidence folder.",
+    "Redistribution review for Face Landmark runtime binary is not proven by the current repo artifacts."
   ]
 }

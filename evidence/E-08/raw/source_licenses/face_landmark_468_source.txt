@@ -1,4 +1,4 @@
-Artifact: HACKATHON/AI/models/face_landmark_468.onnx
+Artifact: evidence/E-08/raw/source_licenses/face_landmark_468_source.txt
 Component: FaceMesh-compatible 468 landmark ONNX
 Purpose in Challenge 2: extract landmarks used for EAR, MAR, head pose and temporal Random Forest features.
 
@@ -19,3 +19,6 @@ Review redistribution terms for the converted ONNX artifact before external rele
 
 Manual follow-up if needed:
 Capture a screenshot/PDF of the upstream source/license page and confirm redistribution permission.
+
+
+Repo evidence note: this text file is the repo-pushable evidence for Face Landmark 468. The runtime binary itself is gitignored and must be supplied via the agreed model/release artifact channel if needed.

@@ -1,0 +1,66 @@
+{
+  "evidence_id": "E-27",
+  "title": "C2 generalization / split evidence",
+  "generated_at": "2026-08-10",
+  "truth_policy": "Repo evidence paths cite evidence/ files. Original experiment/ and AI/artifacts paths are local-only/ignored and are not cited as repo-pushable evidence.",
+  "dataset_v2": {
+    "train_dir_exists": true,
+    "valid_dir_exists": true,
+    "train_folder_count": 96,
+    "valid_folder_count": 34,
+    "train_examples": [
+      "T01d",
+      "T03d",
+      "T05d",
+      "T07d",
+      "T09d",
+      "T_claw_train_1",
+      "T_claw_train_1070",
+      "T_claw_train_1089"
+    ],
+    "valid_examples": [
+      "T02d",
+      "T04d",
+      "T06d",
+      "T08d",
+      "T10d",
+      "T_claw_test_41",
+      "T_claw_test_43",
+      "T_claw_test_53"
+    ],
+    "dataset_path_repo_status": "local_only_gitignored"
+  },
+  "split_policy": {
+    "owner_stated_policy": "Random 70/30; crawled/Kaggle data keeps original YOLO train/valid split.",
+    "kaggle_source_provided_by_owner": "https://www.kaggle.com/datasets/habbas11/dms-driver-monitoring-system",
+    "subject_disjoint_audited": false,
+    "reason_subject_disjoint_not_audited": "No reliable subject-id/provenance manifest was found in the available local evidence."
+  },
+  "feature_cache": {
+    "path": "evidence/E-27/derived/generalization_summary.json",
+    "source_note": "Feature cache fields were copied from a local ignored experiment manifest during evidence generation.",
+    "fatigue_schema": "legacy_59_3_10_30",
+    "fatigue_feature_count": 59,
+    "distraction_schema": "distraction_v1_1_3",
+    "distraction_feature_count": 30,
+    "landmark_backend": "onnx-yunet-facemesh468"
+  },
+  "evaluation_artifacts": [
+    {
+      "path": "evidence/E-01/derived/final_evaluation_summary.json",
+      "exists": true,
+      "note": "Repo-pushable evaluation summary."
+    },
+    {
+      "path": "evidence/E-27/derived/c2_overall_class_metrics.csv",
+      "exists": true,
+      "note": "Copied into evidence from local ignored analysis artifact."
+    },
+    {
+      "path": "evidence/E-27/derived/c2_overall_confusion_matrix.png",
+      "exists": true,
+      "note": "Copied into evidence from local ignored analysis artifact."
+    }
+  ],
+  "class_metrics_rows_observed": 5
+}

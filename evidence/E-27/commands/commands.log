@@ -1,0 +1,16 @@
+# E-27 generalization evidence commands
+
+Run from repository root `Hackathon-Automotive-2026/`.
+
+This repo evidence cites only files under `evidence/E-27` and `evidence/E-01`.
+Raw experiment/evaluation artifacts used during generation are local-only/gitignored.
+
+## Repo-pushable evidence checks
+
+```powershell
+Test-Path evidence\E-27\derived\split_manifest.csv
+Test-Path evidence\E-27\derived\generalization_summary.json
+Test-Path evidence\E-27\derived\c2_overall_class_metrics.csv
+Test-Path evidence\E-27\derived\c2_overall_confusion_matrix.png
+Test-Path evidence\E-01\derived\final_evaluation_summary.json
+```

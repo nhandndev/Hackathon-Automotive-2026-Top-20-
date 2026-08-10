@@ -62,7 +62,7 @@ Primary: Tâm.
 
 Artifact manifest, SHA-256, dependency preflight và source/license notes đã có; preflight PASS. Không để như task mở.
 
-Follow-up ngoài evidence runtime: legal/owner review redistribution của `face_landmark_468.onnx` trước public release.
+Follow-up ngoài evidence runtime: legal/owner review redistribution của `Face Landmark runtime binary` trước public release.
 
 ## E-13 - C1 critical-case evaluation
 

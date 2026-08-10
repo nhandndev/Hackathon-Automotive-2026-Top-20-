@@ -1,7 +1,10 @@
 {
   "evidence_id": "E-13",
-  "source": "HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json",
-  "scope": "Challenge 1 TTC critical cases on 6 Practice trips",
+  "source": "evidence/E-01/derived/final_evaluation_summary.json",
+  "source_exists": true,
+  "scope": "Challenge 1 TTC critical cases on available evaluation artifact",
+  "generated_at": "2026-08-10",
+  "truth_policy": "Metrics copied from evaluation.json root-level C1 fields only; this script did not rerun evaluator.",
   "overall": {
     "n_trips": 6,
     "overall_mae_critical": 1.028,
@@ -10,16 +13,146 @@
     "overall_composite_score": 73.6
   },
   "ranking": [
-    {"trip_id": "T04-Sample", "score": 86.1},
-    {"trip_id": "T03-Sample", "score": 82.4},
-    {"trip_id": "T02-Sample", "score": 77.8},
-    {"trip_id": "T06-Sample", "score": 70.4},
-    {"trip_id": "T05-Sample", "score": 68.6},
-    {"trip_id": "T01-Sample", "score": 56.3}
+    {
+      "trip_id": "T04-Sample",
+      "score": 86.1
+    },
+    {
+      "trip_id": "T03-Sample",
+      "score": 82.4
+    },
+    {
+      "trip_id": "T02-Sample",
+      "score": 77.8
+    },
+    {
+      "trip_id": "T06-Sample",
+      "score": 70.4
+    },
+    {
+      "trip_id": "T05-Sample",
+      "score": 68.6
+    },
+    {
+      "trip_id": "T01-Sample",
+      "score": 56.3
+    }
   ],
-  "notes": [
-    "This file summarizes the C1 root-level metrics from the final three-challenge evaluation artifact.",
-    "It is not a newly rerun evaluation.",
-    "Full per-trip C1 details remain at the root/per_trip fields in HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json."
-  ]
+  "per_trip": [
+    {
+      "trip_id": "T01-Sample",
+      "n_frames": 600,
+      "n_finite_gt": 57,
+      "n_critical_zone": 12,
+      "n_danger_zone": 10,
+      "mae_overall": 10.049,
+      "mae_critical": 3.384,
+      "rmse_critical": 5.138,
+      "inv_ttc_mae": 0.1102,
+      "precision": 0.636,
+      "recall": 0.7,
+      "f1": 0.667,
+      "false_positive_rate": 0.007,
+      "accuracy": 0.988,
+      "composite_score": 56.3
+    },
+    {
+      "trip_id": "T02-Sample",
+      "n_frames": 600,
+      "n_finite_gt": 35,
+      "n_critical_zone": 19,
+      "n_danger_zone": 18,
+      "mae_overall": 6.348,
+      "mae_critical": 0.714,
+      "rmse_critical": 1.009,
+      "inv_ttc_mae": 0.1805,
+      "precision": 0.789,
+      "recall": 0.833,
+      "f1": 0.811,
+      "false_positive_rate": 0.007,
+      "accuracy": 0.988,
+      "composite_score": 77.8
+    },
+    {
+      "trip_id": "T03-Sample",
+      "n_frames": 600,
+      "n_finite_gt": 61,
+      "n_critical_zone": 32,
+      "n_danger_zone": 29,
+      "mae_overall": 66.624,
+      "mae_critical": 0.449,
+      "rmse_critical": 1.753,
+      "inv_ttc_mae": 0.1846,
+      "precision": 0.848,
+      "recall": 0.966,
+      "f1": 0.903,
+      "false_positive_rate": 0.009,
+      "accuracy": 0.99,
+      "composite_score": 82.4
+    },
+    {
+      "trip_id": "T04-Sample",
+      "n_frames": 600,
+      "n_finite_gt": 121,
+      "n_critical_zone": 76,
+      "n_danger_zone": 52,
+      "mae_overall": 7.749,
+      "mae_critical": 0.327,
+      "rmse_critical": 0.552,
+      "inv_ttc_mae": 0.1004,
+      "precision": 0.889,
+      "recall": 0.769,
+      "f1": 0.825,
+      "false_positive_rate": 0.009,
+      "accuracy": 0.972,
+      "composite_score": 86.1
+    },
+    {
+      "trip_id": "T05-Sample",
+      "n_frames": 600,
+      "n_finite_gt": 66,
+      "n_critical_zone": 47,
+      "n_danger_zone": 35,
+      "mae_overall": 1.194,
+      "mae_critical": 0.607,
+      "rmse_critical": 1.029,
+      "inv_ttc_mae": 0.1528,
+      "precision": 0.345,
+      "recall": 0.543,
+      "f1": 0.422,
+      "false_positive_rate": 0.064,
+      "accuracy": 0.913,
+      "composite_score": 68.6
+    },
+    {
+      "trip_id": "T06-Sample",
+      "n_frames": 600,
+      "n_finite_gt": 262,
+      "n_critical_zone": 97,
+      "n_danger_zone": 60,
+      "mae_overall": 5.532,
+      "mae_critical": 0.684,
+      "rmse_critical": 1.138,
+      "inv_ttc_mae": 0.2798,
+      "precision": 0.87,
+      "recall": 0.667,
+      "f1": 0.755,
+      "false_positive_rate": 0.011,
+      "accuracy": 0.957,
+      "composite_score": 70.4
+    }
+  ],
+  "source_file": {
+    "path": "evidence/E-01/derived/final_evaluation_summary.json",
+    "exists": true,
+    "note": "Original AI/artifacts evaluation is gitignored."
+  },
+  "available_prediction_csvs": [],
+  "missing_expected_items": [
+    "c1_cases.pdf is not present/generated.",
+    "prediction/GT case CSV bundle is not present in this evidence folder.",
+    "Bin/case definition still requires owner review."
+  ],
+  "source_note": "Repo-pushable evidence summary. Original local AI/artifacts evaluation file is gitignored.",
+  "available_prediction_csvs_note": "Prediction CSVs under AI/artifacts are gitignored and are not cited as repo evidence paths."
 }

@@ -1,0 +1,13 @@
+split,label,frame_count
+train,alert,9415
+train,distracted,9803
+train,drowsy,7769
+train,microsleep,5897
+train,missing,3981
+train,yawning,4800
+valid,alert,1513
+valid,distracted,2526
+valid,drowsy,1833
+valid,microsleep,978
+valid,missing,4672
+valid,yawning,2165

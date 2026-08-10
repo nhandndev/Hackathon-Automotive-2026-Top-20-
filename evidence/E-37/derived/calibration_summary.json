@@ -1,0 +1,80 @@
+{
+  "evidence_id": "E-37",
+  "title": "Calibration quality audit",
+  "generated_at": "2026-08-10",
+  "truth_policy": "Summarizes calibration artifacts currently present in evidence/E-37. It does not assert source manifest availability if files are not found in repo.",
+  "artifacts": [
+    {
+      "path": "evidence/E-37/derived/baseline_distribution.csv",
+      "exists": true,
+      "size_bytes": 1206,
+      "sha256": "4D0CE2D8118F4F8888EAB9679B8999E2570E552B916D73D7CC70C8792EC5E8B4"
+    },
+    {
+      "path": "evidence/E-37/derived/epipolar_montage.png",
+      "exists": true,
+      "size_bytes": 996373,
+      "sha256": "AB1C894A847888E20DE693FBC6492380D5BC43BE1F904C12EDEFA5BE33E50790"
+    }
+  ],
+  "baseline_distribution_rows": 1,
+  "baseline_distribution": [
+    {
+      "baseline_m": "0.3",
+      "trip_count": "50",
+      "trip_pct": "1",
+      "consistent_trip_count": "50",
+      "inconsistent_trip_count": "0",
+      "total_calibration_frames": "22650",
+      "image_width": "640",
+      "image_height": "360",
+      "fov_deg": "90",
+      "fx_px": "320",
+      "fy_px": "320",
+      "cx_px": "320",
+      "cy_px": "180",
+      "p2_tx_px": "0",
+      "p3_tx_px": "-96",
+      "reported_baseline_min_m": "0.3",
+      "reported_baseline_max_m": "0.3",
+      "derived_baseline_min_m": "0.3",
+      "derived_baseline_max_m": "0.3",
+      "derived_baseline_mean_m": "0.3",
+      "derived_baseline_std_m": "0",
+      "max_reported_derived_abs_delta_m": "0",
+      "p2_matrix": "320 0 320 0;0 320 180 0;0 0 1 0",
+      "p3_matrix": "320 0 320 -96;0 320 180 0;0 0 1 0",
+      "trip_ids": "T14-Sample;T15-Sample;T16-Sample;T17-Sample;T18-Sample;T19-Sample;T20-Sample;T21-Sample;T22-Sample;T23-Sample;T24-Sample;T25-Sample;T26-Sample;T27-Sample;T28-Sample;T29-Sample;T30-Sample;T31-Sample;T32-Sample;T33-Sample;T34-Sample;T35-Sample;T36-Sample;T37-Sample;T38-Sample;T39-Sample;T40-Sample;T41-Sample;T42-Sample;T43-Sample;T44-Sample;T45-Sample;T46-Sample;T47-Sample;T48-Sample;T49-Sample;T50-Sample;T51-Sample;T52-Sample;T53-Sample;T54-Sample;T55-Sample;T56-Sample;T57-Sample;T58-Sample;T59-Sample;T60-Sample;T61-Sample;T62-Sample;T63-Sample",
+      "source_manifest": "dataset_manifest.json",
+      "calibration_source_pattern": "<trip>/kitti/calibration_info.txt + <trip>/kitti/calib/000000.txt"
+    }
+  ],
+  "epipolar_montage_png": {
+    "width_px": 1344,
+    "height_px": 852
+  },
+  "source_files_checked": [
+    {
+      "path": "HACKATHON/AI/core/challenge1_road/depth.py",
+      "exists": true,
+      "size_bytes": 6485,
+      "sha256": "6F92EBB6ED6AB1D0EFD2D9AE006B7BF5C0B5C495F5DB3EF93C392D099796A9FE"
+    },
+    {
+      "path": "HACKATHON/AI/configs/challenge1.yaml",
+      "exists": true,
+      "size_bytes": 3633,
+      "sha256": "4CC9DD6A5A68D8C8BAA97C301738FD1DC9F8CB573C68BE39263D2B3B04FC8E89"
+    },
+    {
+      "path": "dataset_manifest.json",
+      "exists": false
+    }
+  ],
+  "source_manifest_status": "not_found_in_repo_root",
+  "limitations": [
+    "The baseline CSV and epipolar montage exist as evidence artifacts, but the generation script/source manifest was not found by repo scan in this turn.",
+    "No new calibration computation was run in this turn.",
+    "This evidence does not prove full camera calibration correctness unless source manifest and generation method are attached/reviewed."
+  ]
+}

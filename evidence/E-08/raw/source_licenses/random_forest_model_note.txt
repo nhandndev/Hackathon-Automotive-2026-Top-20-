@@ -13,7 +13,6 @@ Feature schema:
 legacy_59
 
 Training artifact lineage recorded by project context:
-experiment/training_outputs/driver_state_rf_v4_50model/candidate_models/run_20260805_012346/candidate_013.joblib
-
+HACKATHON/AI/model/candidate_013.joblib
 License/source note:
 This is a team-trained model artifact. Dataset provenance and permission should be tracked in the dataset evidence tasks, not in this dependency artifact task.

@@ -27,14 +27,14 @@
       "purpose": "Random Forest driver-state classifier, legacy 59 features"
     },
     {
-      "path": "HACKATHON/AI/models/face_detection_yunet_2023mar.onnx",
+      "path": "evidence/E-08/raw/source_licenses/yunet_source.txt",
       "challenge": "Challenge 2",
-      "purpose": "Face detection"
+      "purpose": "Repo-pushable source/license note for YuNet runtime dependency; ONNX binary itself is gitignored."
     },
     {
-      "path": "HACKATHON/AI/models/face_landmark_468.onnx",
+      "path": "evidence/E-08/raw/source_licenses/face_landmark_468_source.txt",
       "challenge": "Challenge 2",
-      "purpose": "Face landmarks for features"
+      "purpose": "Repo-pushable source/license note for Face Landmark runtime dependency; ONNX binary itself is gitignored."
     }
   ],
   "expected_csv_schema": [
@@ -46,14 +46,16 @@
   ],
   "notes": [
     "Challenge 3 is formula-based and implemented in HACKATHON/AI/core/challenge3_fusion/risk_engine.py.",
-    "Final three-challenge evaluation artifact: HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json.",
+    "Final three-challenge evaluation artifact: evidence/E-01/derived/final_evaluation_summary.json.",
     "Dataset files are intentionally not bundled here; owner must provide dataset path such as ../Practice_Dataset.",
     "This is a reproducibility manifest, not a final zip bundle."
   ],
   "final_evaluation": {
-    "path": "HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json",
+    "path": "evidence/E-01/derived/final_evaluation_summary.json",
+    "note": "Summary copied into evidence. Original local evaluation artifact is under ignored AI/artifacts and is not cited as repo-pushable evidence.",
     "challenge1_overall_composite": 73.6,
     "challenge2_overall_composite": 84.0,
     "challenge3_overall_composite": 100.0
-  }
+  },
+  "truth_policy": "Repo evidence paths point to tracked or evidence-folder files only. Runtime files ignored by git are represented by source notes/hashes, not cited as pushable evidence paths."
 }

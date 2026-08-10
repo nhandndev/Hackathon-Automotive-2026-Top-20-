@@ -1,0 +1,16 @@
+# E-08 dependency evidence commands
+
+Run from repository root `Hackathon-Automotive-2026/`.
+
+## Repo-pushable evidence checks
+
+```powershell
+Test-Path evidence\E-08\derived\c2_artifact_manifest.json
+Test-Path evidence\E-08\derived\model_hashes.txt
+Test-Path evidence\E-08\raw\source_licenses\yunet_source.txt
+Test-Path evidence\E-08\raw\source_licenses\face_landmark_468_source.txt
+Test-Path HACKATHON\AI\models\candidate_013.joblib
+Test-Path HACKATHON\AI\configs\challenge2.yaml
+```
+
+Note: YuNet and Face Landmark ONNX runtime binaries are local/gitignored unless explicitly provided through the model/release artifact channel.

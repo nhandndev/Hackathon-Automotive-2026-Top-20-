@@ -1,0 +1,23 @@
+# E-13 C1 critical cases evidence commands
+
+Run from repository root `Hackathon-Automotive-2026/`.
+
+## Existing evaluation artifact
+
+```powershell
+Test-Path HACKATHON\AIrtifacts\predictions_6_samples\evaluation.json
+Get-Content HACKATHON\AIrtifacts\predictions_6_samples\evaluation.json -TotalCount 80
+```
+
+## Original evaluator command from E-01
+
+```powershell
+python AI	eam_kit\evaluation.py `
+  --predictions AIrtifacts\predictions_6_samples `
+  --data-dir ..\Practice_Dataset `
+  --output AIrtifacts\evaluation_6_samples.json
+```
+
+This evidence did not rerun evaluator; it summarized the existing `evaluation.json`.
+
+Generated: 2026-08-10

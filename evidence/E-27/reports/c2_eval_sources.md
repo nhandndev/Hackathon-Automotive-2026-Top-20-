@@ -1,27 +1,12 @@
 # E-27 - C2 Evaluation Sources
 
-Current usable C2 evaluation artifacts:
+Repo-pushable artifacts currently used as evidence:
 
-| Artifact | Meaning |
+| Artifact | Role |
 |---|---|
-| `HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json` | Final C2 per-trip BTC practice evaluation under `challenge2` |
-| `HACKATHON/AI/artifacts/predictions/candidate013_pred/analysis/overall_class_metrics.csv` | Overall per-class one-vs-rest metrics for candidate_013 |
-| `HACKATHON/AI/artifacts/predictions/candidate013_pred/analysis/overall_confusion_matrix.png` | Overall C2 confusion matrix image, 3600 frames |
+| `evidence/E-01/derived/final_evaluation_summary.json` | Three-challenge evaluation summary copied into evidence |
+| `evidence/E-27/derived/c2_overall_class_metrics.csv` | Candidate_013 one-vs-rest class metrics copied into evidence |
+| `evidence/E-27/derived/c2_overall_confusion_matrix.png` | Six-trip confusion matrix copied into evidence |
+| `evidence/E-27/derived/generalization_summary.json` | Feature/split summary from local ignored dataset scan |
 
-Key metrics from the attached confusion-matrix analysis:
-
-```text
-Accuracy: 83.806%
-Frames: 3600
-Macro Precision: 83.9%
-Macro Recall/TPR: 82.4%
-Macro F1: 82.1%
-Macro Specificity: 95.8%
-Macro FAR/FPR: 4.2%
-Macro FNR/Miss: 17.6%
-```
-
-Important observation:
-
-- `microsleep` recall is 100.0% in the provided analysis.
-- `alert` recall is low because many alert frames are predicted as distracted.
+Do not cite `AI/artifacts` or `experiment` directly because those folders are ignored by git.

@@ -1,0 +1,38 @@
+{
+  "evidence_id": "E-07",
+  "title": "C3 formula/thresholds",
+  "generated_at": "2026-08-10",
+  "truth_policy": "Constants are parsed from HACKATHON/AI/core/challenge3_fusion/risk_engine.py. No external BTC document is bundled here.",
+  "source_files": [
+    {
+      "path": "HACKATHON/AI/core/challenge3_fusion/risk_engine.py",
+      "exists": true,
+      "size_bytes": 3765,
+      "sha256": "3EA9D7E8AB0C23D5746260C65015A2D52A6CEC983EE1F0E3D88A12C7911C184A"
+    },
+    {
+      "path": "evidence/E-01/derived/final_evaluation_summary.json",
+      "exists": true,
+      "note": "Repo-pushable summary; original AI/artifacts file is gitignored."
+    }
+  ],
+  "formula_from_source_docstring": "safe = 100 - (harsh_brake_count*3 + harsh_accel_count*2 + harsh_corner_count*2 + near_miss_count*5 + speeding_pct_time*0.15)",
+  "constants": {
+    "HARSH_BRAKE_G": 0.4,
+    "HARSH_ACCEL_G": 0.35,
+    "HARSH_LATERAL_G": 0.3,
+    "G_MS2": 9.81,
+    "NEAR_MISS_TTC_SEC": 1.5,
+    "SPEEDING_TOLERANCE_KMH": 5.0,
+    "HARSH_BRAKE_PENALTY": 3.0,
+    "HARSH_ACCEL_PENALTY": 2.0,
+    "HARSH_CORNER_PENALTY": 2.0,
+    "NEAR_MISS_PENALTY": 5.0,
+    "SPEEDING_MAX_PENALTY": 15.0
+  },
+  "limitations": [
+    "This evidence cites production source code and existing sample calculation only.",
+    "No external BTC PDF/screenshot is attached here.",
+    "Tailgating is documented as absent from current CSV contract in the source docstring."
+  ]
+}

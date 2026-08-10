@@ -155,64 +155,15 @@ Primary scope: E-02, E-03, E-04, E-14, E-15, E-16, E-17, E-18, E-19, E-20, E-26,
 
 **Comment:** Evidence ở `E-40/`. Đây là claim-control evidence, không phải performance improvement evidence.
 
-## Business, pilot and governance
 
-### E-28 - Market sources
+## E-24 - CarSky/KUKSA/VHAL/APK same-event trace
 
-**Status: OPEN / NOT EXECUTED**.
+**Status: OPEN**  
+Primary: Dân. Supporting: Nhân.
 
-- [ ] Lưu authoritative source snapshots, date, definition và calculation sheet.
+- [ ] Đồng bộ clock.
+- [ ] Gửi một known event có event ID cố định.
+- [ ] Capture Backend payload, Signal Watch value, Bridge log, Android logcat và APK UI cùng event.
+- [ ] Xuất `carsky_trace_bundle.zip`, MP4 và `mapping.md`.
 
-**Comment:** Chưa làm. E-28 cần nguồn thị trường thật, snapshot/PDF/source URL và calculation sheet; không tự bịa số liệu thị trường.
-
-### E-29 - Competitive matrix
-
-**Status: OPEN**.
-
-- [ ] Hoàn thiện feature/pricing comparison với source URL/snapshot và access date.
-
-### E-30 - Pricing/BOM/unit economics
-
-**Status: OPEN**. Supporting: Dân.
-
-- [ ] Thu BOM/quotes thật và tính low/base/high sensitivity.
-- [ ] Tách approved quote, estimate và hypothetical pricing.
-
-### E-31 - Customer/buyer hypotheses
-
-**Status: OPEN**.
-
-- [ ] Thực hiện 5-8 interviews có consent và cùng questionnaire.
-- [ ] Tổng hợp cả confirming và disconfirming insight.
-
-### E-32 - Pilot protocol
-
-**Status: OPEN**. Supporting: Hùng.
-
-- [ ] Pre-register KPI, label protocol, sample-size rationale và stop/scale gates.
-
-### E-33 - ROI model
-
-**Status: OPEN**.
-
-- [ ] Tạo transparent ROI calculator và baseline log.
-- [ ] Tách observed, assumed và pending values; không claim field ROI khi chưa có pilot.
-
-### E-34 - Safety/privacy gates
-
-**Status: OPEN**. Supporting: Dân.
-
-- [ ] Tabletop review consent, retention, role access, escalation và camera-offline behavior.
-- [ ] Ghi approver và unresolved items, không chỉ tick checklist.
-
-### E-35 - Reviewer evidence index
-
-**Status: PARTIAL**. Supporting: Thiện.
-
-Hiện chỉ có danh sách E-01 đến E-42.
-
-- [ ] Map claim → artifact path → hash → timestamp → owner.
-- [ ] Tạo `access_test.csv` và kiểm tra từng link/file ở reviewer mode.
-- [x] Không đánh dấu DONE chỉ vì có `EVIDENCE_INDEX.md`.
-
-**Comment:** Đã giữ status PARTIAL đúng thực tế; còn thiếu claim-file-hash-owner mapping và reviewer access test.
+Lưu tại `evidence/E-24/`.

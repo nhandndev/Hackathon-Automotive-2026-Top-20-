@@ -5,11 +5,6 @@
 Các bằng chứng này liên quan đến độ chính xác và tính tái lập của Core AI. Agent đã tạo sẵn script đánh giá, Owner cần cung cấp data/model thật.
 
 
-## E-27: C2 generalization (Hùng)
-- [ ] **Hành động:** Xác nhận split policy (subject/trip-disjoint).
-- [ ] **Kết quả mong đợi:** `c2_eval.json`, `confusion_matrix.png`, `split_manifest.csv`
-- **Ghi chú của Owner:** Split policy hiện tại: random 70/30; với crawled/Kaggle data giữ đúng form `train/valid` của YOLO dataset gốc. Kaggle source owner cung cấp: `https://www.kaggle.com/datasets/habbas11/dms-driver-monitoring-system`. Đã tạo evidence tại `evidence/03_ai_c2/E-27_c2_generalization_evaluation/`: `reports/split_policy.md`, `derived/split_manifest.csv`, `reports/c2_eval_sources.md`, `reports/source_report.md`. Chưa audit subject-disjoint vì cần subject IDs/provenance.
-
 ## E-42: Model drift/domain gap (Tâm/Hùng)
 - [ ] **Hành động:** Xác nhận consent/provenance dữ liệu real.
 - [ ] **Kết quả mong đợi:** `psi_ks_metrics.csv`

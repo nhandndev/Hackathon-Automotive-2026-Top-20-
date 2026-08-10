@@ -352,10 +352,14 @@ const buildPendingReportNarrative = (models: VehicleReportModel[], mode: string)
 };
 
 export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ vehicles, reportType, tripIds, dataReady = true }) => {
+  const cloneVehiclesForCopilot = (items: typeof vehicles): typeof vehicles => JSON.parse(JSON.stringify(items));
+  const [reportVehiclesSnapshot, setReportVehiclesSnapshot] = useState<typeof vehicles | null>(() => (
+    dataReady && vehicles.length ? cloneVehiclesForCopilot(vehicles) : null
+  ));
   const [copilotInsight, setCopilotInsight] = useState('Đang chờ phản hồi AI Copilot từ Bedrock...');
-  const [aiInsightStatus, setAiInsightStatus] = useState<AiInsightStatus>('loading');
+  const [aiInsightStatus, setAiInsightStatus] = useState<AiInsightStatus>('unavailable');
   const [aiTripInsights, setAiTripInsights] = useState<Record<string, any>>({});
-  const [isLoadingInsight, setIsLoadingInsight] = useState(true);
+  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
   const [bedrockRequested, setBedrockRequested] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
@@ -377,14 +381,21 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
     setExpandedTrips(prev => ({ ...prev, [tripId]: !prev[tripId] }));
   };
 
+  useEffect(() => {
+    if (!reportVehiclesSnapshot && dataReady && vehicles.length) {
+      setReportVehiclesSnapshot(cloneVehiclesForCopilot(vehicles));
+    }
+  }, [dataReady, vehicles.length, reportVehiclesSnapshot]);
+
+  const reportVehicles = reportVehiclesSnapshot ?? vehicles;
   const selectedIds = (tripIds ?? '').split(',').filter(Boolean);
   const selectedTrips = useMemo(() => (
     selectedIds.length
-      ? vehicles.filter((vehicle) => selectedIds.includes(vehicle.trip_id))
+      ? reportVehicles.filter((vehicle) => selectedIds.includes(vehicle.trip_id))
       : reportType === 'compare'
-        ? vehicles.slice(0, 2)
-        : vehicles.filter((vehicle) => vehicle.runtime_status === 'completed')
-  ), [selectedIds.join(','), vehicles, reportType]);
+        ? reportVehicles.slice(0, 2)
+        : reportVehicles.filter((vehicle) => vehicle.runtime_status === 'completed')
+  ), [selectedIds.join(','), reportVehicles, reportType]);
   const missingSelectedIds = useMemo(
     () => selectedIds.filter((tripId) => !selectedTrips.some((trip) => trip.trip_id === tripId)),
     [selectedIds.join(','), selectedTrips],
@@ -392,7 +403,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
   
   const rows = useMemo(() => {
     // 1. Compute true global fleet ranking across ALL vehicles in system
-    const allFleetRows = buildRankingRows(vehicles);
+    const allFleetRows = buildRankingRows(reportVehicles);
     
     // 2. Filter for selected trips while preserving global rank (#1..#N)
     const selectedTripSet = new Set(selectedTrips.map(t => t.trip_id));
@@ -427,10 +438,10 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       );
     }
     return rawRows;
-  }, [vehicles, selectedTrips, reportType]);
+  }, [reportVehicles, selectedTrips, reportType]);
 
   const reportModels = useMemo(() => {
-    const models = buildVehicleReportModels(vehicles, selectedTrips);
+    const models = buildVehicleReportModels(reportVehicles, selectedTrips);
     if (reportType === 'maintenance') {
       return [...models].sort((a, b) => {
         const priorityRank = { INSPECT: 3, WATCH: 2, NORMAL: 1 };
@@ -447,7 +458,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       );
     }
     return models;
-  }, [vehicles, selectedTrips, reportType]);
+  }, [reportVehicles, selectedTrips, reportType]);
 
   const reportMode = useMemo(() => inferReportMode(reportType, reportModels.length), [reportType, reportModels.length]);
   const isSingleTripReport = reportModels.length === 1;
@@ -481,7 +492,7 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       ? 'Tổng hợp an toàn từ JSON/local AI telemetry, trip risk, TTC/headway và safety review priority.'
       : `So sánh và đánh giá mức độ an toàn của ${rows.length} trip`;
 
-  const allFleetRows = useMemo(() => buildRankingRows(vehicles), [vehicles]);
+  const allFleetRows = useMemo(() => buildRankingRows(reportVehicles), [reportVehicles]);
   const fleetAverage = allFleetRows.length ? allFleetRows.reduce((sum, row) => sum + row.score, 0) / allFleetRows.length : 0;
   const isSafetyOverview = reportType === 'safety' && rows.length > 1;
   const selectedFleetAverage = rows.length ? rows.reduce((sum, row) => sum + row.score, 0) / rows.length : 0;
@@ -512,8 +523,11 @@ export const CopilotFleetReportPage: React.FC<CopilotFleetReportPageProps> = ({ 
       : 'text-slate-200 hover:bg-slate-800';
 
   useEffect(() => {
-    setBedrockRequested(canRequestBedrockInsight);
-  }, [canRequestBedrockInsight, inputSignature]);
+    // Manual-only Bedrock call: opening the report must never auto-call AI.
+    // The report input is frozen by reportVehiclesSnapshot, so live trip updates cannot retrigger Copilot.
+    setBedrockRequested(false);
+    activeRequestSignatureRef.current = null;
+  }, [inputSignature]);
 
   useEffect(() => {
     let cancelled = false;

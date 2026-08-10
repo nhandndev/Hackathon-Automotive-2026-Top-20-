@@ -148,3 +148,4 @@ Hiện chỉ có danh sách E-01 đến E-42.
 - [x] Không đánh dấu DONE chỉ vì có `EVIDENCE_INDEX.md`.
 
 **Comment:** Đã giữ status PARTIAL đúng thực tế; còn thiếu claim-file-hash-owner mapping và reviewer access test.
+hihi

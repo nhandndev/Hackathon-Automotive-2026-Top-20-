@@ -1,0 +1,11 @@
+Python 3.13.5
+CARLA API: /home/student/miniconda3/lib/python3.13/site-packages/carla.cpython-313-x86_64-linux-gnu.so
+[EVENT-DOWNGRADE] scenario=lead_brake -> none; giữ trip và tiếp tục salvage. reason=Event lead_brake chỉ có 0 frame evidence
+[PASS] 22 scenario evidence validators + event downgrade
+[FRAME-SALVAGE] removed=2/10; kept=8; reasons={'synthetic': 2}
+[FRAME-SALVAGE] removed=1/10; kept=9; reasons={'unreadable_image_2': 1}
+[EVENT-DOWNGRADE] Raw JSON event validator không đạt; đổi scenario thành none trước frame salvage. reasons=lead_brake không có giảm tốc đủ lớn: 0.00 < 5.00 km/h.
+[FRAME-SALVAGE] removed=0; kept=10
+[EVENT-DOWNGRADE] scenario -> none sau salvage; Sau salvage chỉ còn 2 frame event, cần >= 3.
+[FRAME-SALVAGE] removed=2/10; kept=8; reasons={'synthetic': 2}
+[PASS] frame salvage synthetic tests

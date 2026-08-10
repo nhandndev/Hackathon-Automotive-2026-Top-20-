@@ -1,0 +1,76 @@
+{
+  "captured_at_utc": "2026-08-10T04:56:57.898583+00:00",
+  "hostname": "ubuntu",
+  "jetson_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+  "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+  "python_version": "3.10.12",
+  "git_commit": {
+    "exit_code": 128,
+    "stdout": "",
+    "stderr": "fatal: not a git repository (or any parent up to mount point /media/students)\nStopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+  },
+  "git_status": {
+    "exit_code": 128,
+    "stdout": "",
+    "stderr": "fatal: not a git repository (or any parent up to mount point /media/students)\nStopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+  },
+  "l4t_release": {
+    "exit_code": 0,
+    "stdout": "# R36 (release), REVISION: 4.4, GCID: 41062509, BOARD: generic, EABI: aarch64, DATE: Mon Jun 16 16:07:13 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "stderr": ""
+  },
+  "jetpack": {
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": ""
+  },
+  "cuda": {
+    "exit_code": 127,
+    "stdout": "",
+    "stderr": ""
+  },
+  "tensorrt": {
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": ""
+  },
+  "onnxruntime": {
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'onnxruntime'"
+  },
+  "opencv": {
+    "exit_code": 0,
+    "stdout": "5.0.0",
+    "stderr": ""
+  },
+  "nvpmodel": {
+    "exit_code": 0,
+    "stdout": "NVPM VERB: Config file: /etc/nvpmodel.conf\nNVPM VERB: parsing done for /etc/nvpmodel.conf\nNVPM VERB: Current mode: NV Power Mode: 25W\n1\nNVPM VERB: PARAM CPU_ONLINE: ARG CORE_0: PATH /sys/devices/system/cpu/cpu0/online: REAL_VAL: 1 CONF_VAL: 1\nNVPM VERB: PARAM CPU_ONLINE: ARG CORE_1: PATH /sys/devices/system/cpu/cpu1/online: REAL_VAL: 1 CONF_VAL: 1\nNVPM VERB: PARAM CPU_ONLINE: ARG CORE_2: PATH /sys/devices/system/cpu/cpu2/online: REAL_VAL: 1 CONF_VAL: 1\nNVPM VERB: PARAM CPU_ONLINE: ARG CORE_3: PATH /sys/devices/system/cpu/cpu3/online: REAL_VAL: 1 CONF_VAL: 1\nNVPM VERB: PARAM CPU_ONLINE: ARG CORE_4: PATH /sys/devices/system/cpu/cpu4/online: REAL_VAL: 1 CONF_VAL: 1\nNVPM VERB: PARAM CPU_ONLINE: ARG CORE_5: PATH /sys/devices/system/cpu/cpu5/online: REAL_VAL: 1 CONF_VAL: 1\nNVPM VERB: PARAM FBP_POWER_GATING: ARG FBP_PG_MASK: PATH /sys/devices/platform/gpu.0/fbp_pg_mask: REAL_VAL: 2 CONF_VAL: 2\nNVPM VERB: PARAM TPC_POWER_GATING: ARG TPC_PG_MASK: PATH /sys/devices/platform/gpu.0/tpc_pg_mask: REAL_VAL: 240 CONF_VAL: 240\nNVPM VERB: PARAM GPU_POWER_CONTROL_ENABLE: ARG GPU_PWR_CNTL_EN: PATH /sys/devices/platform/gpu.0/power/control: REAL_VAL: auto CONF_VAL: on\nNVPM VERB: PARAM CPU_A78_0: ARG MIN_FREQ: PATH /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq: REAL_VAL: 729600 CONF_VAL: 729600\nNVPM VERB: PARAM CPU_A78_0: ARG MAX_FREQ: PATH /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq: REAL_VAL: 1344000 CONF_VAL: 1344000\nNVPM VERB: PARAM CPU_A78_1: ARG MIN_FREQ: PATH /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq: REAL_VAL: 729600 CONF_VAL: 729600\nNVPM VERB: PARAM CPU_A78_1: ARG MAX_FREQ: PATH /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq: REAL_VAL: 1344000 CONF_VAL: 1344000\nNVPM VERB: PARAM CPU_A78_2: ARG MIN_FREQ: PATH /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq: REAL_VAL: 729600 CONF_VAL: 729600\nNVPM VERB: PARAM CPU_A78_2: ARG MAX_FREQ: PATH /sys/devices/system/cpu/cpu2/cpufreq/scaling_max_freq: REAL_VAL: 1344000 CONF_VAL: 1344000\nNVPM VERB: PARAM CPU_A78_3: ARG MIN_FREQ: PATH /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq: REAL_VAL: 729600 CONF_VAL: 729600\nNVPM VERB: PARAM CPU_A78_3: ARG MAX_FREQ: PATH /sys/devices/system/cpu/cpu3/cpufreq/scaling_max_freq: REAL_VAL: 1344000 CONF_VAL: 1344000\nNVPM VERB: PARAM CPU_A78_4: ARG MIN_FREQ: PATH /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq: REAL_VAL: 729600 CONF_VAL: 729600\nNVPM VERB: PARAM CPU_A78_4: ARG MAX_FREQ: PATH /sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq: REAL_VAL: 1344000 CONF_VAL: 1344000\nNVPM VERB: PARAM CPU_A78_5: ARG MIN_FREQ: PATH /sys/devices/system/cpu/cpu5/cpufreq/scaling_min_freq: REAL_VAL: 729600 CONF_VAL: 729600\nNVPM VERB: PARAM CPU_A78_5: ARG MAX_FREQ: PATH /sys/devices/system/cpu/cpu5/cpufreq/scaling_max_freq: REAL_VAL: 1344000 CONF_VAL: 1344000\nNVPM VERB: PARAM GPU: ARG MIN_FREQ: PATH /sys/devices/platform/17000000.gpu/devfreq_dev/min_freq: REAL_VAL: 306000000 CONF_VAL: 0\nNVPM VERB: PARAM GPU: ARG MAX_FREQ: PATH /sys/devices/platform/17000000.gpu/devfreq_dev/max_freq: REAL_VAL: 918000000 CONF_VAL: 918000000\nNVPM VERB: PARAM GPU_POWER_CONTROL_DISABLE: ARG GPU_PWR_CNTL_DIS: PATH /sys/devices/platform/gpu.0/power/control: REAL_VAL: auto CONF_VAL: auto\nNVPM VERB: PARAM EMC: ARG MAX_FREQ: PATH /sys/kernel/nvpmodel_clk_cap/emc: REAL_VAL: 3199000000 CONF_VAL: 3199000000",
+    "stderr": ""
+  },
+  "jetson_clocks": {
+    "exit_code": 0,
+    "stdout": "SOC family:tegra234  Machine:NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super\nOnline CPUs: 0-5\ncpu0:  Online=1 Governor=schedutil MinFreq=729600 MaxFreq=1344000 CurrentFreq=1344000 IdleStates: WFI=1 c7=1 \ncpu1:  Online=1 Governor=schedutil MinFreq=729600 MaxFreq=1344000 CurrentFreq=1113600 IdleStates: WFI=1 c7=1 \ncpu2:  Online=1 Governor=schedutil MinFreq=729600 MaxFreq=1344000 CurrentFreq=1190400 IdleStates: WFI=1 c7=1 \ncpu3:  Online=1 Governor=schedutil MinFreq=729600 MaxFreq=1344000 CurrentFreq=1267200 IdleStates: WFI=1 c7=1 \ncpu4:  Online=1 Governor=schedutil MinFreq=729600 MaxFreq=1344000 CurrentFreq=729600 IdleStates: WFI=1 c7=1 \ncpu5:  Online=1 Governor=schedutil MinFreq=729600 MaxFreq=1344000 CurrentFreq=729600 IdleStates: WFI=1 c7=1 \nGPU MinFreq=306000000 MaxFreq=918000000 CurrentFreq=306000000\nActive GPU TPCs: 4\nEMC MinFreq=204000000 MaxFreq=3199000000 CurrentFreq=665600000 FreqOverride=0\nFAN Dynamic Speed Control=nvfancontrol hwmon0_pwm1=58\nNV Power Mode: 25W",
+    "stderr": ""
+  },
+  "memory": {
+    "exit_code": 0,
+    "stdout": "total        used        free      shared  buff/cache   available\nMem:           7.4Gi       2.8Gi       2.7Gi        80Mi       2.0Gi       4.6Gi\nSwap:          3.7Gi          0B       3.7Gi",
+    "stderr": ""
+  },
+  "disk": {
+    "exit_code": 0,
+    "stdout": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        59G  4.2G   52G   8% /media/students/JETSON_DATA",
+    "stderr": ""
+  },
+  "benchmark_configuration": {
+    "status": "NOT_RUN",
+    "reason": "Inference/demo workload is not runnable yet",
+    "input_resolution": null,
+    "stream_count": "None",
+    "trip_or_input": "None",
+    "power_mode": "See nvpmodel output",
+    "clocks_locked": false
+  }
+}

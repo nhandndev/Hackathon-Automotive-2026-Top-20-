@@ -1,0 +1,14 @@
+{
+  "validated_at_utc": "2026-08-10T07:08:05.254106+00:00",
+  "valid": false,
+  "trip_directory": "/T01-Sample",
+  "validator_file": "/home/student/Workspace/hungplt2/carla/PythonAPI/examples/carla_project_scripts/carla_project_scripts/script_carla/collect.py",
+  "report": {
+    "trip_id": "T01-Sample",
+    "counts": {},
+    "frames": 0,
+    "errors": [
+      "Không tồn tại trip dir: /T01-Sample"
+    ]
+  }
+}

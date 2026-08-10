@@ -1,28 +1,108 @@
-# Task Ticket: Hùng & Tâm (AI/ML)
-**Thư mục lưu kết quả:** `evidence/01_release/E-01_challenge_evaluation_bundle/`, `evidence/05_orchestrator/E-06_frame_alert_vs_event_ablation/`, v.v.
+# Task Ticket - Hùng & Tâm (AI/ML)
 
-## Hướng dẫn chung
-Các bằng chứng này liên quan đến độ chính xác và tính tái lập của Core AI. Agent đã tạo sẵn script đánh giá, Owner cần cung cấp data/model thật.
+Primary scope: E-01, E-05, E-06, E-07, E-08, E-13, E-27, E-37, E-42.
 
+## E-01 - Frozen challenge evaluation bundle
 
-## E-42: Model drift/domain gap (Tâm/Hùng)
-- [ ] **Hành động:** Xác nhận consent/provenance dữ liệu real.
-- [ ] **Kết quả mong đợi:** `psi_ks_metrics.csv`
-- **Ghi chú của Owner:** Bỏ qua theo quyết định hiện tại. Không tự sinh PSI/KS nếu chưa có dữ liệu real + consent/provenance + baseline/target domain rõ ràng.
+**Status: PARTIAL**  
+Primary: Hùng. Supporting: Tâm.
 
-## E-05: Alert Orchestrator state/policy (Tâm)
-- [ ] **Hành động:** Review policy config có đúng ý đồ thiết kế không.
-- [ ] **Kết quả mong đợi:** `orchestrator_junit.xml`, `policy_config.yaml`, `state_trace.jsonl`
-- **Ghi chú của Owner:** E05 là bằng chứng cho Decision Engine/Alert Orchestrator: tầng lọc khi nào prediction/risk được gửi thành cảnh báo thật. Đã tạo evidence tại `evidence/05_orchestrator/E-05_state_policy_lifecycle/`: `reports/alert_orchestrator_explainer.md`, `derived/policy_config.yaml`, `derived/state_trace.jsonl`, `derived/orchestrator_junit.xml`, `reports/source_report.md`. Vẫn cần Tâm/owner review policy config có đúng ý đồ thiết kế không.
+Đã có `commands.log`, `manifest.json`, `final_evaluation_summary.json` và source report.
 
-## E-06: Ablation: raw alert vs orchestrated (Tâm)
-Supporting: Nhân
-- [ ] **Hành động:** Cung cấp label protocol cho episode.
-- [ ] **Kết quả mong đợi:** `ablation.csv`, `ablation_notebook.html`, label protocol
-- **Ghi chú của Owner:** Với C2, nguồn label/protocol nằm ở `experiment/dataset-v2`. Đã tạo `evidence/05_orchestrator/E-06_frame_alert_vs_event_ablation/reports/label_protocol.md` và `reports/source_report.md` để mô tả label source. Chưa tạo `ablation.csv`/notebook vì cần chốt episode-level protocol cho raw alert vs orchestrated alert.
+Việc còn lại:
 
-## E-13: C1 critical cases evaluated (Tâm)
-- [ ] **Hành động:** Review bin definition có đúng thiết kế.
-- [ ] **Kết quả mong đợi:** `c1_metrics.json`, `c1_cases.pdf`, prediction/GT CSV
-- **Ghi chú của Owner:** File `HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json` dùng được cho C1 metrics: C1 metrics nằm ở root/per_trip; C2 nằm trong `challenge2`; C3 nằm trong `challenge3`. Đã cập nhật `evidence/02_ai_c1/E-13_c1_critical_case_evaluation/derived/c1_metrics.json` và `reports/source_report.md`. Chưa tạo `c1_cases.pdf`; cần Tâm review bin definition và chốt case selection.
+- [ ] Khóa model/config/evaluator/data scope đúng release.
+- [ ] Đóng `evaluation_bundle.zip`.
+- [ ] Tạo SHA-256 cho bundle và từng artifact trọng yếu.
+- [ ] Chạy lại lệnh từ clean environment và lưu exit code/stdout/stderr.
 
+Lưu tại `evidence/E-01/`.
+
+## E-05 - Alert Orchestrator state/policy/lifecycle
+
+**Status: PARTIAL**  
+Primary: Hùng. Owner review: Tâm.
+
+Đã có policy snapshot, state trace và JUnit-style file nhưng hiện còn static placeholder.
+
+- [ ] Tâm xác nhận policy/threshold đúng thiết kế.
+- [ ] Chạy dynamic tests cho confirmation, persistence, cooldown, suppression, idempotency và OPEN/UPDATE/RESOLVED.
+- [ ] Thay placeholder bằng JUnit/log từ test thật.
+
+Lưu tại `evidence/E-05/`.
+
+## E-06 - Raw-frame alert vs orchestrated event ablation
+
+**Status: PARTIAL**  
+Primary: Hùng. Supporting: Nhân, Tâm.
+
+- [ ] Chốt episode boundary và label protocol.
+- [ ] Replay cùng labeled episodes qua raw alert và Decision Engine.
+- [ ] Xuất `ablation.csv` và `ablation_notebook.html`.
+- [ ] Báo alerts/episode, duplicate rate, open delay và false alerts/hour theo denominator rõ ràng.
+
+Lưu tại `evidence/E-06/`.
+
+## E-07 - C3 formula and threshold verification
+
+**Status: PARTIAL**  
+Primary: Hùng.
+
+Đã có formula, threshold, deterministic tests và sample calculation.
+
+- [ ] Owner sign-off rằng snapshot khớp exact release source.
+- [ ] Nếu BTC yêu cầu nguồn contract bên ngoài code, đính kèm PDF/screenshot và đối chiếu từng threshold.
+
+Lưu tại `evidence/E-07/`.
+
+## E-08 - C2 dependencies and provenance
+
+**Status: DONE (runtime evidence)**  
+Primary: Tâm.
+
+Artifact manifest, SHA-256, dependency preflight và source/license notes đã có; preflight PASS. Không để như task mở.
+
+Follow-up ngoài evidence runtime: legal/owner review redistribution của `face_landmark_468.onnx` trước public release.
+
+## E-13 - C1 critical-case evaluation
+
+**Status: PARTIAL**  
+Primary: Hùng. Reviewer: Tâm.
+
+Đã có `c1_metrics.json`.
+
+- [ ] Chốt danger/critical bin definition.
+- [ ] Xuất prediction/GT CSV theo case/scenario.
+- [ ] Tạo `c1_cases.pdf` gồm worst cases và montage.
+- [ ] Ghi model/config/evaluator hash.
+
+Lưu tại `evidence/E-13/`.
+
+## E-27 - C2 generalization evaluation
+
+**Status: PARTIAL**  
+Primary: Tâm. Supporting: Hùng.
+
+- [ ] Đưa actual `c2_eval.json`, per-class metrics và confusion matrix vào `evidence/E-27/` thay vì chỉ dẫn đường dẫn nguồn.
+- [ ] Khóa exact `candidate_013.joblib` hash, `model_version=4`, split và label policy.
+- [ ] Audit subject/trip-disjoint; nếu không chứng minh được thì disclosure rõ random 70/30 limitation.
+- [ ] Bổ sung dataset provenance/license snapshot.
+
+## E-37 - Stereo calibration audit
+
+**Status: DONE**  
+Primary: Hùng. Supporting: Dân.
+
+`baseline_distribution.csv` và `epipolar_montage.png` đã tồn tại. Không để như task mở. Chỉ đổi format sang PDF nếu packet cuối yêu cầu.
+
+## E-42 - Domain gap and model drift
+
+**Status: OPEN**  
+Primary: Tâm. Supporting: Hùng.
+
+- [ ] Xác nhận real-data consent và provenance.
+- [ ] Khóa baseline domain và target domain.
+- [ ] Tính PSI/KS hoặc metric phù hợp trên các feature so sánh được.
+- [ ] Xuất domain-gap report kèm sample size và limitation.
+
+Lưu tại `evidence/E-42/`.

@@ -1,0 +1,12 @@
+# E-42 drift/domain-gap evidence commands
+
+No PSI/KS computation was run because required real target-domain data was not found as repo-pushable evidence.
+
+## Repo-pushable evidence checks
+
+```powershell
+Test-Path evidence\E-42\derived\drift_status.json
+Test-Path evidence\E-27\derived\generalization_summary.json
+Test-Path evidence\E-27\derived\c2_overall_class_metrics.csv
+Test-Path evidence\E-27\derived\c2_overall_confusion_matrix.png
+```

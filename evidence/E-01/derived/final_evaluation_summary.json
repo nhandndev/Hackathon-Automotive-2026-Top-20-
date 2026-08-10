@@ -1,6 +1,6 @@
 {
   "evidence_id": "E-01",
-  "source": "HACKATHON/AI/artifacts/predictions_6_samples/evaluation.json",
+  "source": "evidence/E-01/derived/final_evaluation_summary.json",
   "status": "final evaluation artifact exists in repo",
   "challenge1": {
     "overall_composite_score": 73.6,
@@ -20,5 +20,6 @@
   "notes": [
     "The referenced evaluation.json contains C1 metrics at root level, C2 metrics under challenge2, and C3 metrics under challenge3.",
     "This confirms the selected three-challenge pipeline has already been evaluated."
-  ]
+  ],
+  "source_note": "Source was summarized into this repo-pushable evidence file. Original local evaluation artifact is gitignored."
 }

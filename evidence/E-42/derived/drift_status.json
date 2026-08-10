@@ -1,0 +1,31 @@
+{
+  "evidence_id": "E-42",
+  "title": "Model drift / domain gap",
+  "generated_at": "2026-08-10",
+  "status": "not_computed",
+  "reason": "No repo-pushable real-driver production dataset with consent/provenance and no baseline-vs-target feature table are available.",
+  "available_related_sources": [
+    {
+      "path": "evidence/E-27/derived/generalization_summary.json",
+      "exists": true,
+      "note": "Repo-pushable summary of local dataset-v2 evidence."
+    },
+    {
+      "path": "evidence/E-27/derived/c2_overall_class_metrics.csv",
+      "exists": true,
+      "note": "Repo-pushable copied metrics artifact."
+    },
+    {
+      "path": "evidence/E-27/derived/c2_overall_confusion_matrix.png",
+      "exists": true,
+      "note": "Repo-pushable copied confusion matrix artifact."
+    }
+  ],
+  "not_available": [
+    "psi_ks_metrics.csv",
+    "baseline feature distribution table",
+    "target/real deployment feature distribution table",
+    "data consent/provenance document for real-driver data"
+  ],
+  "safe_statement": "E-42 currently documents the evidence gap only; it does not assert drift or no-drift."
+}

@@ -1,0 +1,88 @@
+{
+  "evidence_id": "E-06",
+  "title": "Ablation: raw alert vs orchestrated",
+  "generated_at": "2026-08-10",
+  "truth_policy": "Repo evidence paths cite this derived label inventory/counts. Raw dataset JSON files are local-only/gitignored and are not cited as repo evidence paths.",
+  "dataset_path": "evidence/E-06/derived/label_inventory.json",
+  "splits": {
+    "train": {
+      "trip_json_count": 96,
+      "frame_count": 41665,
+      "label_counts": {
+        "alert": 9415,
+        "distracted": 9803,
+        "drowsy": 7769,
+        "microsleep": 5897,
+        "missing": 3981,
+        "yawning": 4800
+      },
+      "examples": [
+        "T01d",
+        "T03d",
+        "T05d",
+        "T07d",
+        "T09d",
+        "T_claw_train_1",
+        "T_claw_train_1070",
+        "T_claw_train_1089"
+      ]
+    },
+    "valid": {
+      "trip_json_count": 34,
+      "frame_count": 13687,
+      "label_counts": {
+        "alert": 1513,
+        "distracted": 2526,
+        "drowsy": 1833,
+        "microsleep": 978,
+        "missing": 4672,
+        "yawning": 2165
+      },
+      "examples": [
+        "T02d",
+        "T04d",
+        "T06d",
+        "T08d",
+        "T10d",
+        "T_claw_test_41",
+        "T_claw_test_43",
+        "T_claw_test_53"
+      ]
+    }
+  },
+  "cache_manifests": [
+    {
+      "path": "evidence/E-06/derived/label_inventory.json#cache_manifest_1",
+      "exists": true,
+      "size_bytes": 3055,
+      "sha256": "2DC424197AF570E44900A9F54FB9447ACED1AD124E7911A9662EDFA6056D618E",
+      "repo_evidence_status": "summarized_here_from_local_ignored_source"
+    },
+    {
+      "path": "evidence/E-06/derived/label_inventory.json#cache_manifest_2",
+      "exists": true,
+      "size_bytes": 3035,
+      "sha256": "FBEF9D330C8939ABA5F7DB3C8DE9581384FA9F4FFB82045059DE5C33B7C2A4C6",
+      "repo_evidence_status": "summarized_here_from_local_ignored_source"
+    },
+    {
+      "path": "evidence/E-06/derived/label_inventory.json#cache_manifest_3",
+      "exists": true,
+      "size_bytes": 496,
+      "sha256": "F4EA110A8A238FBA85D67B05DAEA2320CD396D98EC4CF8A2831C2F72F424EB19",
+      "repo_evidence_status": "summarized_here_from_local_ignored_source"
+    },
+    {
+      "path": "evidence/E-06/derived/label_inventory.json#cache_manifest_4",
+      "exists": true,
+      "size_bytes": 496,
+      "sha256": "F4EA110A8A238FBA85D67B05DAEA2320CD396D98EC4CF8A2831C2F72F424EB19",
+      "repo_evidence_status": "summarized_here_from_local_ignored_source"
+    }
+  ],
+  "unknown_or_unreadable_json_count": 0,
+  "unknown_or_unreadable_examples": [],
+  "ablation_status": "not_computed",
+  "reason_ablation_not_computed": "No episode-level ground-truth protocol for raw-frame alerts vs orchestrated events was found.",
+  "dataset_source_note": "Counts were generated from a local ignored dataset scan; raw dataset path is intentionally not cited as repo evidence."
+}

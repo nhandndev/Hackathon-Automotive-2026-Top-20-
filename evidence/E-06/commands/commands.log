@@ -1,0 +1,19 @@
+# E-06 ablation evidence commands
+
+Run from repository root `Hackathon-Automotive-2026/`.
+
+This repo evidence does not cite raw dataset paths because the raw dataset is gitignored/local-only.
+
+## Repo-pushable evidence checks
+
+```powershell
+Test-Path evidence\E-06\derived\label_inventory.json
+Test-Path evidence\E-06\derived\label_counts.csv
+```
+
+## Evidence generated
+
+- `derived/label_inventory.json`
+- `derived/label_counts.csv`
+- `reports/label_protocol.md`
+- `reports/source_report.md`

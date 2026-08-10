@@ -1,4 +1,4 @@
 split,path,policy,count,examples
-train,experiment/dataset-v2/train,"random 70/30 plus original YOLO-form train split for crawled data",96,"T01d; T03d; T05d; T07d; T09d; T_claw_train_*"
-valid,experiment/dataset-v2/valid,"random 70/30 plus original YOLO-form valid split for crawled data",34,"T02d; T04d; T06d; T08d; T10d; T_claw_test_*"
-feature_cache,experiment/dataset-v2/.ch2_feature_cache/schema_v4,"feature cache generated from train/valid split",1,"manifest.json"
+train,evidence/E-27/derived/split_manifest.csv#train,random 70/30 plus original YOLO-form train split for crawled data,96,T01d; T03d; T05d; T07d; T09d; T_claw_train_1; T_claw_train_1070; T_claw_train_1089; T_claw_train_11; T_claw_train_1103
+valid,evidence/E-27/derived/split_manifest.csv#valid,random 70/30 plus original YOLO-form valid split for crawled data,34,T02d; T04d; T06d; T08d; T10d; T_claw_test_41; T_claw_test_43; T_claw_test_53; T_claw_test_83; T_claw_test_CHANNEL_04_20220812145704_20220812145714
+feature_cache,evidence/E-27/derived/generalization_summary.json#feature_cache,cache observed if folder exists,1,manifest.json

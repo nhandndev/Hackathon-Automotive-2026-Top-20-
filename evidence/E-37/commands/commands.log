@@ -1,0 +1,22 @@
+# E-37 Calibration quality evidence commands
+
+Run from repository root `Hackathon-Automotive-2026/`.
+
+## Existing artifact checks
+
+```powershell
+Test-Path evidence\E-37\derivedaseline_distribution.csv
+Test-Path evidence\E-37\derived\epipolar_montage.png
+Get-Content evidence\E-37\derivedaseline_distribution.csv -TotalCount 20
+```
+
+## C1 source checks
+
+```powershell
+Test-Path HACKATHON\AI\core\challenge1_road\depth.py
+Test-Path HACKATHON\AI\configs\challenge1.yaml
+```
+
+No calibration generation command was found or run in this evidence update.
+
+Generated: 2026-08-10

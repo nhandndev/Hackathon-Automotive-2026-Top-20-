@@ -1,45 +1,14 @@
-# E-05 - Alert Orchestrator là gì?
+# E-05 - Alert Orchestrator Explainer
 
-E-05 không phải là accuracy của Challenge 1/2/3.
+Decision Engine runs after C1/C2/C3. It does not modify the BTC CSV, does not train a model, and does not create new predictions. Its role is to filter signals over time before sending alerts.
 
-Nó là bằng chứng cho tầng **Decision Engine / Alert Orchestrator**: tầng quyết định khi nào một prediction/risk thật sự được gửi thành cảnh báo cho Fleet Dashboard / CarSky / AI Desktop.
+Real source files in repo:
 
-## Input của Orchestrator
+- `HACKATHON/AI/configs/decision_engine.yaml`
+- `HACKATHON/AI/core/decision_engine/policy.py`
+- `HACKATHON/AI/core/decision_engine/engine.py`
+- `HACKATHON/AI/core/decision_engine/schemas.py`
 
-Từ AI pipeline:
+Policy groups currently include: TTC, microsleep, distraction, drowsiness, speeding, harsh behavior, risk tiers, sensor health and vigilance lapse.
 
-- `predicted_ttc`
-- `driver_state`
-- `alertness_score`
-- `continuous_eye_closure_ms`
-- `perclos_30s`
-- speed/accel
-- C3 risk/safe score
-
-## Orchestrator làm gì?
-
-Nó lọc cảnh báo bằng:
-
-- persistence: nguy hiểm phải kéo dài đủ lâu,
-- cooldown: tránh spam cảnh báo liên tục,
-- recovery: chỉ resolve khi trạng thái an toàn đủ lâu,
-- severity: watch / warning / critical,
-- policy thresholds từ `AI/configs/decision_engine.yaml`.
-
-## Evidence trong folder này
-
-| File | Ý nghĩa |
-|---|---|
-| `policy_config.yaml` | Snapshot ngưỡng chính |
-| `state_trace.jsonl` | Trace nguồn state/event/transport |
-| `orchestrator_junit.xml` | JUnit-style static evidence |
-| `source_report.md` | Evidence lấy từ đâu |
-
-## Cần owner review
-
-Tâm/owner cần xác nhận policy có đúng ý đồ demo/sản phẩm không, ví dụ:
-
-- microsleep cần critical ngay hay cần persistence,
-- drowsy warning sau bao lâu,
-- TTC critical cooldown bao lâu,
-- có cho alert khi xe đang đứng yên không.
+Note: this evidence proves source structure/policy presence. It does not prove real-world alert quality unless ablation or episode-level replay is added.

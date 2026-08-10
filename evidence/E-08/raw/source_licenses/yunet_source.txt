@@ -1,4 +1,4 @@
-Artifact: HACKATHON/AI/models/face_detection_yunet_2023mar.onnx
+Artifact: evidence/E-08/raw/source_licenses/yunet_source.txt
 Component: YuNet face detector
 Purpose in Challenge 2: detect driver face ROI before landmark extraction.
 
@@ -13,3 +13,6 @@ HACKATHON/AI/models/face_landmark_models.manifest.yaml
 
 Manual follow-up if needed:
 Capture a screenshot/PDF of the upstream source and license page for final submission.
+
+
+Repo evidence note: this text file is the repo-pushable evidence for YuNet. The runtime binary itself is gitignored and must be supplied via the agreed model/release artifact channel if needed.

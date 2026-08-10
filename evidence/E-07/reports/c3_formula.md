@@ -1,8 +1,8 @@
 # E-07 - Challenge 3 Formula / Thresholds
 
-Nguồn code: `HACKATHON/AI/core/challenge3_fusion/risk_engine.py`
+Source code: `HACKATHON/AI/core/challenge3_fusion/risk_engine.py`
 
-Challenge 3 không train model ML. Nó tính điểm theo công thức BTC-style safe driving score.
+Challenge 3 does not train an ML model. It computes a safe-driving score from the current source formula:
 
 ```text
 safe_score = 100 - penalty
@@ -16,7 +16,7 @@ penalty =
 + speeding_pct_time  * 0.15
 ```
 
-## Thresholds
+## Thresholds from source
 
 | Event | Condition |
 |---|---|
@@ -37,12 +37,6 @@ NEAR_MISS_TTC_SEC = 1.5
 SPEEDING_TOLERANCE_KMH = 5.0
 ```
 
-## Output meaning
-
-- `safe_driving_score`: càng cao càng an toàn.
-- `risk_score`: `100 - safe_driving_score`, càng cao càng rủi ro.
-- `predicted_risk_score` trong CSV là risk tích lũy tại frame đó.
-
 ## Source note
 
-Tailgating không nằm trong công thức CSV hiện tại vì BTC CSV contract không có `predicted_headway_sec`; code ghi rõ evaluator public cũng bỏ term này.
+Tailgating is not included in the current CSV formula because the source notes that the BTC CSV contract has no `predicted_headway_sec`, and the public evaluator omits that term.

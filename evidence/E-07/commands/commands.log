@@ -1,0 +1,22 @@
+# E-07 C3 formula evidence commands
+
+Run from repository root `Hackathon-Automotive-2026/`.
+
+## Source checks
+
+```powershell
+Test-Path HACKATHON\AI\core\challenge3_fusion
+isk_engine.py
+Get-Content HACKATHON\AI\core\challenge3_fusion
+isk_engine.py -TotalCount 80
+```
+
+## Evidence generated
+
+- `derived/formula_manifest.json`
+- `derived/sample_calculation.csv`
+- `derived/c3_tests.xml`
+- `reports/c3_formula.md`
+- `reports/source_report.md`
+
+Generated: 2026-08-10

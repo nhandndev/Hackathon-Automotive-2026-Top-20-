@@ -6,8 +6,8 @@ sklearn 1.9.0
 onnxruntime 1.28.0
 ort_providers ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\models\candidate_013.joblib
-FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\models\face_detection_yunet_2023mar.onnx
-FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\models\face_landmark_468.onnx
+FOUND LOCAL_IGNORED_YUNET_RUNTIME_BINARY
+FOUND LOCAL_IGNORED_FACE_LANDMARK_RUNTIME_BINARY
 FOUND E:\automotive_cc\Hackathon-Automotive-2026\HACKATHON\AI\configs\challenge2.yaml
 model_classes ['alert', 'distracted', 'drowsy', 'microsleep', 'yawning']
 feature_count 59

@@ -1,0 +1,144 @@
+{
+  "evidence_id": "E-05",
+  "title": "Alert Orchestrator state/policy",
+  "generated_at": "2026-08-10",
+  "truth_policy": "Summary is generated from source files that exist in the repo. No runtime alert-rate claim is made.",
+  "source_files": [
+    {
+      "path": "HACKATHON/AI/configs/decision_engine.yaml",
+      "exists": true,
+      "size_bytes": 2287,
+      "sha256": "26807A79B1C55927FAB6D93FFD3C50B03722DE125A73A288546902CE37887EFB"
+    },
+    {
+      "path": "HACKATHON/AI/core/decision_engine/policy.py",
+      "exists": true,
+      "size_bytes": 5957,
+      "sha256": "47D5901593B4DF60CC7E1FE8CAE6D379B1741237362E1E55D9D40E190C19F0A6"
+    },
+    {
+      "path": "HACKATHON/AI/core/decision_engine/engine.py",
+      "exists": true,
+      "size_bytes": 33680,
+      "sha256": "7AFC5A885932C43DA83569F4A89E71BFDDE23E033335D044B17952AD07AED801"
+    },
+    {
+      "path": "HACKATHON/AI/core/decision_engine/schemas.py",
+      "exists": true,
+      "size_bytes": 5175,
+      "sha256": "8482CFF11CDE111CB1619EA0C270B273CF557CEF8F336F0EC50010D88161A29B"
+    },
+    {
+      "path": "HACKATHON/AI/core/decision_engine/README.md",
+      "exists": true,
+      "size_bytes": 40099,
+      "sha256": "CC0EB9E84D3429654ACD020EC78E5E821756F6A763F4B9D45B096B2ABB4602F4"
+    },
+    {
+      "path": "HACKATHON/AI/scripts/send_decision_events.py",
+      "exists": true,
+      "size_bytes": 2649,
+      "sha256": "A83B37406280E1CCFFB2DCD9166B88A6605AF13A3EABFEC7FDF75ACB9532CDA6"
+    }
+  ],
+  "policy_loaded": true,
+  "policy_version": "decision_engine_v1",
+  "policy_enabled": true,
+  "policy_sections": [
+    "version",
+    "enabled",
+    "general",
+    "ttc",
+    "microsleep",
+    "distraction",
+    "drowsiness",
+    "speeding",
+    "harsh_behavior",
+    "risk_tiers",
+    "sensor_health",
+    "vigilance_lapse"
+  ],
+  "declared_thresholds": {
+    "ttc": {
+      "watch_sec": 5.0,
+      "warning_sec": 3.0,
+      "critical_sec": 1.5,
+      "warning_persistence_ms": 500,
+      "recovery_sec": 4.0,
+      "recovery_ms": 2000,
+      "cooldown_ms": 5000
+    },
+    "microsleep": {
+      "reliable_closure_ms": 1000,
+      "ml_confidence": 0.8,
+      "ml_persistence_ms": 2000,
+      "stopped_warning_closure_ms": 3000,
+      "stopped_fleet_closure_ms": 10000,
+      "recovery_ms": 3000,
+      "cooldown_ms": 30000
+    },
+    "distraction": {
+      "high_speed_kmh": 50.0,
+      "high_speed_duration_ms": 3500,
+      "medium_speed_kmh": 20.0,
+      "medium_speed_duration_ms": 6000,
+      "critical_duration_ms": 10000,
+      "gaze_gap_tolerance_ms": 100,
+      "recovery_ms": 2000,
+      "cooldown_ms": 30000
+    },
+    "drowsiness": {
+      "perclos_watch": 0.15,
+      "perclos_warning": 0.25,
+      "perclos_critical": 0.4,
+      "perclos_persistence_ms": 3000,
+      "ml_watch_confidence": 0.65,
+      "ml_watch_persistence_ms": 2000,
+      "warning_confidence": 0.7,
+      "warning_alertness_max": 0.55,
+      "warning_persistence_ms": 5000,
+      "critical_warning_persistence_ms": 15000,
+      "strong_yawn_ms": 2000,
+      "yawn_count": 2,
+      "yawn_window_ms": 60000,
+      "yawn_perclos_min": 0.15,
+      "yawn_alertness_max": 0.6,
+      "recovery_alertness_min": 0.65,
+      "recovery_perclos_max": 0.15,
+      "recovery_ms": 10000,
+      "cooldown_ms": 60000
+    },
+    "risk_tiers": {
+      "thresholds": [
+        25.0,
+        50.0,
+        75.0
+      ]
+    }
+  },
+  "existing_trace_files": [
+    {
+      "path": "evidence/E-05/derived/state_trace.jsonl",
+      "exists": true,
+      "size_bytes": 571,
+      "sha256": "922EAB172A40070DFFD2169EA1D3EDF601865BF66C5E66A7859E559AF8660B51"
+    },
+    {
+      "path": "evidence/E-05/derived/orchestrator_junit.xml",
+      "exists": true,
+      "size_bytes": 437,
+      "sha256": "9F3D52A094C089A0BB00E6A484472B5886DEF4956C00F0E9BA6DB480EC5BA58C"
+    },
+    {
+      "path": "evidence/E-05/derived/policy_config.yaml",
+      "exists": true,
+      "size_bytes": 1182,
+      "sha256": "286663260937C5A7AC549E43C90A1A8D203ED4BB1E54D3DC53051A0955492FB7"
+    }
+  ],
+  "limitations": [
+    "state_trace.jsonl is a source trace/static lifecycle note, not a full runtime replay over all trips.",
+    "orchestrator_junit.xml is static evidence currently present in repo, not proof of a full pytest suite execution unless rerun and logs are attached.",
+    "No alert precision/false-alarm ablation is claimed here; that belongs to E-06."
+  ]
+}

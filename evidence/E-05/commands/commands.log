@@ -1,0 +1,22 @@
+# E-05 Alert Orchestrator evidence commands
+
+Run from repository root `Hackathon-Automotive-2026/`.
+
+## Source checks
+
+```powershell
+Test-Path HACKATHON\AI\configs\decision_engine.yaml
+Test-Path HACKATHON\AI\core\decision_engine\policy.py
+Test-Path HACKATHON\AI\core\decision_engine\engine.py
+Test-Path HACKATHON\AI\core\decision_engine\schemas.py
+```
+
+## Files summarized
+
+- `HACKATHON/AI/configs/decision_engine.yaml`
+- `HACKATHON/AI/core/decision_engine/policy.py`
+- `HACKATHON/AI/core/decision_engine/engine.py`
+- `HACKATHON/AI/core/decision_engine/schemas.py`
+- `HACKATHON/AI/scripts/send_decision_events.py`
+
+Generated: 2026-08-10

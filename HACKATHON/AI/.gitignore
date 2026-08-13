@@ -29,7 +29,7 @@ experimental/**/artifacts/
 __pycache__/
 *.pyc
 *.pyo
-/experimental
+experimental/
 /models/ch2_feature_cache/
 /models/*.json
 

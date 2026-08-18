@@ -2,8 +2,19 @@
 
 > Connected Car Hackathon 2026 - DMS-10 Driver Intelligence Platform  
 > This README is written for BTC/judges/mentors who want to understand the project, run the system end-to-end, and evaluate it on their own dataset.
+> Team Overview
+
+| Member | Main role | Primary ownership |
+|---|---|---|
+| Doan Ngoc Nhan | Team Leader / Backend / CarSky Integration | Backend architecture, AI-to-Backend pipeline, API contracts, reliability evidence, CarSky signal mapping and HMI integration path |
+| Phan Le Thanh Hung | AI Engineer | Challenge 2 and Challenge 3 AI/model pipeline, driver-state model work, risk/fusion logic, evaluation support |
+| Duong Thi My Tam | AI Engineer | Challenge 1 model/pipeline, TTC and road-risk related AI work, AI evaluation support |
+| To Dan | Business Value / Pitching / Enterprise Solution / Embedded| Business narrative, enterprise value proposition, solution positioning, final report and submission coordination |
+| Nguyen Tri Thien | Frontend Engineer / Fleet Dashboard | Fleet Dashboard UI, dashboard workflows, business-facing visualization, fleet-management solution presentation |
+
 
 ---
+
 
 ## 1. Project Overview
 
@@ -692,3 +703,18 @@ python AI\team_kit\evaluation.py `
   --data-dir <PATH_TO_BTC_DATASET> `
   --output AI\artifacts\evaluation_btc_review.json
 ```
+## 17. Responsibility Boundaries
+
+| Area | Owner | Contribution |
+|---|---|---|
+| Team leadership and technical coordination | Doan Ngoc Nhan | Coordinated system integration, aligned AI/Backend/Frontend/CarSky boundaries, maintained evidence-driven implementation claims |
+| Backend and API contracts | Doan Ngoc Nhan | Implemented and verified FastAPI alert/snapshot boundary, `DecisionEvent` ingestion, idempotency handling, WebSocket live stream and backend reliability traces |
+| AI-to-Backend pipeline | Doan Ngoc Nhan | Connected AI/Decision Engine outputs into Backend contracts so model results can be consumed by Dashboard and CarSky/HMI |
+| CarSky integration | Doan Ngoc Nhan | Implemented Backend-to-CarSky signal publishing, CarSky/KUKSA mapping, speed-mux fallback path and Android HMI integration evidence |
+| Challenge 2 driver-state model | Phan Le Thanh Hung | Built and supported the driver-state model pipeline for `alert`, `drowsy`, `yawning`, `distracted`, `microsleep` predictions |
+| Challenge 3 risk/fusion logic | Phan Le Thanh Hung | Worked on risk-score/fusion logic and model-output alignment for the final AI pipeline |
+| Challenge 1 TTC/road-risk model | Duong Thi My Tam | Worked on TTC/road-risk model pipeline and Challenge 1 evaluation support |
+| Business value and pitching | To Dan | Developed business value story, customer-facing positioning, enterprise solution angle, pitch/report narrative and submission readiness |
+| Fleet Dashboard frontend | Nguyen Tri Thien | Built dashboard workflows for fleet monitoring, trip detail, driver ranking, ranking analysis, insights and reports |
+| Enterprise solution display | Nguyen Tri Thien | Designed how AI safety outputs are presented to fleet managers as actionable business views |
+

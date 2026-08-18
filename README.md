@@ -7,9 +7,9 @@
 | Member | Main role | Primary ownership |
 |---|---|---|
 | Doan Ngoc Nhan | Team Leader / Backend / CarSky Integration | Backend architecture, AI-to-Backend pipeline, API contracts, reliability evidence, CarSky signal mapping and HMI integration path |
-| Phan Le Thanh Hung | AI Engineer | Challenge 2 and Challenge 3 AI/model pipeline, driver-state model work, risk/fusion logic, evaluation support |
-| Duong Thi My Tam | AI Engineer | Challenge 1 model/pipeline, TTC and road-risk related AI work, AI evaluation support |
-| To Dan | Business Value / Pitching / Enterprise Solution / Embedded| Business narrative, enterprise value proposition, solution positioning, final report and submission coordination |
+| Phan Le Thanh Hung | AI Engineer | Challenge 2 and Challenge 3 AI/model ownership: driver-state prediction from cabin/driver signals, 5-class state output, model artifact validation, risk-scoring/fusion logic, `predicted_risk_score` alignment and evaluation support |
+| Duong Thi My Tam | AI Engineer | Challenge 1 AI/model ownership: road-risk and TTC prediction pipeline, road-camera perception, stereo/depth/TTC reasoning, critical/danger case review, TTC output alignment and evaluation support |
+| To Dan | Business Value / Pitching / Enterprise Solution / Embedded | Business narrative, enterprise value proposition, solution positioning, embedded/product context, final report and submission coordination |
 | Nguyen Tri Thien | Frontend Engineer / Fleet Dashboard | Fleet Dashboard UI, dashboard workflows, business-facing visualization, fleet-management solution presentation |
 
 
